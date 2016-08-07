@@ -31,14 +31,14 @@
 #' djt
 #' }
 #' @return Tweets data returned as a tibble data_frame
-#' @details dplyr
+#' @importFrom dplyr data_frame bind_rows
 #' @export
 search_tweets <- function(q, count = 100, type = "mixed",
                           token = NULL, ...) {
 
   if (is.null(token)) {
     token <- get_tokens()
-    token <- .fetch_tokens(token, "search/tweets")
+    token <- fetch_tokens(token, "search/tweets")
   }
 
   params <- list(
@@ -53,25 +53,32 @@ search_tweets <- function(q, count = 100, type = "mixed",
     "search/tweets",
     param = params)
 
-  tw_df <- dplyr::data_frame()
+  tw_df <- data_frame()
   nrows <- 0
 
   message("Searching for tweets...")
 
-  while (nrows < count) {
-    qresp <- TWIT(get = TRUE, url, config = token)
-    qresp <- .from_js(qresp)
+  if (count > 1000) {
+    message("It takes a little longer to collect this many tweets.")
+  }
 
-    tw_df <- dplyr::bind_rows(tw_df,
-      parse_status(qresp$statuses))
+  while (nrows < count) {
+    res <- TWIT(get = TRUE, url, config = token)
+    res <- from_js(res)
+
+    tw_df <- bind_rows(tw_df,
+      tweets_df(res))
 
     nrows <- nrow(tw_df)
 
-    if (length(qresp$search_metadata$next_results) == 0) break
-    if (qresp$search_metadata$next_results == 0) break
+    if (!"search_metadata" %in% names(res)) break
+    if (!"next_results" %in% names(res$search_metadata)) break
+    if (length(res$search_metadata$next_results) == 0) break
+    if (res$search_metadata$next_results == 0) break
 
-    url <- make_url(restapi = TRUE, "search/tweets",
-      sub("[?]", "", qresp$search_metadata$next_results))
+    url <- make_url(
+      restapi = TRUE, "search/tweets",
+      sub("[?]", "", res$search_metadata$next_results))
   }
 
   message(paste0("Collected ", nrows, " tweets!"))
