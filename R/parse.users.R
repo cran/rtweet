@@ -1,42 +1,24 @@
-#' user_df
-#'
-#' @description Converts user object (nested list converted from
-#'   json object) into a [tibble] data frame.
-#'
-#' @param dat User object or nested list. Usually this is the
-#'   return object produced by \code{\link{from_js}} and
-#'   \code{\link{lookup_users}}..
-#'
-#' @importFrom dplyr bind_cols
-#' @export
-user_df <- function(dat) {
+parse_users <- function(x) {
 
-  if ("user" %in% names(dat)) {
-    dat <- dat[["user"]]
+  if ("statuses" %in% names(x)) {
+    x <- x[["statuses"]]
   }
 
-  user_df <- bind_cols(
-    user_toplevel_df(dat),
-    user_entities_df(dat))
+  if ("friends_count" %in% names(x)) {
+    return(user_df(x))
+  }
 
-  user_df
-}
-
-check_user_obj <- function(x) {
+  if ("statuses" %in% names(x)) {
+    x <- x[["statuses"]]
+  }
 
   if ("user" %in% names(x)) {
-    x <- x[["user"]]
+    return(user_df(x[["user"]]))
   }
 
-  if (!"id_str" %in% names(x)) {
-    if ("id" %in% names(x)) {
-      x$id_str <- x$id
-    } else {
-      stop("object does not contain ID variable.", call. = FALSE)
-    }
-  }
-  x
+  return(invisible())
 }
+
 
 usr_ent_urls <- function(x, list = FALSE) {
 
@@ -78,9 +60,30 @@ user_toplevel_df <- function(x, n = NULL, names = NULL,
 
   if (is.null(n)) n <- length(x[["id_str"]])
 
+  for (i in toplevel) {
+    if (!i %in% names(x)) {
+
+      if (i %in% c("id_str", "name", "screen_name", "location",
+        "description", "url", "created_at", "favourites_count",
+        "utc_offset", "time_zone", "lang")) {
+        x[[i]] <- rep(NA_character_, n)
+      } else if (i %in% c("followers_count", "friends_count", "listed_count",
+        "favourites_count", "favorite_count", "statuses_count")) {
+        x[[i]] <- rep(NA_integer_, n)
+      } else if (i == c("protected", "geo_enabled", "verified")) {
+        x[[i]] <- rep(NA, n)
+      } else {
+        x[[i]] <- rep(NA, n)
+      }
+
+    }
+  }
+
   toplevel_df <- lapply(x[toplevel], return_with_NA)
 
-  toplevel_df$user_id <- check_user_id(x)
+  names(toplevel_df) <- gsub("_str", "", names(toplevel_df))
+
+  names(toplevel_df)[names(toplevel_df) == "id"] <- "user_id"
 
   if ("created_at" %in% names(toplevel_df)) {
     toplevel_df[["created_at"]] <- format_date(

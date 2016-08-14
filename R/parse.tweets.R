@@ -1,15 +1,19 @@
-#' tweets_df
-#'
-#' @description Converts tweets object (nested list converted from
-#'   json object) into a [tibble] data frame.
-#'
-#' @param dat Tweets object or nested list. Usually this is the
-#'   return object produced by \code{\link{from_js}} and
-#'   \code{\link{search_tweets}} or \code{\link{stream_tweets}}.
-#'
-#' @importFrom dplyr bind_cols
-#' @export
-tweets_df <- function(dat) {
+parse_tweets <- function(x) {
+
+  if ("statuses" %in% names(x)) {
+    x <- x[["statuses"]]
+  } else if ("status" %in% names(x)) {
+    x <- x[["status"]]
+  }
+
+  if (!"friends_count" %in% names(x)) {
+    return(tweets_df(x))
+  }
+
+  return(invisible())
+}
+
+check_response_obj <- function(dat) {
 
   if (missing(dat)) {
     stop("Must specify tweets object, dat.", call. = TRUE)
@@ -19,32 +23,9 @@ tweets_df <- function(dat) {
     dat <- dat[["statuses"]]
   }
 
-  tweets_df <- bind_cols(
-    tweets_toplevel_df(dat),
-    tweets_entities_df(dat),
-    tweets_retweet_df(dat),
-    tweets_place_df(dat))
-
-  tweets_df
-}
-
-
-
-check_response_obj <- function(dat) {
-
-  if (missing(dat)) {
-    stop("Must specify tweets object, dat.", call. = TRUE)
-  }
-
-  if (all(c("statuses", "search_metadata") %in% names(dat))) {
-    dat <- dat[["statuses"]]
-  }
-
   if (!"id_str" %in% names(dat)) {
     if ("id" %in% names(dat)) {
       dat$id_str <- dat$id
-    } else {
-      stop("object does not contain ID variable.", call. = FALSE)
     }
   }
 
@@ -62,7 +43,7 @@ tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
     toplevel <- c("created_at", "id_str", "retweet_count",
       "favorite_count", "text", "in_reply_to_status_id_str",
       "in_reply_to_user_id_str", "is_quote_status",
-      "quoted_status_id_str", "lang")
+      "quoted_status_id_str", "source", "lang")
   }
 
   if (!is.null(add.names)) {
@@ -73,12 +54,40 @@ tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
 
   if (is.null(n)) n <- length(dat[["id_str"]])
 
+  for (i in toplevel) {
+    if (!i %in% names(dat)) {
+
+      if (i %in% c("created_at", "id_str", "text",
+        "in_reply_to_status_id_str","in_reply_to_user_id_str",
+        "quoted_status_id_str", "lang")) {
+        dat[[i]] <- rep(NA_character_, n)
+      } else if (i %in% c("retweet_count", "favorite_count")) {
+        dat[[i]] <- rep(NA_integer_, n)
+      } else if (i == "is_quote_status") {
+        dat[[i]] <- rep(NA, n)
+      } else {
+        dat[[i]] <- rep(NA, n)
+      }
+
+    }
+  }
+
   toplevel_df <- lapply(dat[toplevel], return_with_NA)
+
   toplevel_df$user_id <- check_user_id(dat)
+
+  names(toplevel_df) <- gsub("_str", "", names(toplevel_df))
+
+  names(toplevel_df)[names(toplevel_df) == "id"] <- "status_id"
 
   if ("created_at" %in% names(toplevel_df)) {
     toplevel_df[["created_at"]] <- format_date(
       toplevel_df[["created_at"]], date = FALSE)
+  }
+  if ("source" %in% names(toplevel_df)) {
+    toplevel_df[["source"]] <- sapply(
+      strsplit(as.character(toplevel_df[["source"]]), "[<]|[>]"),
+      function(x) x[3])
   }
 
   tbl_df(toplevel_df)
@@ -218,5 +227,3 @@ tweets_place_df <- function(dat, n = NULL) {
 
   place_df
 }
-
-

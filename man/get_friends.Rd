@@ -4,23 +4,26 @@
 \alias{get_friends}
 \title{get_friends}
 \usage{
-get_friends(user, token = NULL, page = "-1", stringify = TRUE)
+get_friends(user, n = 75000, page = "-1", parse = TRUE, token = NULL)
 }
 \arguments{
 \item{user}{Screen name or user id of target user.}
 
+\item{n}{Number of friends to return. For max return, enter
+\code{n = "all"} or \code{n = 75000} (max per token).}
+
+\item{page}{Default \code{page = -1} specifies first page of json
+results. Other pages specified via cursor values supplied by
+Twitter API response object.}
+
+\item{parse}{Logical, indicating whether to return parsed
+vector or nested list (fromJSON) object. By default,
+\code{parse = TRUE} saves you the time [and frustrations]
+associated with disentangling the Twitter API return objects.}
+
 \item{token}{OAuth token (1.0 or 2.0). By default
 \code{token = NULL} fetches a non-exhausted token from
 an environment variable.}
-
-\item{page}{Numeric or character vector used as cursor value.
-Default \code{page = -1} specifies first page of json results,
-or first 5000 friends. Other pages specified via cursor values
-supplied by Twitter API response object.}
-
-\item{stringify}{Logical, indicating whether to return user
-ids as strings (some ids are too long to be read as numeric).
-Defaults to \code{TRUE}.}
 }
 \value{
 friends User ids for everyone a user follows.

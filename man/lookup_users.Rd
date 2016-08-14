@@ -4,7 +4,7 @@
 \alias{lookup_users}
 \title{lookup_users}
 \usage{
-lookup_users(users, token = NULL)
+lookup_users(users, token = NULL, parse = TRUE)
 }
 \arguments{
 \item{users}{User id or screen name of target user.}
@@ -12,6 +12,9 @@ lookup_users(users, token = NULL)
 \item{token}{OAuth token (1.0 or 2.0). By default
 \code{token = NULL} fetches a non-exhausted token from
 an environment variable @describeIn tokens.}
+
+\item{parse}{Logical, indicating whether or not to parse
+return object into data frame(s)}
 }
 \value{
 json response object (max is 18000 per token)
@@ -19,6 +22,21 @@ json response object (max is 18000 per token)
 \description{
 Returns Twitter user data_frame object for
   specified user_ids or screen_names.
+}
+\examples{
+\dontrun{
+# search for 1000 tweets mentioning Hillary Clinton
+hrc <- search_tweets(q = "hillaryclinton", count = 1000)
+
+# lookup returned user_id values
+users <- lookup_users(hrc$user_id)
+users
+
+# merge data objects
+dat <- dplyr::left_join(hrc, users, by = "user_id")
+dat
+}
+
 }
 \seealso{
 \url{https://dev.twitter.com/overview/documentation}

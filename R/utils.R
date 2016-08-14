@@ -1,13 +1,40 @@
-#' from_js
-#'
-#' @description Convert json object to nested list.
-#'
-#' @param rsp json response object
-#'
+return_last <- function(x, n = 1) {
+  x <- rev(x)
+  x[seq_along(n)]
+}
+
+#' @importFrom dplyr bind_rows
+bply <- function(x, f) {
+  x <- bind_rows(lapply(x, f))
+  x[!duplicated(x), ]
+}
+
+#' @importFrom dplyr tbl_df
+n_rows <- function(x, n = NULL) {
+  stopifnot(is.data.frame(x))
+  if (!is.null(n)) {
+    if (nrow(x) > n) {
+      x <- x[seq_len(n), ]
+    }
+  }
+  if (!"tibble" %in% class(x)) {
+    x <- tbl_df(x)
+  }
+  x
+}
+
+nanull <- function(x) {
+  if (is.null(x)) return(NA)
+  if (identical(x, "")) return(NA)
+  if (length(x) == 0) return(NA)
+  x[x == ""] <- NA
+  x[is.null(x)] <- NA
+  x
+}
+
 #' @keywords internal
 #' @import httr
 #' @importFrom jsonlite fromJSON
-#' @export
 from_js <- function(rsp) {
 
   if (http_type(rsp) != "application/json") {
@@ -17,10 +44,19 @@ from_js <- function(rsp) {
   fromJSON(content(rsp, as = "text"))
 }
 
-#' .id_type
-#'
 #' @keywords internal
-#' @return Character vector of either screen_name or user_id
+.ids_type <- function(x) {
+  if (is.list(x)) x <- unlist(x)
+  for (i in seq_along(x)) {
+    x[i] <- .id_type(x[i])
+  }
+  if (length(unique(x)) > 1) {
+    stop("user object must contain user_ids OR only scree_names, but not both.")
+  }
+  unique(x)
+}
+
+#' @keywords internal
 .id_type <- function(x) {
   if (suppressWarnings(is.na(as.numeric(x)))) {
     return("screen_name")
@@ -29,31 +65,7 @@ from_js <- function(rsp) {
   }
 }
 
-
-
-#' stream_params
-#'
 #' @keywords internal
-#' @description Returns stream param.
-#' @param stream character stream query
-#' @return param character vector
-stream_params <- function(stream) {
-  stream <- unlist(trimws(unlist(strsplit(stream, ","))))
-
-  if (!all(suppressWarnings(is.na(as.numeric(stream))))) {
-    if (all(is.integer(as.integer(stream)))) {
-      params <- list(follow = stream)
-    } else {
-      params <- list(locations = stream)
-    }
-  } else {
-    params <- list(track = stream)
-  }
-  params
-}
-
-
-
 format_date <- function(x, date = TRUE) {
   x <- as.POSIXct(x,
     format = "%a %b %d %H:%M:%S %z %Y",
@@ -64,7 +76,7 @@ format_date <- function(x, date = TRUE) {
   x
 }
 
-
+#' @keywords internal
 check_user_id <- function(dat, n = NULL) {
 
   dat <- check_response_obj(dat)
@@ -84,7 +96,7 @@ check_user_id <- function(dat, n = NULL) {
   user_id
 }
 
-
+#' @keywords internal
 return_with_NA <- function(x, n) {
   if (is.character(x)) {
     myNA <- NA_character_
@@ -104,4 +116,31 @@ return_with_NA <- function(x, n) {
     }
   }
   x
+}
+
+#' @keywords internal
+is_n <- function(n) {
+  if (is.character(n)) {
+    n <- suppressWarnings(as.numeric(n))
+  }
+  if (all(
+    length(n) == 1,
+    is.numeric(n),
+    identical(n %% 1, 0),
+    n > 0)) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+#' @keywords internal
+is_url <- function(url) {
+  url_names <- c("scheme", "hostname", "port", "path", "query")
+  if (all(length(url) > 1, is.list(url),
+     url_names %in% names(url))) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
 }
