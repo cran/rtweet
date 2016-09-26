@@ -1,8 +1,8 @@
 Package: rtweet
 Type: Package
 Title: Collecting Twitter Data
-Version: 0.2.0
-Date: 2016-07-29
+Version: 0.3.0
+Date: 2016-09-26
 Author: Michael W. Kearney
 Maintainer: Michael W. Kearney <mkearney@ku.edu>
 Description: An implementation of calls designed to extract
@@ -13,13 +13,15 @@ Description: An implementation of calls designed to extract
     given to functions designed to return tweets, friends,
     and followers.
 Depends: R (>= 3.1.0)
-Imports: dplyr, httr, jsonlite
+Imports: httr (>= 1.2.0), jsonlite
 License: MIT + file LICENSE
 LazyData: TRUE
-URL: https://github.com/mkearney/rtweet/
+URL: https://CRAN.R-project.org/package=rtweet
 BugReports: https://github.com/mkearney/rtweet/issues
 RoxygenNote: 5.0.1
+Suggests: knitr, rmarkdown, testthat
+VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2016-08-13 22:39:54 UTC; mwk
+Packaged: 2016-09-26 15:28:12 UTC; mwk
 Repository: CRAN
-Date/Publication: 2016-08-14 09:13:16
+Date/Publication: 2016-09-26 21:21:00

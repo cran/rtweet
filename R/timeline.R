@@ -12,16 +12,35 @@
 #'   \code{parse = TRUE} saves users from the time
 #'   [and frustrations] associated with disentangling the Twitter
 #'   API return objects.
-#' @param token OAuth token (1.0 or 2.0). By default
-#'   \code{token = NULL} fetches a non-exhausted token from
-#'   an environment variable.
-#' @param \dots Other arguments passed on to \code{make_url}.
+#' @param token OAuth token. By default \code{token = NULL} fetches a
+#'   non-exhausted token from an environment variable. Find instructions
+#'   on how to create tokens and setup an environment variable in the
+#'   tokens vignette (in r, send \code{?tokens} to console).
+#' @param \dots Futher arguments passed on to \code{make_url}.
+#'   All named arguments that do not match the above arguments
+#'   (i.e., count, type, etc.) will be built into the request.
+#'   To return only English language tweets, for example, use
+#'   \code{lang = "en"}. Or, to exclude retweets, use
+#'   \code{include_rts = FALSE}. For more options see Twitter's
+#'   API documentation.
 #'
 #' @seealso \url{https://dev.twitter.com/overview/documentation}
+#' @examples
+#' \dontrun{
+#' # get 2000 from Donald Trump's account
+#' djt <- get_timeline("realDonaldTrump", n = 2000)
 #'
+#' # data frame where each observation (row) is a different tweet
+#' djt
+#'
+#' # users data for realDonaldTrump is also retrieved.
+#' # access it via users_data() users_data(hrc)
+#' users_data(djt)
+#' }
 #' @return List consisting of two data frames. One with the tweets
 #'   data for a specified user and the second is a single row for
 #'   the user provided.
+#' @family tweets
 #' @export
 get_timeline <- function(user, n = 200, max_id = NULL,
   parse = TRUE, token = NULL, ...) {
@@ -52,7 +71,10 @@ get_timeline <- function(user, n = 200, max_id = NULL,
 
   tm <- scroller(url, n, n.times, token)
 
-  if (parse) tm <- parser(tm, n)
+  if (parse) {
+    tm <- parser(tm, n)
+    tm <- attr_tweetusers(tm)
+  }
 
   tm
 }

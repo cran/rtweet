@@ -3,9 +3,10 @@
 #' @description Returns rate limit information for Twitter
 #'   access tokens.
 #'
-#' @param token OAuth token (1.0 or 2.0). By default
-#'   \code{token = NULL} fetches a non-exhausted token from
-#'   an environment variable.
+#' @param token OAuth token. By default \code{token = NULL} fetches a
+#'   non-exhausted token from an environment variable. Find instructions
+#'   on how to create tokens and setup an environment variable in the
+#'   tokens vignette (in r, send \code{?tokens} to console).
 #' @param query If null, returns entire rate limit request object as
 #'   data frame. otherwise, query returns specific values matching
 #'   the query of interest; e.g., \code{query = "lookup/users"} returns
@@ -26,6 +27,8 @@ rate_limit <- function(token, query = NULL, rest = TRUE) {
     restapi = rest,
     query = "application/rate_limit_status")
 
+  token <- check_token(token)
+
   r <- TWIT(get = TRUE, url, config = token)
 
   rl_df <- .rl_df(r)
@@ -39,14 +42,13 @@ rate_limit <- function(token, query = NULL, rest = TRUE) {
 }
 
 
-#' @keywords internal
 .rl_df <- function(r) {
 
   r <- from_js(r)
 
   data <- r$resources
 
-  rl_df <- data.frame(
+  rl_df <- data_frame_(
     query = gsub(".limit|.remaining|.reset", "",
       gsub(".*[.][/]", "", grep(".limit$", names(unlist(data)), value = TRUE))),
     limit = unlist(lapply(data, function(y)
@@ -55,11 +57,10 @@ rate_limit <- function(token, query = NULL, rest = TRUE) {
       lapply(y, function(x) getElement(x, "remaining")))),
     reset = unlist(lapply(data, function(y)
       lapply(y, function(x) getElement(x, "reset")))),
-    row.names = NULL,
-    stringsAsFactors = FALSE)
+    row.names = NULL)
 
   rl_df$reset <- difftime(
-    as.POSIXct(rl_df$reset,
+    as.POSIXct(as.numeric(rl_df$reset),
       origin = "1970-01-01"),
     Sys.time(),
     units = "mins")

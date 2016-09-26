@@ -26,20 +26,22 @@
 #'   (e.g., \code{get_friends}, take reflect these changes.
 #' @return json response object
 #' @import httr
+#' @keywords internal
 #' @noRd
 TWIT <- function(get = TRUE, url, ..., timeout = NULL, filename = NULL) {
 
-  if (all(is.null(timeout), is.null(filename))) {
+  if (is.null(timeout)) {
     if (get) {
     return(GET(url, ...))
   } else {
     return(POST(url, ...))
   }
   } else {
-    tryCatch(POST(url, ...,
+    GET(url, ...,
       timeout(timeout),
-      write_disk(filename, overwrite = TRUE)),
-      error = function(e) return(invisible()))
+      write_disk(filename, overwrite = TRUE),
+    	progress())
+    	#error = function(e) return(NULL))
   }
 }
 
@@ -56,6 +58,7 @@ TWIT <- function(get = TRUE, url, ..., timeout = NULL, filename = NULL) {
 #' @param param Additional parameters (arguments) passed
 #'   along. If none, NULL (default).
 #' @return URL used in httr call.
+#' @keywords internal
 #' @noRd
 make_url <- function(restapi = TRUE, query, param = NULL) {
 

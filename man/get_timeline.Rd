@@ -21,11 +21,18 @@ should be older than}
 [and frustrations] associated with disentangling the Twitter
 API return objects.}
 
-\item{token}{OAuth token (1.0 or 2.0). By default
-\code{token = NULL} fetches a non-exhausted token from
-an environment variable.}
+\item{token}{OAuth token. By default \code{token = NULL} fetches a
+non-exhausted token from an environment variable. Find instructions
+on how to create tokens and setup an environment variable in the
+tokens vignette (in r, send \code{?tokens} to console).}
 
-\item{\dots}{Other arguments passed on to \code{make_url}.}
+\item{\dots}{Futher arguments passed on to \code{make_url}.
+All named arguments that do not match the above arguments
+(i.e., count, type, etc.) will be built into the request.
+To return only English language tweets, for example, use
+\code{lang = "en"}. Or, to exclude retweets, use
+\code{include_rts = FALSE}. For more options see Twitter's
+API documentation.}
 }
 \value{
 List consisting of two data frames. One with the tweets
@@ -36,7 +43,25 @@ List consisting of two data frames. One with the tweets
 Returns timeline of tweets from a specified
   Twitter user.
 }
+\examples{
+\dontrun{
+# get 2000 from Donald Trump's account
+djt <- get_timeline("realDonaldTrump", n = 2000)
+
+# data frame where each observation (row) is a different tweet
+djt
+
+# users data for realDonaldTrump is also retrieved.
+# access it via users_data() users_data(hrc)
+users_data(djt)
+}
+}
 \seealso{
 \url{https://dev.twitter.com/overview/documentation}
+
+Other tweets: \code{\link{get_favorites}},
+  \code{\link{lookup_statuses}},
+  \code{\link{search_tweets}}, \code{\link{stream_tweets}},
+  \code{\link{tweets_data}}
 }
 

@@ -7,13 +7,19 @@
 #'   for future sessions. It also makes it easier to write teh card -
 #'   allowing internals of the functions t call your tokens for you.
 #' @return path
+#' @family tokens
 #' @export
 get_tokens <- function() {
+	if (all(is.null(.state$twitter_tokens), !is.null(.state$twitter_token))) {
+		.state$twitter_tokens <- .state$twitter_token
+	}
   if (is.null(.state$twitter_tokens)) {
-    load_tokens(twitter_pat())
+    .state$twitter_tokens <- load_tokens(twitter_pat())
   }
   .state$twitter_tokens
 }
+
+
 
 #' create_token
 #'
@@ -36,6 +42,7 @@ get_tokens <- function() {
 #'
 #' @return Twitter personal access token object
 #' @import httr
+#' @family tokens
 #' @export
 create_token <- function(app, consumer_key, consumer_secret) {
   token <- oauth_app(
@@ -61,6 +68,7 @@ create_token <- function(app, consumer_key, consumer_secret) {
 #' @param sleep logical indicating whether to force system sleep if
 #'   rate limit is exhausted. defaults to \code{sleep = FALSE}.
 #' @return token with non-exhausted rate limit
+#' @keywords internal
 #' @noRd
 fetch_tokens <- function(tokens, query, sleep = FALSE) {
 
@@ -71,7 +79,7 @@ fetch_tokens <- function(tokens, query, sleep = FALSE) {
   for (i in seq_along(tokens)) {
     token <- tokens[[i]]
 
-    remaining <- rate_limit(token, query)[, "remaining"]
+    remaining <- rate_limit(token, query)[["remaining"]]
 
     if (remaining > 0) return(token)
   }
@@ -79,14 +87,14 @@ fetch_tokens <- function(tokens, query, sleep = FALSE) {
   if (sleep) {
     token <- tokens[[1]]
 
-    reset <- rate_limit(token, query)[, "reset"]
+    reset <- rate_limit(token, query)[["reset"]]
 
     Sys.sleep(reset[[1]] * 60)
 
     return(token)
 
   } else {
-    message("Rate limit exceeded - please wait!")
+    stop("Rate limit exceeded - please wait!", call. = FALSE)
   }
 
   token
@@ -119,7 +127,7 @@ check_token <- function(token, query = NULL) {
   }
 
   if (!is.token(token)) {
-    stop("Not a valid access token.")
+    stop("Not a valid access token.", call. = FALSE)
   }
 
   token
@@ -142,10 +150,20 @@ twitter_pat <- function() {
   pat
 }
 
+if_load <- function(x) {
+	suppressWarnings(
+		tryCatch(load(x),
+			error = function(e) (return(FALSE))))
+}
+
 load_tokens <- function(pat) {
   if (identical(pat, ".httr-oauth")) {
     .state$twitter_tokens <- readRDS(pat)
+  } else if (if_load(pat)) {
+  	x <- load(pat)
+  	.state$twitter_tokens <- get(x)
   } else {
-    load(pat, .state)
+  	.state$twitter_tokens <- readRDS(pat)
   }
+	.state$twitter_tokens
 }

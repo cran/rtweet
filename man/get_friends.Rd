@@ -4,13 +4,10 @@
 \alias{get_friends}
 \title{get_friends}
 \usage{
-get_friends(user, n = 75000, page = "-1", parse = TRUE, token = NULL)
+get_friends(user, page = "-1", parse = TRUE, token = NULL)
 }
 \arguments{
 \item{user}{Screen name or user id of target user.}
-
-\item{n}{Number of friends to return. For max return, enter
-\code{n = "all"} or \code{n = 75000} (max per token).}
 
 \item{page}{Default \code{page = -1} specifies first page of json
 results. Other pages specified via cursor values supplied by
@@ -21,9 +18,10 @@ vector or nested list (fromJSON) object. By default,
 \code{parse = TRUE} saves you the time [and frustrations]
 associated with disentangling the Twitter API return objects.}
 
-\item{token}{OAuth token (1.0 or 2.0). By default
-\code{token = NULL} fetches a non-exhausted token from
-an environment variable.}
+\item{token}{OAuth token. By default \code{token = NULL} fetches a
+non-exhausted token from an environment variable. Find instructions
+on how to create tokens and setup an environment variable in the
+tokens vignette (in r, send \code{?tokens} to console).}
 }
 \value{
 friends User ids for everyone a user follows.
@@ -47,5 +45,8 @@ epa
 }
 \seealso{
 \url{https://dev.twitter.com/overview/documentation}
+
+Other ids: \code{\link{get_followers}},
+  \code{\link{next_cursor}}
 }
 

@@ -1,3 +1,92 @@
+# rtweet 0.3.0
+* New CRAN version!
+* Lots of improvements to stability and entirely new functions to 
+play around with (see previous news updates for more info).
+* Added more documentation all round, including help features, examples, and 
+vignette infrastructure.
+
+# rtweet 0.2.92
+* Added gzip option for `stream_tweets()`
+
+# rtweet 0.2.91
+* Added sample method for `stream_tweets()` function. By default, 
+the streaming query argument, `q`, is now set to an empty string, 
+`q = ""`, which returns a random sample of all Tweets 
+(pretty cool, right?).
+
+# rtweet 0.2.9
+* Added `post_tweet()` function. Users can now post tweets from their R console.
+
+# rtweet 0.2.8
+* Added `get_favorites()` function
+* Update tests
+* Exports tweets and users classes with show and plot methods
+
+# rtweet 0.2.7
+* Added screen_name variable for user mentions (in addition to user_id).
+
+# rtweet 0.2.6
+
+* Added `lookup_statuses()` function, which is the counterpart to 
+`lookup_users()`. Supply a vector of status IDs and return tweet data
+for each status. `lookup_statuses()` is particularly powerful when 
+combined with other methods designed to collect older Tweets. Early 
+experiments with doing this all through R have turned out surprisingly 
+well, but packaging it in a way that makes it easy to do on other 
+machines is unlikely to happen in the short term.
+
+* Removed dplyr dependencies. Everyone should install and use `dplyr`, 
+but for sake of parsimony, it's been removed from rtweet.
+
+* Continued development of S4 classes and methods. Given removal of 
+dplyr dependencies, I've started to integrate print/show methods that
+will limit the number of rows (and width of columns) when printed. 
+Given the amount of data returned in a relatively short period of time,
+printing entire data frames quickly becomes headache-inducing.
+
+# rtweet 0.2.5
+
+* S4 class and methods integration
+
+# rtweet 0.2.4
+
+* Added new trends functions. Find what trending locations are
+available with `trends_available()` and/or search for trends 
+worldwide or by geogaphical location using `get_trends()`.
+
+* Stability improvements including integration with Travis CI and 
+code analysis via codecov. Token encryption method also means API 
+testing conducted on multiple machines and systems.
+
+# rtweet 0.2.3
+
+* Added new `search_users()` function! Search for users by keyword,
+name, or interest and return data on the first 1000 hits.
+
+# rtweet 0.2.2
+
+* Output for `search_tweets()`, `stream_tweets()`, and 
+`get_timeline()` now consists of tweets data and contains users data
+attribute.
+
+* Output for `lookup_users()` now consists of users data and contains
+tweets data attribute.
+
+* To access users data from a tweets object or vice-versa, use
+`users_data()` and `tweets_data()` functions on objects outputed 
+by major rtweet retrieval functions.
+
+* Updated testthat tests
+
+# rtweet 0.2.1
+
+* Output for `get_friends()` and `get_followers()` is now a tibble 
+of "ids". To retrieve next cursor value, use new `next_cursor()`
+function.
+
+* Major stability improvements via testthat tests for every major
+function.
+
 # rtweet 0.2.0
 
 * Since previous CRAN release, numerous new features and improvements

@@ -1,5 +1,6 @@
 #' @importFrom httr warn_for_status
-scroller <- function(url, n, n.times, ..., catch_error = FALSE) {
+scroller <- function(url, n, n.times, ...,
+  catch_error = FALSE) {
 
   stopifnot(is_n(n), is_url(url))
 
@@ -21,6 +22,10 @@ scroller <- function(url, n, n.times, ..., catch_error = FALSE) {
 
     x[[i]] <- from_js(r)
 
+    if ("statuses" %in% names(x[[i]])) {
+    	if (identical(length(x[[i]][["statuses"]]), 0L)) break
+    }
+
     count <- n - unique_id_count(x)
 
     if (break_check(x[[i]], url, count)) break
@@ -31,8 +36,7 @@ scroller <- function(url, n, n.times, ..., catch_error = FALSE) {
       url$query$max_id <- get_max_id(x[[i]])
     }
   }
-
-  x
+  exclude_list_null(x)
 }
 
 
@@ -93,7 +97,6 @@ get_max_id <- function(x) {
 }
 
 
-#' @importFrom dplyr bind_rows
 break_check <- function(r, url, count = NULL) {
   if (!is.null(count)) {
     if (count <= 0) return(TRUE)

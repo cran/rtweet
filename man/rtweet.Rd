@@ -4,6 +4,9 @@
 \name{rtweet}
 \alias{rtweet}
 \alias{rtweet-package}
+\alias{rtweets}
+\alias{rtwitter}
+\alias{tokens}
 \title{rtweet}
 \description{
 rtweet provides users a range of functions
@@ -15,12 +18,22 @@ It has three main goals:
 \itemize{
 \item Compose and request calls to Twitter's API
   following (the best practices for writing an API
-  package) [https://cran.r-project.org/web/packages/httr/
-  vignettes/api-packages.html].
+  package) [https://cran.r-project.org/web/packages/httr/vignettes/api-packages.html].
 \item Provide functions that can acccept multiple
   personal access tokens.
 \item Make extracting data from Twitter seem a little
   easier.
 }
+}
+\examples{
+\dontrun{
+# for instructions on access tokens, see the tokens vignette
+vignette("tokens")
+
+# for a quick demo check the rtweet vignette
+vignette("rtweet")
+}
+
+
 }
 

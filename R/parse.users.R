@@ -1,31 +1,10 @@
-parse_users <- function(x) {
-
-  if ("statuses" %in% names(x)) {
-    x <- x[["statuses"]]
-  }
-
-  if ("friends_count" %in% names(x)) {
-    return(user_df(x))
-  }
-
-  if ("statuses" %in% names(x)) {
-    x <- x[["statuses"]]
-  }
-
-  if ("user" %in% names(x)) {
-    return(user_df(x[["user"]]))
-  }
-
-  return(invisible())
-}
-
 
 usr_ent_urls <- function(x, list = FALSE) {
 
   if (is.data.frame(x)) {
     if ("expanded_url" %in% names(x)) {
       if (list) {
-        x <- as.character(x[["expanded_url"]])
+        x <- as.list(x[["expanded_url"]])
       } else {
         x <- x[["expanded_url"]]
       }
@@ -39,7 +18,6 @@ usr_ent_urls <- function(x, list = FALSE) {
   x
 }
 
-#' @importFrom dplyr tbl_df
 user_toplevel_df <- function(x, n = NULL, names = NULL,
                              add.names = NULL) {
 
@@ -67,8 +45,9 @@ user_toplevel_df <- function(x, n = NULL, names = NULL,
         "description", "url", "created_at", "favourites_count",
         "utc_offset", "time_zone", "lang")) {
         x[[i]] <- rep(NA_character_, n)
-      } else if (i %in% c("followers_count", "friends_count", "listed_count",
-        "favourites_count", "favorite_count", "statuses_count")) {
+      } else if (i %in% c("followers_count", "friends_count",
+        "listed_count", "favourites_count", "favorite_count",
+        "statuses_count")) {
         x[[i]] <- rep(NA_integer_, n)
       } else if (i == c("protected", "geo_enabled", "verified")) {
         x[[i]] <- rep(NA, n)
@@ -90,20 +69,34 @@ user_toplevel_df <- function(x, n = NULL, names = NULL,
       toplevel_df[["created_at"]], date = FALSE)
   }
 
-  tbl_df(toplevel_df)
+  data_frame_(toplevel_df)
 }
 
+data_frame_ <- function(...) {
+  data.frame(..., stringsAsFactors = FALSE)
+}
+as_data_frame_ <- function(...) {
+  as.data.frame(..., stringsAsFactors = FALSE)
+}
+rbindr_ <- function(...) {
+  rbind(...)
+}
+rbind_ <- function(...) {
+  do.call("rbindr_", ...)
+}
+cbind_ <- function(...) {
+  cbind(..., stringsAsFactors = FALSE)
+}
 
-#' @importFrom dplyr data_frame
 user_entities_df <- function(dat, n = NULL) {
 
   dat <- check_user_obj(dat)
 
   if (is.null(n)) n <- length(dat[["id_str"]])
 
-  user_ent_df <- data_frame(
+  user_ent_df <- data_frame_(
     url = rep(NA_character_, n),
-    description_urls = as.list(rep(NA_character_, n)))
+    description_urls = rep(NA_character_, n))
 
   if ("entities" %in% names(dat)) {
     entities <- dat[["entities"]]

@@ -1,39 +1,6 @@
-parse_tweets <- function(x) {
-
-  if ("statuses" %in% names(x)) {
-    x <- x[["statuses"]]
-  } else if ("status" %in% names(x)) {
-    x <- x[["status"]]
-  }
-
-  if (!"friends_count" %in% names(x)) {
-    return(tweets_df(x))
-  }
-
-  return(invisible())
-}
-
-check_response_obj <- function(dat) {
-
-  if (missing(dat)) {
-    stop("Must specify tweets object, dat.", call. = TRUE)
-  }
-
-  if ("statuses" %in% names(dat)) {
-    dat <- dat[["statuses"]]
-  }
-
-  if (!"id_str" %in% names(dat)) {
-    if ("id" %in% names(dat)) {
-      dat$id_str <- dat$id
-    }
-  }
-
-  dat
-}
-
 tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
-                               add.names = NULL) {
+                               add.names = NULL,
+                               clean.tweets = FALSE) {
 
   if (missing(dat)) {
     stop("Must specify tweets object, dat.", call. = TRUE)
@@ -42,13 +9,16 @@ tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
   if (is.null(names)) {
     toplevel <- c("created_at", "id_str", "retweet_count",
       "favorite_count", "text", "in_reply_to_status_id_str",
-      "in_reply_to_user_id_str", "is_quote_status",
-      "quoted_status_id_str", "source", "lang")
+      "in_reply_to_user_id_str", "in_reply_to_screen_name",
+      "is_quote_status", "quoted_status_id_str",
+      "source", "lang")
   }
 
   if (!is.null(add.names)) {
     toplevel <- c(toplevel, add.names)
   }
+
+  clean_tweets <- clean.tweets
 
   dat <- check_response_obj(dat)
 
@@ -57,24 +27,31 @@ tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
   for (i in toplevel) {
     if (!i %in% names(dat)) {
 
-      if (i %in% c("created_at", "id_str", "text",
-        "in_reply_to_status_id_str","in_reply_to_user_id_str",
-        "quoted_status_id_str", "lang")) {
+      if (i %in% c("created_at", "id_str", "in_reply_to_status_id_str",
+      	"in_reply_to_user_id_str", "quoted_status_id_str",
+        "text", "in_reply_to_screen_name", "lang")) {
         dat[[i]] <- rep(NA_character_, n)
       } else if (i %in% c("retweet_count", "favorite_count")) {
         dat[[i]] <- rep(NA_integer_, n)
       } else if (i == "is_quote_status") {
         dat[[i]] <- rep(NA, n)
+      #} else if (i == c("id_str", "in_reply_to_status_id_str",
+      	#"in_reply_to_user_id_str", "quoted_status_id_str")) {
+      	#dat[[i]] <- rep(NA_real_, n)
       } else {
         dat[[i]] <- rep(NA, n)
       }
 
     }
   }
+  if (clean_tweets) {
+    dat[["text"]] <- clean_tweets(dat[["text"]])
+  }
 
   toplevel_df <- lapply(dat[toplevel], return_with_NA)
 
   toplevel_df$user_id <- check_user_id(dat)
+  toplevel_df$screen_name <- check_screen_name(dat)
 
   names(toplevel_df) <- gsub("_str", "", names(toplevel_df))
 
@@ -89,8 +66,18 @@ tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
       strsplit(as.character(toplevel_df[["source"]]), "[<]|[>]"),
       function(x) x[3])
   }
+  toplevel_df[["status_id"]] <- as.double(
+  	toplevel_df[["status_id"]])
+  toplevel_df[["user_id"]] <- as.double(
+  	toplevel_df[["user_id"]])
+  toplevel_df[["quoted_status_id"]] <- as.double(
+  	toplevel_df[["quoted_status_id"]])
+  toplevel_df[["in_reply_to_status_id"]] <- as.double(
+  	toplevel_df[["in_reply_to_status_id"]])
+  toplevel_df[["in_reply_to_user_id"]] <- as.double(
+  	toplevel_df[["in_reply_to_user_id"]])
 
-  tbl_df(toplevel_df)
+  data_frame_(toplevel_df)
 }
 
 tweets_entities_df <- function(dat, n = NULL) {
@@ -103,17 +90,24 @@ tweets_entities_df <- function(dat, n = NULL) {
 
   if (is.null(n)) n <- length(dat[["id_str"]])
 
-  ent_df <- data_frame(
-    user_mentions = as.list(rep(NA_character_, n)),
-    hashtags = as.list(rep(NA_character_, n)),
-    urls = as.list(rep(NA_character_, n)))
+  ent_df <- data_frame_(
+    mentions_user_id = I(as.list(rep(NA_real_, n))),
+  	mentions_screen_name = I(as.list(rep(NA_character_, n))),
+    hashtags = I(as.list(rep(NA_character_, n))),
+    urls = I(as.list(rep(NA_character_, n))))
 
   if ("entities" %in% names(dat)) {
     entities <- dat[["entities"]]
 
     if ("user_mentions" %in% names(entities)) {
-      ent_df$user_mentions <- lapply(entities[["user_mentions"]],
+      ent_df$mentions_user_id <- lapply(entities[["user_mentions"]],
         function(x) return_with_NA(x[["id_str"]], 1))
+      ent_df$mentions_user_id <- lapply(ent_df$mentions_user_id,
+      	as.double)
+    }
+    if ("user_mentions" %in% names(entities)) {
+    	ent_df$mentions_screen_name <- lapply(entities[["user_mentions"]],
+    		function(x) return_with_NA(x[["screen_name"]], 1))
     }
 
     if ("hashtags" %in% names(entities)) {
@@ -130,7 +124,6 @@ tweets_entities_df <- function(dat, n = NULL) {
   ent_df
 }
 
-#' @importFrom dplyr data_frame
 tweets_retweet_df <- function(dat, n = NULL) {
 
   if (missing(dat)) {
@@ -141,7 +134,7 @@ tweets_retweet_df <- function(dat, n = NULL) {
 
   if (is.null(n)) n <- length(dat[["id_str"]])
 
-  retweet_df <- data_frame(
+  retweet_df <- data_frame_(
     is_retweet = rep(NA, n),
     retweet_status_id = rep(NA_character_, n))
 
@@ -163,22 +156,22 @@ tweets_retweet_df <- function(dat, n = NULL) {
 make_coords <- function(x) {
 
   if (is.array(x)) {
-    coords_df <- data.frame(matrix(as.numeric(x), 1, 8))
-    names(coords_df) <- c(
-      "long1", "long2", "long3", "long4",
-      "lat1", "lat2", "lat3", "lat4")
+    coords <- matrix(as.numeric(x), 1, 8)
+    #names(coords_df) <- c(
+    #  "long1", "long2", "long3", "long4",
+    #  "lat1", "lat2", "lat3", "lat4")
   } else {
-    coords_df <- data.frame(matrix(rep(NA_real_, 8), 1, 8))
+    coords <- matrix(rep(NA_real_, 8), 1, 8)
 
-    names(coords_df) <- c(
-      "long1", "long2", "long3", "long4",
-      "lat1", "lat2", "lat3", "lat4")
+    #names(coords_df) <- c(
+    #  "long1", "long2", "long3", "long4",
+    #  "lat1", "lat2", "lat3", "lat4")
   }
 
-  coords_df
+  coords
 }
 
-#' @importFrom dplyr data_frame
+
 tweets_place_df <- function(dat, n = NULL) {
 
   if (missing(dat)) {
@@ -189,17 +182,18 @@ tweets_place_df <- function(dat, n = NULL) {
 
   if (is.null(n)) n <- length(dat[["id_str"]])
 
-  place_df <- data_frame(
+  place_df <- data_frame_(
     place_name = rep(NA_character_, n),
     country = rep(NA_character_, n),
-    long1 = rep(NA_real_, n),
-    long2 = rep(NA_real_, n),
-    long3 = rep(NA_real_, n),
-    long4 = rep(NA_real_, n),
-    lat1 = rep(NA_real_, n),
-    lat2 = rep(NA_real_, n),
-    lat3 = rep(NA_real_, n),
-    lat4 = rep(NA_real_, n))
+    coordinates = rep(NA_character_, n))
+    #long1 = rep(NA_real_, n),
+    #long2 = rep(NA_real_, n),
+    #long3 = rep(NA_real_, n),
+    #long4 = rep(NA_real_, n),
+    #lat1 = rep(NA_real_, n),
+    #lat2 = rep(NA_real_, n),
+    #lat3 = rep(NA_real_, n),
+    #lat4 = rep(NA_real_, n))
 
   if ("place" %in% names(dat)) {
     place <- dat[["place"]]
@@ -219,7 +213,7 @@ tweets_place_df <- function(dat, n = NULL) {
         coordinates <- lapply(coordinates, make_coords)
 
         for (i in seq_along(coordinates)) {
-          place_df[, names(coordinates)[i]] <- coordinates[[i]]
+          place_df$coordinates <- coordinates
         }
       }
     }
