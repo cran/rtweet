@@ -12,6 +12,8 @@
 #'   you would prefer to receive. The current default is
 #'   \code{type = "mixed"}, which is a mix between the other two
 #'   valid values \code{type = "recent"} and \code{type = "popular"}.
+#' @param include_rts Logical, indicating whether to include retweets
+#'   in search results.
 #' @param max_id Character, specifying the [oldest] status id beyond
 #'   which results should resume returning.
 #' @param parse Logical, indicating whether to return parsed
@@ -19,6 +21,13 @@
 #'   \code{parse = TRUE} saves users from the time
 #'   [and frustrations] associated with disentangling the Twitter
 #'   API return objects.
+#' @param clean_tweets logical indicating whether to remove non-ASCII
+#'   characters in text of tweets. defaults to FALSE.
+#' @param as_double logical indicating whether to handle ID variables
+#'   as double (numeric) class. By default, this is set to FALSE, meaning
+#'   ID variables are treated as character vectors. Setting this to
+#'   TRUE can provide performance (speed and memory) boost but can also
+#'   lead to issues when printing and saving, depending on the format.
 #' @param token OAuth token. By default \code{token = NULL} fetches a
 #'   non-exhausted token from an environment variable. Find instructions
 #'   on how to create tokens and setup an environment variable in the
@@ -29,8 +38,7 @@
 #'   All named arguments that do not match the above arguments
 #'   (i.e., count, type, etc.) will be built into the request.
 #'   To return only English language tweets, for example, use
-#'   \code{lang = "en"}. Or, to exclude retweets, use
-#'   \code{include_rts = FALSE}. For more options see Twitter's
+#'   \code{lang = "en"}. For more options see Twitter's
 #'   API documentation.
 #' @seealso \url{https://dev.twitter.com/overview/documentation}
 #' @details Twitter API document recommends limiting searches to
@@ -73,15 +81,16 @@
 #' @family tweets
 #' @export
 search_tweets <- function(q, n = 100, type = "mixed", max_id = NULL,
-  parse = TRUE, token = NULL, verbose = TRUE, ...) {
+	                        include_rts = TRUE, parse = TRUE,
+	                        clean_tweets = FALSE,
+                          as_double = FALSE, token = NULL,
+                          verbose = TRUE, ...) {
 
   query <- "search/tweets"
-
   stopifnot(is_n(n), is.atomic(q), is.atomic(max_id))
-
   token <- check_token(token, query)
-
-  n.times <- rate_limit(token, query)[["remaining"]]
+  #n.times <- rate_limit(token, query)[["remaining"]]
+  n.times <- 180
 
   if (nchar(q) > 500) {
     stop("q cannot exceed 500 characters.", call. = FALSE)
@@ -92,10 +101,12 @@ search_tweets <- function(q, n = 100, type = "mixed", max_id = NULL,
       call. = FALSE)
   }
 
-  if (!tolower(type) %in% c("mixed", "recent", "popular")) {
+  if (!isTRUE(tolower(type) %in% c("mixed", "recent", "popular"))) {
     stop("invalid search type - must be mixed, recent, or popular.",
       call. = FALSE)
   }
+
+  if (!include_rts) q <- paste0(q, " -RT")
 
   params <- list(q = q,
     result_type = type,
@@ -109,12 +120,16 @@ search_tweets <- function(q, n = 100, type = "mixed", max_id = NULL,
 
   if (verbose) message("Searching for tweets...")
 
-  tw <- scroller(url, n, n.times, token)
+  tw <- scroller(url, n, n.times, type = "search", token)
 
   if (parse) {
-    tw <- parser(tw, n)
-    tw[["meta_search"]] <- list(query = q, functions = "search_tweets()")
-    tw <- attr_tweetusers(tw)
+    tw <- parser(tw, n, clean_tweets = clean_tweets,
+      as_double = as_double)
+    if (!is.null(tw)) {
+      if (is.list(tw)) {
+        tw <- attr_tweetusers(tw)
+      }
+    }
   }
 
   if (verbose) {
@@ -123,7 +138,6 @@ search_tweets <- function(q, n = 100, type = "mixed", max_id = NULL,
 
   tw
 }
-
 
 
 #' search_users
@@ -141,6 +155,13 @@ search_tweets <- function(q, n = 100, type = "mixed", max_id = NULL,
 #'   \code{parse = TRUE} saves users from the time
 #'   [and frustrations] associated with disentangling the Twitter
 #'   API return objects.
+#' @param clean_tweets logical indicating whether to remove non-ASCII
+#'   characters in text of tweets. defaults to FALSE.
+#' @param as_double logical indicating whether to handle ID variables
+#'   as double (numeric) class. By default, this is set to FALSE, meaning
+#'   ID variables are treated as character vectors. Setting this to
+#'   TRUE can provide performance (speed and memory) boost but can also
+#'   lead to issues when printing and saving, depending on the format.
 #' @param token OAuth token. By default \code{token = NULL} fetches a
 #'   non-exhausted token from an environment variable. Find instructions
 #'   on how to create tokens and setup an environment variable in the
@@ -162,17 +183,15 @@ search_tweets <- function(q, n = 100, type = "mixed", max_id = NULL,
 #' @return Data frame of users returned by query.
 #' @family users
 #' @export
-search_users <- function(q, n = 20, parse = TRUE, token = NULL,
-	verbose = TRUE) {
+search_users <- function(q, n = 20, parse = TRUE,
+  clean_tweets = FALSE, as_double = FALSE,
+  token = NULL, verbose = TRUE) {
 
 	query <- "users/search"
-
 	stopifnot(is_n(n), is.atomic(q))
-
 	token <- check_token(token, query)
-
-	n.times <- rate_limit(token, query)[["remaining"]]
-	if (n.times > 50) n.times <- 50
+	n.times <- ceiling(n / 20)
+  if (n.times > 50) n.times <- 50
 
 	if (nchar(q) > 500) {
 		stop("q cannot exceed 500 characters.", call. = FALSE)
@@ -188,7 +207,9 @@ search_users <- function(q, n = 20, parse = TRUE, token = NULL,
 
 	if (verbose) message("Searching for users...")
 
-	usr <- list()
+	usr <- vector("list", n.times)
+  k <- 0
+  nrows <- NULL
 
 	for (i in seq_len(n.times)) {
 		r <- tryCatch(
@@ -199,17 +220,31 @@ search_users <- function(q, n = 20, parse = TRUE, token = NULL,
 
 		usr[[i]] <- from_js(r)
 
-		if (count_users_returned(usr) >= n) break
+    if (identical(length(usr[[i]]), 0)) break
+    if (isTRUE(is.numeric(nrow(usr[[i]])))) {
+      nrows <- nrow(usr[[i]])
+    } else {
+      if (identical(nrows, 0)) break
+      nrows <- 0
+    }
 
-		url$query$page <- (i + 1)
+    k <- k + nrows
+
+		if (k >= n) break
+
+		url$query$page <- (i + 1L)
 	}
 
-	if (parse) {
-		usr <- parser(usr, n)
-		usr <- usr[c("users", "tweets")]
-		usr[["meta_search"]] <- list(query = q, functions = "search_users()")
-    usr <- attr_tweetusers(usr)
-	}
+  if (parse) {
+    usr <- parser(usr, n, clean_tweets = clean_tweets,
+      as_double = as_double)
+    if (!is.null(usr)) {
+      if (is.list(usr)) {
+        usr <- usr[c("users", "tweets")]
+        usr <- attr_tweetusers(usr)
+      }
+    }
+  }
 
 	if (verbose) {
 		message("Finished collecting users!")
@@ -218,4 +253,28 @@ search_users <- function(q, n = 20, parse = TRUE, token = NULL,
 	usr
 }
 
-count_users_returned <- function(x) length(unique(unlist(lapply(x, function(x) x[["id_str"]]))))
+count_users_returned <- function(x) {
+	length(unique(unlist(lapply(x, function(x) x[["id_str"]]),
+		use.names = FALSE)))
+}
+
+
+
+#' Get value for max_id
+#'
+#' @param df Tweets data frame with "created_at" and "status_id" variables.
+#'
+#' @return Character string of max_id to be used in future function calls.
+#' @export
+#'
+next_id <- function(df) {
+	if (!all(c("created_at", "status_id") %in% names(df))) {
+		stop("wrong data frame - function requires tweets data")
+	}
+	if (any(grepl("posix", class(df$created_at), ignore.case = TRUE))) {
+		df$created_at <- format_date(df$created_at)
+	}
+	df <- df[!is.na(df$status_id), ]
+	df <- df[order(df$created_at), ]
+	df$status_id[1]
+}

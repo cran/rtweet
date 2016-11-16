@@ -61,12 +61,22 @@ next_cursor <- function(ids) {
 #' @export
 users_data <- function(tweets) {
 	stopifnot(is.data.frame(tweets))
-	if (!"users" %in% names(attributes(tweets))) {
+	if (!"users" %xy% attributes(tweets)) {
 		return(tweets)
 	} else {
 		return(attr(tweets, "users"))
 	}
 }
+
+all_tw <- function(search = TRUE) {
+	if (search) {
+		x <- " OR "
+	} else {
+		x <- ","
+	}
+	paste(letters, collapse = x)
+}
+
 
 #' tweets_data
 #'
@@ -103,47 +113,38 @@ tweets_data <- function(users) {
 	}
 }
 
-#' meta_data
-#'
-#' @description Returns meta data search information.
-#'
-#' @param x Data frame of class rtweet_table.
-#'
-#' @examples
-#' \dontrun{
-#' # search for 100 tweets containing the letter r
-#' r <- search_tweets("r")
-#'
-#' # print tweets data (only first 10 rows are shown)
-#' r
-#'
-#' # extract users data
-#' users_data(r)
-#'
-#' # extract meta datadata
-#' meta_data(r)
-#' }
-#'
-#' @return List of parameters used in \code{search_users}.
-#'
-#' @export
-meta_data <- function(x) {
-	attr(x, "meta_search")
-}
 
 attr_tweetusers <- function(x) {
 
 	stopifnot(is.list(x))
 
 	if (identical(names(x)[1], "tweets")) {
-		d <- x[["tweets"]]
-		attr(d, "users") <- x[["users"]]
-		attr(d, "meta_search") <- x[["meta_search"]]
+		if (is.null(x[["tweets"]])) {
+			d <- data.frame()
+		} else {
+			d <- x[["tweets"]]
+		}
+		if ("users" %in% names(x)) {
+			if (is.null(x[["users"]])) {
+			attr(d, "users") <- data.frame()
+		} else {
+			attr(d, "users") <- x[["users"]]
+		}
+		}
 	}
 	if (identical(names(x)[1], "users")) {
-		d <- x[["users"]]
-		attr(d, "tweets") <- x[["tweets"]]
-		attr(d, "meta_search") <- x[["meta_search"]]
+		if (is.null(x[["users"]])) {
+			d <- data.frame()
+		} else {
+			d <- x[["users"]]
+		}
+		if ("tweets" %in% names(x)) {
+			if (is.null(x[["tweets"]])) {
+			attr(d, "tweets") <- data.frame()
+		} else {
+			attr(d, "tweets") <- x[["tweets"]]
+		}
+		}
 	}
 	d
 }

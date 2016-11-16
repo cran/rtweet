@@ -1,25 +1,49 @@
+parse_users <- function(x, as_double = FALSE) {
+
+  if ("friends_count" %in% names(x)) {
+    return(user_df(x, as_double = as_double))
+  }
+
+  if ("statuses" %in% names(x)) {
+    x <- x[["statuses"]]
+  }
+
+  if ("user" %in% names(x)) {
+    return(user_df(x[["user"]], as_double = as_double))
+  }
+  invisible()
+}
+
+user_df <- function(dat, as_double = FALSE) {
+
+  if ("user" %in% names(dat)) {
+    dat <- dat[["user"]]
+  }
+
+  user_df <- cbind(
+    user_toplevel_df(dat, as_double = as_double),
+    user_entities_df(dat))
+
+  unique(user_df)
+}
 
 usr_ent_urls <- function(x, list = FALSE) {
 
   if (is.data.frame(x)) {
     if ("expanded_url" %in% names(x)) {
-      if (list) {
-        x <- as.list(x[["expanded_url"]])
-      } else {
-        x <- x[["expanded_url"]]
-      }
+      x <- x[["expanded_url"]]
     } else {
       x <- NA_character_
     }
   } else {
     x <- NA_character_
   }
-
   x
 }
 
 user_toplevel_df <- function(x, n = NULL, names = NULL,
-                             add.names = NULL) {
+                             add.names = NULL,
+                             as_double = FALSE) {
 
   if (is.null(names)) {
     toplevel <- c("id_str", "name", "screen_name",
@@ -29,13 +53,10 @@ user_toplevel_df <- function(x, n = NULL, names = NULL,
       "time_zone", "geo_enabled", "verified",
       "statuses_count", "lang")
   }
-
   if (!is.null(add.names)) {
     toplevel <- c(toplevel, add.names)
   }
-
   x <- check_response_obj(x)
-
   if (is.null(n)) n <- length(x[["id_str"]])
 
   for (i in toplevel) {
@@ -54,14 +75,11 @@ user_toplevel_df <- function(x, n = NULL, names = NULL,
       } else {
         x[[i]] <- rep(NA, n)
       }
-
     }
   }
 
   toplevel_df <- lapply(x[toplevel], return_with_NA)
-
   names(toplevel_df) <- gsub("_str", "", names(toplevel_df))
-
   names(toplevel_df)[names(toplevel_df) == "id"] <- "user_id"
 
   if ("created_at" %in% names(toplevel_df)) {
@@ -69,23 +87,14 @@ user_toplevel_df <- function(x, n = NULL, names = NULL,
       toplevel_df[["created_at"]], date = FALSE)
   }
 
-  data_frame_(toplevel_df)
-}
-
-data_frame_ <- function(...) {
-  data.frame(..., stringsAsFactors = FALSE)
-}
-as_data_frame_ <- function(...) {
-  as.data.frame(..., stringsAsFactors = FALSE)
-}
-rbindr_ <- function(...) {
-  rbind(...)
-}
-rbind_ <- function(...) {
-  do.call("rbindr_", ...)
-}
-cbind_ <- function(...) {
-  cbind(..., stringsAsFactors = FALSE)
+  if (as_double) {
+    toplevel_df[["user_id"]] <- as.double(
+      toplevel_df[["user_id"]])
+  } else {
+    toplevel_df[["user_id"]] <- as.character(
+      toplevel_df[["user_id"]])
+  }
+  data.frame(toplevel_df, stringsAsFactors = FALSE)
 }
 
 user_entities_df <- function(dat, n = NULL) {
@@ -94,9 +103,10 @@ user_entities_df <- function(dat, n = NULL) {
 
   if (is.null(n)) n <- length(dat[["id_str"]])
 
-  user_ent_df <- data_frame_(
+  user_ent_df <- data.frame(
     url = rep(NA_character_, n),
-    description_urls = rep(NA_character_, n))
+    description_urls = rep(NA_character_, n),
+  	stringsAsFactors = FALSE)
 
   if ("entities" %in% names(dat)) {
     entities <- dat[["entities"]]
@@ -105,8 +115,7 @@ user_entities_df <- function(dat, n = NULL) {
       ent_url <- entities[["url"]]
 
       if ("urls" %in% names(ent_url)) {
-        user_ent_df$url <- unlist(lapply(
-          ent_url[["urls"]], usr_ent_urls))
+        user_ent_df$url <- flatten(ent_url[["urls"]])
         }
       }
 
@@ -114,11 +123,9 @@ user_entities_df <- function(dat, n = NULL) {
         ent_url <- entities[["description"]]
 
         if ("urls" %in% names(ent_url)) {
-          user_ent_df$description_urls <- lapply(
-            ent_url[["urls"]], usr_ent_urls)
+          user_ent_df$description_urls <- flatten(ent_url[["urls"]])
         }
       }
-
   }
   user_ent_df
 }

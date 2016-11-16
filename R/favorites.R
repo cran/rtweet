@@ -19,6 +19,13 @@
 #'   vector or nested list (fromJSON) object. By default,
 #'   \code{parse = TRUE} saves you the time [and frustrations]
 #'   associated with disentangling the Twitter API return objects.
+#' @param clean_tweets logical indicating whether to remove non-ASCII
+#'   characters in text of tweets. defaults to FALSE.
+#' @param as_double logical indicating whether to handle ID variables
+#'   as double (numeric) class. By default, this is set to FALSE, meaning
+#'   ID variables are treated as character vectors. Setting this to
+#'   TRUE can provide performance (speed and memory) boost but can also
+#'   lead to issues when printing and saving, depending on the format.
 #' @param token OAuth token. By default \code{token = NULL} fetches a
 #'   non-exhausted token from an environment variable. Find instructions
 #'   on how to create tokens and setup an environment variable in the
@@ -37,7 +44,9 @@
 #' @return Tweets data frame.
 #' @export
 get_favorites <- function(user, n = 3000, since_id = NULL,
-  max_id = NULL, parse = TRUE, token = NULL) {
+                          max_id = NULL, parse = TRUE,
+                          clean_tweets = FALSE,
+                          as_double = FALSE, token = NULL) {
 
   query <- "favorites/list"
 
@@ -66,10 +75,11 @@ get_favorites <- function(user, n = 3000, since_id = NULL,
     query = query,
     param = params)
 
-  fav <- scroller(url, n, n.times, token)
+  fav <- scroller(url, n, n.times, type = "timeline", token)
 
   if (parse) {
-    fav <- parser(fav, n)
+    fav <- parser(fav, n, clean_tweets = clean_tweets,
+      as_double = as_double)
     fav <- attr_tweetusers(fav[c("tweets", "users")])
   }
 

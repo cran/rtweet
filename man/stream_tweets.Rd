@@ -4,8 +4,9 @@
 \alias{stream_tweets}
 \title{stream_tweets}
 \usage{
-stream_tweets(q = "", timeout = 30, parse = TRUE, token = NULL,
-  file_name = NULL, gzip = FALSE, verbose = TRUE)
+stream_tweets(q = "", timeout = 30, parse = TRUE, clean_tweets = TRUE,
+  as_double = FALSE, token = NULL, file_name = NULL, gzip = FALSE,
+  verbose = TRUE, ...)
 }
 \arguments{
 \item{q}{Character vector with desired phrases and keywords
@@ -16,7 +17,9 @@ return sample of all tweets.}
 
 \item{timeout}{Numeric scalar specifying amount of time, in seconds,
 to leave connection open while streaming/capturing tweets.
-By default, this is set at 30 seconds.}
+By default, this is set to 30 seconds. To stream indefinitely,
+use \code{timeout = FALSE} to ensure json file is not deleted
+upon completion or \code{timeout = Inf}.}
 
 \item{parse}{Logical, indicating whether to return parsed data.
 By default, \code{parse = TRUE}, this function does the parsing for
@@ -27,6 +30,15 @@ uses, setting parse to TRUE saves you from having to sort and parse
 the messy list structure returned by Twitter. (Note: if you set parse
 to false, you can use the \code{\link{parse_stream}} function to
 parse the json file at a later point in time.)}
+
+\item{clean_tweets}{logical indicating whether to remove non-ASCII
+characters in text of tweets. defaults to TRUE.}
+
+\item{as_double}{logical indicating whether to handle ID variables
+as double (numeric) class. By default, this is set to FALSE, meaning
+ID variables are treated as character vectors. Setting this to
+TRUE can provide performance (speed and memory) boost but can also
+lead to issues when printing and saving, depending on the format.}
 
 \item{token}{OAuth token. By default \code{token = NULL} fetches a
 non-exhausted token from an environment variable. Find instructions
@@ -46,6 +58,8 @@ a chance Twitter cuts you off for getting behind).}
 
 \item{verbose}{Logical, indicating whether or not to include output
 processing/retrieval messages.}
+
+\item{\dots}{Insert magical paramaters, spell, or potion here.}
 }
 \value{
 Tweets data returned as data frame with users data as attribute.

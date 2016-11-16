@@ -15,7 +15,9 @@
 #'   return sample of all tweets.
 #' @param timeout Numeric scalar specifying amount of time, in seconds,
 #'   to leave connection open while streaming/capturing tweets.
-#'   By default, this is set at 30 seconds.
+#'   By default, this is set to 30 seconds. To stream indefinitely,
+#'   use \code{timeout = FALSE} to ensure json file is not deleted
+#'   upon completion or \code{timeout = Inf}.
 #' @param parse Logical, indicating whether to return parsed data.
 #'   By default, \code{parse = TRUE}, this function does the parsing for
 #'   you. However, for larger streams, or for automated scripts designed
@@ -25,6 +27,13 @@
 #'   the messy list structure returned by Twitter. (Note: if you set parse
 #'   to false, you can use the \code{\link{parse_stream}} function to
 #'   parse the json file at a later point in time.)
+#' @param clean_tweets logical indicating whether to remove non-ASCII
+#'   characters in text of tweets. defaults to TRUE.
+#' @param as_double logical indicating whether to handle ID variables
+#'   as double (numeric) class. By default, this is set to FALSE, meaning
+#'   ID variables are treated as character vectors. Setting this to
+#'   TRUE can provide performance (speed and memory) boost but can also
+#'   lead to issues when printing and saving, depending on the format.
 #' @param token OAuth token. By default \code{token = NULL} fetches a
 #'   non-exhausted token from an environment variable. Find instructions
 #'   on how to create tokens and setup an environment variable in the
@@ -40,6 +49,7 @@
 #'   a chance Twitter cuts you off for getting behind).
 #' @param verbose Logical, indicating whether or not to include output
 #'   processing/retrieval messages.
+#' @param \dots Insert magical paramaters, spell, or potion here.
 #' @seealso \url{https://stream.twitter.com/1.1/statuses/filter.json}
 #' @examples
 #' \dontrun{
@@ -73,12 +83,17 @@
 #'
 #' @return Tweets data returned as data frame with users data as attribute.
 #' @family tweets
+#' @importFrom httr POST write_disk add_headers progress timeout
 #' @export
 stream_tweets <- function(q = "", timeout = 30, parse = TRUE,
-                          token = NULL, file_name = NULL,
-                          gzip = FALSE, verbose = TRUE) {
+  clean_tweets = TRUE, as_double = FALSE, token = NULL, file_name = NULL,
+  gzip = FALSE, verbose = TRUE, ...) {
 
   token <- check_token(token)
+
+  if (!timeout) {
+    timeout <- Inf
+  }
 
   stopifnot(
     is.numeric(timeout), timeout > 0,
@@ -106,6 +121,8 @@ stream_tweets <- function(q = "", timeout = 30, parse = TRUE,
   	file_name <- tempfile(fileext = ".json")
   }
 
+  if (is.infinite(timeout)) tmp <- FALSE
+
   if (!grepl(".json", file_name)) {
     file_name <- paste0(file_name, ".json")
   }
@@ -131,19 +148,20 @@ stream_tweets <- function(q = "", timeout = 30, parse = TRUE,
   		error = function(e) return(NULL))
   }
 
-  if (!is.null(r)) {
-  	return(r)
-  }
-
   if (verbose) {
   	message("Finished streaming tweets!")
   }
 
   if (parse) {
-  	out <- parse_stream(file_name)
-  	if (tmp) file.remove(file_name)
+  	out <- parse_stream(file_name, clean_tweets = clean_tweets, as_double = as_double)
+  	if (tmp) {
+  	  file.remove(file_name)
+  	} else {
+  	  message("streaming data saved as ", file_name)
+  	}
   	return(out)
   } else {
+    message("streaming data saved as ", file_name)
   	invisible()
   }
 }
@@ -155,6 +173,13 @@ stream_tweets <- function(q = "", timeout = 30, parse = TRUE,
 #' @param file_name name of file to be parsed. NOTE: if file
 #'   was created via \code{\link{stream_tweets}}, then it will
 #'   end in ".json" (see example below)
+#' @param clean_tweets logical indicating whether to remove non-ASCII
+#'   characters in text of tweets. defaults to TRUE.
+#' @param as_double logical indicating whether to handle ID variables
+#'   as double (numeric) class. By default, this is set to FALSE, meaning
+#'   ID variables are treated as character vectors. Setting this to
+#'   TRUE can provide performance (speed and memory) boost but can also
+#'   lead to issues when printing and saving, depending on the format.
 #'
 #' @return Parsed tweets data with users data attribute.
 #'
@@ -166,39 +191,84 @@ stream_tweets <- function(q = "", timeout = 30, parse = TRUE,
 #' }
 #' @importFrom jsonlite stream_in
 #' @export
-parse_stream <- function(file_name) {
+parse_stream <- function(file_name, clean_tweets = TRUE,
+                         as_double = FALSE) {
 
-	s <- tryCatch(stream_in(file(file_name),
-		verbose = TRUE), error = function(e) return(NULL))
+	s <- tryCatch(suppressWarnings(
+    stream_in(file(file_name),
+		verbose = TRUE)), error = function(e) return(NULL))
 
 	if (is.null(s)) {
-		rl <- readLines(file_name)
-		cat(rl[[seq_len(length(rl) - 1)]], file = file_name)
+		rl <- readLines(file_name, warn = FALSE)
+		cat(paste0(rl[seq_len(length(rl) - 1)],
+		  collapse = "\n"),
+      file = file_name)
 
-		s <- tryCatch(stream_in(file(file_name),
-			verbose = TRUE), error = function(e) return(NULL))
+		s <- tryCatch(suppressWarnings(
+      stream_in(file(file_name),
+			verbose = TRUE)), error = function(e) return(NULL))
 	}
-	if (is.null(s)) stop("it's not right. -luther", call. = FALSE)
+	if (is.null(s)) {
+		cat("\n", file = file_name, append = TRUE)
 
-	s <- parser(s)
+		s <- tryCatch(suppressWarnings(
+      stream_in(file(file_name),
+			verbose = TRUE)), error = function(e) return(NULL))
+	}
+	if (is.null(s)) stop("it's not right. -luther",
+    call. = FALSE)
+
+	s <- parser(s, clean_tweets = clean_tweets,
+	  as_double = as_double)
 
 	attr_tweetusers(s)
 }
 
 #' @keywords internal
-stream_params <- function(stream) {
-  #stream <- unlist(trimws(unlist(strsplit(stream, ","))))
-
-  if (!all(suppressWarnings(is.na(as.numeric(stream))))) {
-    if (all(is.integer(as.integer(stream)))) {
-      params <- list(follow = stream)
-    } else {
-      params <- list(locations = stream)
+stream_params <- function(stream, ...) {
+  if (length(stream) > 1) {
+    params <- list(location = paste(stream, collapse = ","))
+  } else if (!all(suppressWarnings(is.na(as.numeric(stream))))) {
+    if (all(is.integer(as.numeric(stream)))) {
+      params <- list(follow = stream, ...)
     }
   } else {
-    params <- list(track = stream)
+    params <- list(track = stream, ...)
   }
 
   params[["filter_level"]] <- "low"
   params
+}
+
+#' parse_stream_xl
+#'
+#' Returns tweets data frame from large json file
+#'
+#' @param x Path name for json file
+#' @param by Number of Tweets to per chunk. By default this is set to
+#'   10,000 tweets.
+#' @return Data frame of tweets data
+#' @details Reading and simplifying json files can be very slow. To
+#'   make things more managable, \code{parse_stream_xl} does one chunk
+#'   of Tweets at a time and then compiles the data into a data frame.
+#' @export
+parse_stream_xl <- function(x, by = 10000) {
+  stopifnot(is.character(x), is.numeric(by))
+  x <- readLines(x)
+  n <- length(x)
+  N <- ceiling(n / by)
+  jmin <- 1L
+  df <- vector("list", N)
+  for (i in seq_len(N)) {
+    tmp <- tempfile()
+    jmax <- jmin + (by - 1)
+    if (jmax > n) jmax <- n
+    cat(paste(x[jmin:jmax], collapse = "\n"),
+      file = tmp, append = FALSE)
+    df[[i]] <- parse_stream(tmp)
+    if (jmax >= n) break
+    jmin <- jmax + 1
+    message(i, " of ", N)
+  }
+  do.call("rbind", df)
 }
