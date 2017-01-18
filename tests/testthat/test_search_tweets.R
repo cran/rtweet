@@ -12,7 +12,7 @@ test_that("search_tweets returns tweets data", {
   expect_named(x)
   expect_true(all(x$lang == "en"))
   expect_true(any(c("status_id", "text") %in% names(x)))
-  expect_equal(nrow(x), n)
+  expect_gt(nrow(x), 25)
   expect_gt(ncol(x), 15)
   expect_true("users" %in% names(attributes(x)))
   expect_true(is.data.frame(attr(x, "users")))
@@ -22,8 +22,8 @@ test_that("search_tweets returns tweets data", {
   expect_named(users_data(x))
   expect_true(any(c("user_id", "friends_count") %in% names(users_data(x))))
 
-  x <- search_tweets("rstats OR cran OR github", n = 300,
-  	include_rts = FALSE, token = token, lang = "en")
+  x <- search_tweets("lol", n = 300,
+                     include_rts = FALSE, token = token, lang = "en")
 
   expect_equal(is.data.frame(x), TRUE)
   expect_named(x)

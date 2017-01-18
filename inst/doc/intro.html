@@ -12,7 +12,6 @@
 
 <meta name="author" content="Michael W. Kearney" />
 
-<meta name="date" content="2016-11-15" />
 
 <title>Intro to rtweet: Collecting Twitter Data</title>
 
@@ -70,59 +69,70 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Intro to rtweet: Collecting Twitter Data</h1>
 <h4 class="author"><em>Michael W. Kearney</em></h4>
-<h4 class="date"><em>2016-11-15</em></h4>
 
 
 
 <p>This vignettes provides a <em>very</em> quick tour of the R package <code>rtweet: Collecting Twitter Data</code>. Before getting to the tour, however, I want to explain the philosophy behind rtweet.</p>
 <div id="package-philosophy" class="section level2">
 <h2>Package Philosophy</h2>
-<p>I started <code>rtweet</code> so I could collect data for my dissertation. I considered using one of a few open-source packages that had already been developed—e.g., <code>twitteR</code>, <code>streamR</code>, <code>tweepy</code>—to collect data. The most up-to-date of these libraries were the ones on Python, which I had just started to learn. I was surprised to discover there wasn’t a equally up-to-date option on R. The Python lirbaries seemed to work well, but an R package would allow me to collect and analyze data within the same environment. So, I decided that if I created my own functions in R, I would avoid the problem of bouncing back and forth between environments. Plus, it meant that I would have the flexibility to wrangle the data in whatever way I chose.</p>
-<p>Communication studies has an abundance of critical thinking, but a shortage of computer programming. As I developed <code>rtweet</code> I realized I could contribute to the field by making this awesome Twitter data more accessible and more approachable to communication scholars. Accordingly, the underlying philosophy of <code>rtweet</code> is simple. It is to make Twitter data more accessible to more people.</p>
-<pre><code>rtweet philosophy: make Twitter data more accessible to more people.</code></pre>
-<p>With that in mind, I want to encourage any feedback or suggestions you have. If you use github, I’d encourage you to <a href="https://github.com/mkearney/rtweet/issues">create an new issue</a>. Otherwise, feel free to email me at <a href="mailto:mkearney@ku.edu">mkearney@ku.edu</a>.</p>
+<p>The approach I’ve taken to constructing <code>rtweet</code> has been shaped by my desires to…</p>
+<ol style="list-style-type: lower-alpha">
+<li>make interacting with Twitter’s APIs more approachable</li>
+<li>make Twitter data more accessible to researchers</li>
+</ol>
+<p>Consequently, most of my attention gets funneled toward data retrieval and data exploration functions—as opposed to post/interactive functions, e.g., <code>post_follow_user()</code>. Currently, <code>rtweet</code> offers users several functions for posting on behalf of their own Twitter accounts, but efforts to add documentation and support for those functions has been thin. I’m not opposed to these things, but at least for now I’m unlikely to set aside my own time to develop them.</p>
+<p>With that in mind, I want to encourage any feedback or suggestions you have. If you use Github and you experience a clear bug, I’d encourage you to copy all relevant code along with the error message and <a href="https://github.com/mkearney/rtweet/issues">create an new issue on Github</a>. For other issues and discussion, please consider <a href="https://groups.google.com/group/rtweet">joining and posting to the Google group</a>.</p>
 </div>
-<div id="accessing-twitters-api" class="section level2">
-<h2>Accessing Twitter’s API</h2>
-<p>In order to collect data, you must first obtain a user access token. To do this, I recommend following the vignette on <a href="https://github.com/mkearney/rtweet/blob/master/vignettes/tokens.Rmd">obtaining and setting up user access tokens</a>. However, if you’re in a hurry, the <a href="https://github.com/mkearney/rtweet/blob/master/README.md">quick guide found here</a> works as well.</p>
+<div id="authorization-tokens" class="section level2">
+<h2>Authorization tokens</h2>
+<p>In order to collect data, you must first obtain a user access token. The recommended way to do this is described in the vignette entitled <a href="https://mkearney.github.io/rtweet/articles/auth.html">obtaining and setting up user access tokens</a>. However, if you’re in a hurry, the <a href="https://mkearney.github.io/rtweet/index.html">quick guide found here</a> works as well.</p>
 </div>
-<div id="install-and-load" class="section level2">
-<h2>Install and Load</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">&quot;devtools&quot;</span>)
-devtools::<span class="kw">install_github</span>(<span class="st">&quot;mkearney/rtweet&quot;</span>)
+<div id="installing-and-loading" class="section level2">
+<h2>Installing and loading</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">&quot;rtweet&quot;</span>)
 <span class="kw">library</span>(rtweet)</code></pre></div>
 </div>
-<div id="posting-tweets" class="section level2">
-<h2>Posting Tweets</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">post_tweet</span>(<span class="st">&quot;my first rtweet #rstats&quot;</span>)</code></pre></div>
+<div id="pipe-operator" class="section level2">
+<h2>Pipe operator</h2>
+<p>The <code>rtweet</code> package exports magrittr’s pipe <code>%&gt;%</code>. Given the recursive nature of networks and Twitter data, I find it often comes in handy for writing legible code. I also tend to use it in examples, but I understand not everyone will be familiar with it. So, for a crash course, all you really need to know is the pipe operator reorders R functions such that they occur linearly. That is, instead of wrapping one function around another function, the pipe operator goes in order from left to right—just like this sentence flows from left to right. So, a line of code in base R that looks like this</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">paste0</span>(<span class="st">&quot;your lucky number is &quot;</span>, <span class="kw">sample</span>(<span class="dv">1</span>:<span class="dv">20</span>, <span class="dv">1</span>))</code></pre></div>
+<p>Can be rewritten so that the first function you see is the first function that runs when the code is executed, e.g.,</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">20</span>) %&gt;%
+<span class="st">    </span><span class="kw">sample</span>(<span class="dv">1</span>) %&gt;%
+<span class="st">    </span><span class="kw">paste0</span>(<span class="st">&quot;your lucky number is &quot;</span>, .)</code></pre></div>
+<p>The pipe (<code>%&gt;%</code>) simply passes along what’s on the left-hand side to the right-hand side of the line of code. Once it goes through the pipe, the output is assigned to the period (<code>.</code>), and it is by default plugged into the first argument of the function on the right-hand side of the pipe.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## select the four element from the lhs of the pipe
+<span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">10</span>) %&gt;%
+<span class="st">    </span>.[[<span class="dv">4</span>]]</code></pre></div>
+<p>Given the default behavior, you don’t always have the rewrite the data object as it is often assumed. In the code below, for example, the mean function is by default applied to the numbers 1 through 10.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">10</span>) %&gt;%
+<span class="st">    </span><span class="kw">mean</span>()</code></pre></div>
 </div>
 <div id="retrieving-tweets" class="section level2">
 <h2>Retrieving Tweets</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># search for 500 tweets using the #rstats hashtag</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## search for 500 tweets using the #rstats hashtag
 team_rstats &lt;-<span class="st"> </span><span class="kw">search_tweets</span>(<span class="st">&quot;#rstats&quot;</span>, <span class="dt">n =</span> <span class="dv">500</span>)
 team_rstats
 
-<span class="co"># extract data on the users who posted the tweets</span>
-<span class="kw">users_data</span>(team_rstats)
+## access and preview data on the users who posted the tweets
+<span class="kw">users_data</span>(team_rstats) %&gt;%
+<span class="st">    </span><span class="kw">head</span>()
 
-<span class="co"># view search meta data</span>
-<span class="kw">meta_data</span>(team_rstats)
-
-<span class="co"># return 200 tweets from @KyloR3n's timeline</span>
+## return 200 tweets from @KyloR3n's timeline
 kylo_is_a_mole &lt;-<span class="st"> </span><span class="kw">get_timeline</span>(<span class="st">&quot;KyloR3n&quot;</span>, <span class="dt">n =</span> <span class="dv">2000</span>)
 <span class="kw">head</span>(kylo_is_a_mole)
 
-<span class="co"># extract emo kylo ren's user data</span>
-<span class="kw">head</span>(<span class="kw">users_data</span>(kylo_is_a_mole))
+## extract emo kylo ren's user data
+<span class="kw">users_data</span>(kylo_is_a_mole)
 
-<span class="co"># stream tweets mentioning @HillaryClinton for 2 minutes (120 sec)</span>
+## stream tweets mentioning @HillaryClinton for 2 minutes (120 sec)
 imwithher &lt;-<span class="st"> </span><span class="kw">stream_tweets</span>(<span class="st">&quot;HillaryClinton&quot;</span>, <span class="dt">timeout =</span> <span class="dv">120</span>)
 <span class="kw">head</span>(imwithher)
 
-<span class="co"># extract data on the users who posted the tweets</span>
+## extract data on the users who posted the tweets
 <span class="kw">head</span>(<span class="kw">users_data</span>(imwithher))
 
-<span class="co"># stream 3 random samples of tweets</span>
+## stream 3 random samples of tweets
 for (in in <span class="kw">seq_len</span>(<span class="dv">3</span>)) {
     <span class="kw">stream_tweets</span>(<span class="dt">q =</span> <span class="st">&quot;&quot;</span>, <span class="dt">timeout =</span> <span class="dv">60</span>,
         <span class="dt">file_name =</span> <span class="kw">paste0</span>(<span class="st">&quot;rtw&quot;</span>, i), <span class="dt">parse =</span> <span class="ot">FALSE</span>)
@@ -135,14 +145,19 @@ for (in in <span class="kw">seq_len</span>(<span class="dv">3</span>)) {
     }
 }
 
-<span class="co"># parse the samples</span>
-tw &lt;-<span class="st"> </span><span class="kw">lapply</span>(<span class="kw">c</span>(<span class="st">&quot;rtw1.json&quot;</span>, <span class="st">&quot;rtw2.json&quot;</span>, <span class="st">&quot;rtw3.json&quot;</span>), parse_stream)
+## parse the samples
+tw &lt;-<span class="st"> </span><span class="kw">lapply</span>(<span class="kw">c</span>(<span class="st">&quot;rtw1.json&quot;</span>, <span class="st">&quot;rtw2.json&quot;</span>, <span class="st">&quot;rtw3.json&quot;</span>),
+             parse_stream)
 
-<span class="co"># collapse lists into single data frame</span>
+## collapse lists into single data frame
+tw.users &lt;-<span class="st"> </span><span class="kw">do.call</span>(<span class="st">&quot;rbind&quot;</span>, <span class="kw">users_data</span>(tw))
 tw &lt;-<span class="st"> </span><span class="kw">do.call</span>(<span class="st">&quot;rbind&quot;</span>, tw)
+<span class="kw">attr</span>(tw, <span class="st">&quot;users&quot;</span>) &lt;-<span class="st"> </span>tw.users
 
-<span class="co"># preview data</span>
-<span class="kw">head</span>(tw)</code></pre></div>
+## preview data
+<span class="kw">head</span>(tw)
+<span class="kw">users_data</span>(tw) %&gt;%
+<span class="st">    </span><span class="kw">head</span>()</code></pre></div>
 </div>
 <div id="retrieving-users" class="section level2">
 <h2>Retrieving Users</h2>
@@ -150,59 +165,67 @@ tw &lt;-<span class="st"> </span><span class="kw">do.call</span>(<span class="st
 harder_science &lt;-<span class="st"> </span><span class="kw">search_users</span>(<span class="st">&quot;social science&quot;</span>, <span class="dt">n =</span> <span class="dv">500</span>)
 harder_science
 
-<span class="co"># view search meta data</span>
-<span class="kw">meta_data</span>(harder_science)
-
 <span class="co"># extract most recent tweets data from the social scientists</span>
 <span class="kw">tweets_data</span>(harder_science)
 
-<span class="co"># lookup users by screen_name or user_id</span>
+## lookup users by screen_name or user_id
 users &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;KimKardashian&quot;</span>, <span class="st">&quot;justinbieber&quot;</span>, <span class="st">&quot;taylorswift13&quot;</span>,
-    <span class="st">&quot;espn&quot;</span>, <span class="st">&quot;JoelEmbiid&quot;</span>, <span class="st">&quot;cstonehoops&quot;</span>, <span class="st">&quot;KUHoops&quot;</span>,
-    <span class="st">&quot;upshotnyt&quot;</span>, <span class="st">&quot;fivethirtyeight&quot;</span>, <span class="st">&quot;hadleywickham&quot;</span>,
-    <span class="st">&quot;cnn&quot;</span>, <span class="st">&quot;foxnews&quot;</span>, <span class="st">&quot;msnbc&quot;</span>, <span class="st">&quot;maddow&quot;</span>, <span class="st">&quot;seanhannity&quot;</span>,
-    <span class="st">&quot;potus&quot;</span>, <span class="st">&quot;epa&quot;</span>, <span class="st">&quot;hillaryclinton&quot;</span>, <span class="st">&quot;realdonaldtrump&quot;</span>,
-    <span class="st">&quot;natesilver538&quot;</span>, <span class="st">&quot;ezraklein&quot;</span>, <span class="st">&quot;annecoulter&quot;</span>)
+           <span class="st">&quot;espn&quot;</span>, <span class="st">&quot;JoelEmbiid&quot;</span>, <span class="st">&quot;cstonehoops&quot;</span>, <span class="st">&quot;KUHoops&quot;</span>,
+           <span class="st">&quot;upshotnyt&quot;</span>, <span class="st">&quot;fivethirtyeight&quot;</span>, <span class="st">&quot;hadleywickham&quot;</span>,
+           <span class="st">&quot;cnn&quot;</span>, <span class="st">&quot;foxnews&quot;</span>, <span class="st">&quot;msnbc&quot;</span>, <span class="st">&quot;maddow&quot;</span>, <span class="st">&quot;seanhannity&quot;</span>,
+           <span class="st">&quot;potus&quot;</span>, <span class="st">&quot;epa&quot;</span>, <span class="st">&quot;hillaryclinton&quot;</span>, <span class="st">&quot;realdonaldtrump&quot;</span>,
+           <span class="st">&quot;natesilver538&quot;</span>, <span class="st">&quot;ezraklein&quot;</span>, <span class="st">&quot;annecoulter&quot;</span>)
 famous_tweeters &lt;-<span class="st"> </span><span class="kw">lookup_users</span>(users)
+
+## preview users data
 famous_tweeters
 
 <span class="co"># extract most recent tweets data from the famous tweeters</span>
 <span class="kw">tweets_data</span>(famous_tweeters)
 
-<span class="co"># or get user IDs of people following stephen colbert</span>
+## or get user IDs of people following stephen colbert
 colbert_nation &lt;-<span class="st"> </span><span class="kw">get_followers</span>(<span class="st">&quot;stephenathome&quot;</span>, <span class="dt">n =</span> <span class="dv">18000</span>)
 
-<span class="co"># get even more by using the next_cursor function</span>
+## get even more by using the next_cursor function
 page &lt;-<span class="st"> </span><span class="kw">next_cursor</span>(colbert_nation)
 
-<span class="co"># use the page object to continue where you left off</span>
+## use the page object to continue where you left off
 colbert_nation_ii &lt;-<span class="st"> </span><span class="kw">get_followers</span>(<span class="st">&quot;stephenathome&quot;</span>, <span class="dt">n =</span> <span class="dv">18000</span>, <span class="dt">page =</span> page)
 colbert_nation &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">unlist</span>(colbert_nation), <span class="kw">unlist</span>(colbert_nation_ii))
 
-<span class="co"># and then lookup data on those users (if hit rate limit, run as two parts)</span>
+## and then lookup data on those users (if hit rate limit, run as two parts)
 colbert_nation &lt;-<span class="st"> </span><span class="kw">lookup_users</span>(colbert_nation)
 colbert_nation
 
-<span class="co"># or get user IDs of people followed *by* President Obama</span>
+## or get user IDs of people followed *by* President Obama
 obama1 &lt;-<span class="st"> </span><span class="kw">get_friends</span>(<span class="st">&quot;BarackObama&quot;</span>)
 obama2 &lt;-<span class="st"> </span><span class="kw">get_friends</span>(<span class="st">&quot;BarackObama&quot;</span>, <span class="dt">page =</span> <span class="kw">next_cursor</span>(obama1))
 
-<span class="co"># and lookup data on Obama's friends</span>
+## and lookup data on Obama's friends
 <span class="kw">lookup_users</span>(<span class="kw">c</span>(<span class="kw">unlist</span>(obama1), <span class="kw">unlist</span>(obama2)))</code></pre></div>
 </div>
 <div id="retrieving-trends" class="section level2">
 <h2>Retrieving Trends</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get trending hashtags, mentions, and topics worldwide</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## get trending hashtags, mentions, and topics worldwide
 prestige_worldwide &lt;-<span class="st"> </span><span class="kw">get_trends</span>()
 prestige_worldwide
 
-<span class="co"># or narrow down to a particular country</span>
+## or narrow down to a particular country
 usa_usa_usa &lt;-<span class="st"> </span><span class="kw">get_trends</span>(<span class="st">&quot;United States&quot;</span>)
 usa_usa_usa
 
-<span class="co"># or narrow down to a popular city</span>
+## or narrow down to a popular city
 CHIEFS &lt;-<span class="st"> </span><span class="kw">get_trends</span>(<span class="st">&quot;Kansas City&quot;</span>)
 CHIEFS</code></pre></div>
+</div>
+<div id="posting-tweets" class="section level2">
+<h2>Posting Tweets</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">post_tweet</span>(<span class="st">&quot;my first rtweet #rstats&quot;</span>)</code></pre></div>
+</div>
+<div id="following-users" class="section level2">
+<h2>Following users</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## ty for the follow ;)
+<span class="kw">post_follow_user</span>(<span class="st">&quot;kearneymw&quot;</span>)</code></pre></div>
 </div>
 
 

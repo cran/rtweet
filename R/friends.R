@@ -39,69 +39,129 @@
 get_friends <- function(user, page = "-1", parse = TRUE,
                         as_double = FALSE, token = NULL) {
 
-  stopifnot(is.atomic(user), is.atomic(page),
-    isTRUE(length(user) == 1))
+    stopifnot(is.atomic(user), is.atomic(page),
+              isTRUE(length(user) == 1))
 
-  token <- check_token(token)
+    token <- check_token(token)
 
-  query <- "friends/ids"
+    query <- "friends/ids"
 
-  params <- list(
-    user_type = user,
-    count = 5000,
-    cursor = page,
-    stringify = TRUE)
+    params <- list(
+        user_type = user,
+        count = 5000,
+        cursor = page,
+        stringify = TRUE)
 
-  names(params)[1] <- .id_type(user)
+    names(params)[1] <- .id_type(user)
 
-  url <- make_url(
-    query = query,
-    param = params)
+    url <- make_url(
+        query = query,
+        param = params)
 
-  f <- tryCatch(
+    f <- tryCatch(
   	TWIT(get = TRUE, url, token),
   	error = function(e) return(NULL))
 
-  if (is.null(f)) {
-    missing <- NA_character_
-    if (as_double) missing <- NA_real_
+    if (is.null(f)) {
+        missing <- NA_character_
+        if (as_double) missing <- NA_real_
   	f[["ids"]] <- missing
-  } else {
-  	if (parse) {
-  		f <- parse_fs(from_js(f, check_rate_limit = FALSE),
-  		  as_double = as_double)
-  	}
-  }
-  f
+    } else {
+        if (parse) f <- parse.piper.fnd(f)
+    }
+    f
+}
+
+#' @importFrom jsonlite fromJSON
+parse.piper.fnd <- function(r) {
+    r <- r[["content"]] %>%
+        rawToChar() %>%
+        jsonlite::fromJSON() %>%
+        tryCatch(error = function(e) return(NULL))
+    if (is.null(r)) return(data.frame(user_id = NA_character_))
+    next_cursor <- r %>%
+        getElement("next_cursor") %>%
+        as.character()
+    usrs <- r %>%
+        getElement("ids") %>%
+        as.character() %>%
+        data.frame(stringsAsFactors = FALSE)
+    names(usrs) <- "user_id"
+    if (is.null(next_cursor)) next_cursor <- NA_character_
+    attr(usrs, "next_cursor") <- next_cursor
+    usrs
+}
+
+ply_friends <- function(users, token = NULL, ...) {
+    n.times <- rate_limit(token, "friends/ids")[["remaining"]]
+    if (n.times == 0L) stop("rate limit exceeded", call. = FALSE)
+    lapply(users, get_friends, token = token, ...)
 }
 
 
-
-#' ply_friends
+#' lookup_friendships
 #'
-#' @param users Screen names and/or user ids of target user. Since
-#'   friend networks are requested one at a time, users can be a mixture of
-#'   user_ids and screen_names.
+#' Look up informaiton on friendship between authenticated
+#'   user and up to 100 users.
+#'
+#' @param user Screen name or user id of target user.
+#' @param parse Logical indicating whether to return parsed data frame.
+#'   Defaults to true.
 #' @param token OAuth token. By default \code{token = NULL} fetches a
 #'   non-exhausted token from an environment variable. Find instructions
 #'   on how to create tokens and setup an environment variable in the
 #'   tokens vignette (in r, send \code{?tokens} to console).
-#' @param \dots Arguments passed on to \code{\link{get_friends}}.
-#'
-#' @return List of friend networks where \code{n}th element contains
-#'   user ids of \code{n}th users.
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' get friend networks for up to 15 users per token
-#' users <- c("inside_R", "rtweet_package", "RLangTip", "Rbloggers", "rstudio")
-#' friend.networks <- ply_friends(users)
-#' friend.networks[[1]]
-#' str(friend.networks)
-#' }
-ply_friends <- function(users, token = NULL, ...) {
-	n.times <- rate_limit(token, "friends/ids")[["remaining"]]
-	if (n.times == 0L) stop("rate limit exceeded", call. = FALSE)
-	lapply(users, get_friends, token = token, ...)
+lookup_friendships <- function(user, parse = TRUE,
+                               token = NULL) {
+
+    stopifnot(is.atomic(user))
+
+    token <- check_token(token)
+
+    query <- "friendships/lookup"
+
+    params <- list(
+        user_type = paste(user, collapse = ","))
+
+    names(params)[1] <- .id_type(user)
+
+    url <- make_url(
+        query = query,
+        param = params)
+
+    f <- tryCatch(
+  	TWIT(get = TRUE, url, token),
+  	error = function(e) return(NULL))
+
+    if (parse) {
+        parse_fndshp(f)
+    } else {
+        f
+    }
+}
+
+
+#' @importFrom jsonlite fromJSON
+parse_fndshp <- function(fndshp) {
+    fndshp <- fndshp[["content"]] %>%
+        rawToChar() %>%
+        jsonlite::fromJSON() %>%
+        plyget("connections")
+    fndshp$followed_by <- fndshp %>%
+        plyget(function(x) "followed_by" %in% x) %>%
+        unlist(use.names = FALSE)
+    fndshp$following <- fndshp %>%
+        plyget(function(x) "following" %in% x) %>%
+        unlist(use.names = FALSE)
+    fndshp$blocking <- fndshp %>%
+        plyget(function(x) "blocking" %in% x) %>%
+        unlist(use.names = FALSE)
+    fndshp$muting <- fndshp %>%
+        plyget(function(x) "muting" %in% x) %>%
+        unlist(use.names = FALSE)
+    fndshp$none <- fndshp %>%
+        plyget(function(x) "none" %in% x) %>%
+        unlist(use.names = FALSE)
+    fndshp[, c(1:2, 4, 6:10)]
 }

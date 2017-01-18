@@ -4,33 +4,39 @@
 \alias{parse_stream}
 \title{parse_stream}
 \usage{
-parse_stream(file_name, clean_tweets = TRUE, as_double = FALSE)
+parse_stream(file_name, ...)
 }
 \arguments{
 \item{file_name}{name of file to be parsed. NOTE: if file
 was created via \code{\link{stream_tweets}}, then it will
 end in ".json" (see example below)}
 
-\item{clean_tweets}{logical indicating whether to remove non-ASCII
-characters in text of tweets. defaults to TRUE.}
-
-\item{as_double}{logical indicating whether to handle ID variables
-as double (numeric) class. By default, this is set to FALSE, meaning
-ID variables are treated as character vectors. Setting this to
-TRUE can provide performance (speed and memory) boost but can also
-lead to issues when printing and saving, depending on the format.}
+\item{\dots}{For developmental purposes.}
 }
 \value{
-Parsed tweets data with users data attribute.
+Data frame of tweets data with attributes users data
 }
 \description{
 parse_stream
 }
+\details{
+Reading and simplifying json files can be very slow. To
+  make things more managable, \code{parse_stream_xl} does one chunk
+  of Tweets at a time and then compiles the data into a data frame.
+}
 \examples{
 \dontrun{
-stream_tweets(q = "", file_name = "tw", parse = FALSE)
-tw <- parse_stream("tw.json")
-tw
+## file extension automatically converted to .json whether or
+## not file_name already includes .json
+stream_tweets(q = "", timeout = 30,
+              file_name = "rtweet-stream", parse = FALSE)
+rt <- parse_stream("rtweet-stream.json")
+## preview tweets data
+head(rt)
+## preview users data
+head(users_data(rt))
+## plot time series
+ts_plot(rt, "secs")
 }
 }
 

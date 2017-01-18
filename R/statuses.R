@@ -9,6 +9,8 @@
 #'   an environment variable @describeIn tokens.
 #' @param parse Logical, indicating whether or not to parse
 #'   return object into data frame(s).
+#' @param usr Logical indicating whether to return users data frame.
+#'   Defaults to true.
 #' @param clean_tweets logical indicating whether to remove non-ASCII
 #'   characters in text of tweets. defaults to FALSE.
 #' @param as_double logical indicating whether to handle ID variables
@@ -32,70 +34,73 @@
 #' @return json response object (max is 18000 per token)
 #' @family tweets
 #' @export
-lookup_statuses <- function(statuses, token = NULL, parse = TRUE,
-                            clean_tweets = FALSE, as_double = FALSE) {
+lookup_statuses <- function(statuses,
+                            token = NULL,
+                            parse = TRUE,
+                            usr = TRUE,
+                            clean_tweets = FALSE,
+                            as_double = FALSE) {
 
-  if (is.list(statuses)) {
-    statuses <- unlist(statuses)
-  }
-
-  if (length(statuses) > 18000) {
-    statuses <- statuses[1:18000]
-  }
-
-  n.times <- ceiling(length(statuses) / 100)
-
-  from <- 1
-
-  twt <- vector("list", n.times)
-
-  for (i in seq_len(n.times)) {
-    to <- from + 99
-
-    if (to > length(statuses)) {
-      to <- length(statuses)
+    if (is.list(statuses)) {
+        statuses <- unlist(statuses)
     }
 
-    twt[[i]] <- .status_lookup(
-      statuses[from:to],
-      token, parse = parse)
+    if (length(statuses) > 18000) {
+        statuses <- statuses[1:18000]
+    }
 
-    from <- to + 1
+    n.times <- ceiling(length(statuses) / 100)
 
-    if (from > length(statuses)) break
-  }
+    from <- 1
 
-  if (parse) {
-    twt <- parser(twt, clean_tweets = clean_tweets, as_double = as_double)
-    twt <- attr_tweetusers(twt[c("tweets", "users")])
-  }
+    twt <- vector("list", n.times)
 
-  twt
+    for (i in seq_len(n.times)) {
+        to <- from + 99
+
+        if (to > length(statuses)) {
+            to <- length(statuses)
+        }
+
+        twt[[i]] <- .status_lookup(
+            statuses[from:to],
+            token, parse = parse)
+
+        from <- to + 1
+
+        if (from > length(statuses)) break
+    }
+
+    if (parse) {
+        twt <- parse.piper(twt, usr = usr)
+    }
+
+    twt
 }
 
 .status_lookup <- function(statuses, token = NULL, parse) {
 
-  query <- "statuses/lookup"
+    query <- "statuses/lookup"
 
-  if (is.list(statuses)) {
-    statuses <- unlist(statuses)
-  }
+    if (is.list(statuses)) {
+        statuses <- unlist(statuses)
+    }
 
-  stopifnot(is.atomic(statuses))
+    stopifnot(is.atomic(statuses))
 
-  if (length(statuses) > 100) {
-    statuses <- statuses[1:100]
-  }
+    if (length(statuses) > 100) {
+        statuses <- statuses[1:100]
+    }
 
-  params <- list(id = paste(statuses, collapse = ","))
+    params <- list(id = paste(statuses, collapse = ","))
 
-  url <- make_url(
-    query = query,
-    param = params)
+    url <- make_url(
+        query = query,
+        param = params)
 
-  token <- check_token(token, query = "statuses/lookup")
+    token <- check_token(token, query = "statuses/lookup")
 
-  resp <- TWIT(get = TRUE, url, token)
+    resp <- TWIT(get = TRUE, url, token)
 
-  from_js(resp)
+    from_js(resp)
 }

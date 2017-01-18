@@ -4,8 +4,8 @@
 \alias{get_timeline}
 \title{get_timeline}
 \usage{
-get_timeline(user, n = 200, max_id = NULL, parse = TRUE,
-  clean_tweets = FALSE, as_double = FALSE, token = NULL, ...)
+get_timeline(user, n = 200, max_id = NULL, home = FALSE, parse = TRUE,
+  check = TRUE, usr = TRUE, token = NULL, ...)
 }
 \arguments{
 \item{user}{Screen name or user id of target user.}
@@ -13,7 +13,13 @@ get_timeline(user, n = 200, max_id = NULL, parse = TRUE,
 \item{n}{Numeric, number of tweets to return.}
 
 \item{max_id}{Character, status_id from which returned tweets
-should be older than}
+should be older than.}
+
+\item{home}{Logical, indicating whether to return a user-timeline
+or home-timeline. By default, home is set to FALSe, which means
+\code{get_timeline} returns tweets posted by the given user.
+To return a user's home timeline feed, that is, the tweets posted
+by accounts followed by a user, set the home to false.}
 
 \item{parse}{Logical, indicating whether to return parsed
 (data.frames) or nested list (fromJSON) object. By default,
@@ -21,14 +27,12 @@ should be older than}
 [and frustrations] associated with disentangling the Twitter
 API return objects.}
 
-\item{clean_tweets}{logical indicating whether to remove non-ASCII
-characters in text of tweets. defaults to FALSE.}
+\item{check}{Logical indicating whether to remove check available
+rate limit. Ensures the request does not exceed the maximum remaining
+number of calls. Defaults to TRUE.}
 
-\item{as_double}{logical indicating whether to handle ID variables
-as double (numeric) class. By default, this is set to FALSE, meaning
-ID variables are treated as character vectors. Setting this to
-TRUE can provide performance (speed and memory) boost but can also
-lead to issues when printing and saving, depending on the format.}
+\item{usr}{Logical indicating whether to return users data frame.
+Defaults to true.}
 
 \item{token}{OAuth token. By default \code{token = NULL} fetches a
 non-exhausted token from an environment variable. Find instructions
@@ -50,7 +54,10 @@ List consisting of two data frames. One with the tweets
 }
 \description{
 Returns timeline of tweets from a specified
-  Twitter user.
+  Twitter user. By default, get_timeline returns tweets
+  posted by a given user. To return a user's timeline feed,
+  that is, tweets posted by accounts you follow, set the
+  home argument to true.
 }
 \examples{
 \dontrun{

@@ -27,13 +27,6 @@
 #'   the messy list structure returned by Twitter. (Note: if you set parse
 #'   to false, you can use the \code{\link{parse_stream}} function to
 #'   parse the json file at a later point in time.)
-#' @param clean_tweets logical indicating whether to remove non-ASCII
-#'   characters in text of tweets. defaults to TRUE.
-#' @param as_double logical indicating whether to handle ID variables
-#'   as double (numeric) class. By default, this is set to FALSE, meaning
-#'   ID variables are treated as character vectors. Setting this to
-#'   TRUE can provide performance (speed and memory) boost but can also
-#'   lead to issues when printing and saving, depending on the format.
 #' @param token OAuth token. By default \code{token = NULL} fetches a
 #'   non-exhausted token from an environment variable. Find instructions
 #'   on how to create tokens and setup an environment variable in the
@@ -49,7 +42,10 @@
 #'   a chance Twitter cuts you off for getting behind).
 #' @param verbose Logical, indicating whether or not to include output
 #'   processing/retrieval messages.
-#' @param \dots Insert magical paramaters, spell, or potion here.
+#' @param fix.encoding Logical indicating whether to internally specify encoding to
+#'   prevent possible errors caused by things such as non-ascii characters.
+#' @param \dots Insert magical paramaters, spell, or potion here. Or filter for
+#'   tweets by language, e.g., \code{language = "en"}.
 #' @seealso \url{https://stream.twitter.com/1.1/statuses/filter.json}
 #' @examples
 #' \dontrun{
@@ -85,85 +81,115 @@
 #' @family tweets
 #' @importFrom httr POST write_disk add_headers progress timeout
 #' @export
-stream_tweets <- function(q = "", timeout = 30, parse = TRUE,
-  clean_tweets = TRUE, as_double = FALSE, token = NULL, file_name = NULL,
-  gzip = FALSE, verbose = TRUE, ...) {
+stream_tweets <- function(q = "",
+                          timeout = 30,
+                          parse = TRUE,
+                          token = NULL,
+                          file_name = NULL,
+                          gzip = FALSE,
+                          verbose = TRUE,
+                          fix.encoding = TRUE,
+                          ...) {
 
-  token <- check_token(token)
+    if (all(fix.encoding,
+            !identical(getOption("encoding"), "UTF-8"))) {
+        op <- getOption("encoding")
+        options(encoding = "UTF-8")
+        on.exit(options(encoding = op))
+    }
 
-  if (!timeout) {
-    timeout <- Inf
-  }
+    token <- check_token(token)
 
-  stopifnot(
-    is.numeric(timeout), timeout > 0,
-    is.atomic(q), is.atomic(file_name))
+    if (!timeout) {
+        timeout <- Inf
+    }
 
-  if (missing(q)) q <- ""
+    stopifnot(
+        is.numeric(timeout), timeout > 0,
+        is.atomic(q), is.atomic(file_name))
 
-  if (identical(q, "")) {
-    query <- "statuses/sample"
-    params <- NULL
-  } else {
-    query <- "statuses/filter"
-    params <- stream_params(q)
-  }
+    if (missing(q)) q <- ""
 
-  url <- make_url(
-    restapi = FALSE,
-    query,
-    param = params)
+    if (identical(q, "")) {
+        query <- "statuses/sample"
+        params <- NULL
+    } else {
+        query <- "statuses/filter"
+        params <- stream_params(q, ...)
+    }
 
-  tmp <- FALSE
+    url <- make_url(
+        restapi = FALSE,
+        query,
+        param = params)
 
-  if (is.null(file_name)) {
+    tmp <- FALSE
+
+    if (is.null(file_name)) {
   	tmp <- TRUE
   	file_name <- tempfile(fileext = ".json")
-  }
+    }
 
-  if (is.infinite(timeout)) tmp <- FALSE
+    if (is.infinite(timeout)) tmp <- FALSE
 
-  if (!grepl(".json", file_name)) {
-    file_name <- paste0(file_name, ".json")
-  }
+    if (!grepl(".json", file_name)) {
+        file_name <- paste0(file_name, ".json")
+    }
 
-  if (!file.exists(file_name)) file.create(file_name)
+    if (!file.exists(file_name)) file.create(file_name)
 
-  if (verbose) {
-    message(paste0("Streaming tweets for ", timeout, " seconds..."))
-  }
+    if (verbose) {
+        message(paste0("Streaming tweets for ",
+                       timeout, " seconds..."))
+    }
 
-  r <- NULL
+    r <- NULL
 
-  if (gzip) {
-  	r <- tryCatch(POST(url = url,
-  		config = token, write_disk(file_name, overwrite = TRUE),
-  		add_headers(`Accept-Encoding` = "deflate, gzip"),
-  		progress(), timeout(timeout)),
-  		error = function(e) return(NULL))
-  } else {
-  	r <- tryCatch(POST(url = url,
-  		config = token, write_disk(file_name, overwrite = TRUE),
-  		progress(), timeout(timeout)),
-  		error = function(e) return(NULL))
-  }
+    if (gzip) {
+  	r <- tryCatch(POST(
+            url = url,
+            config = token,
+            write_disk(file_name, overwrite = TRUE),
+            add_headers(`Accept-Encoding` = "deflate, gzip"),
+            progress(), timeout(timeout)),
+            error = function(e) return(NULL))
+    } else {
+  	r <- tryCatch(POST(
+            url = url,
+            config = token,
+            write_disk(file_name, overwrite = TRUE),
+            progress(), timeout(timeout)),
+            error = function(e) return(NULL))
+    }
 
-  if (verbose) {
+    if (verbose) {
   	message("Finished streaming tweets!")
-  }
+    }
 
-  if (parse) {
-  	out <- parse_stream(file_name, clean_tweets = clean_tweets, as_double = as_double)
+    if (parse) {
+  	out <- parse_stream(file_name)
   	if (tmp) {
-  	  file.remove(file_name)
+            file.remove(file_name)
   	} else {
-  	  message("streaming data saved as ", file_name)
+            message("streaming data saved as ", file_name)
   	}
   	return(out)
-  } else {
-    message("streaming data saved as ", file_name)
+    } else {
+        message("streaming data saved as ", file_name)
   	invisible()
-  }
+    }
+}
+
+stream_params <- function(stream, ...) {
+    if (length(stream) > 1) {
+        params <- list(locations = paste(stream, collapse = ","))
+    } else if (!all(suppressWarnings(is.na(as.numeric(stream))))) {
+        params <- list(follow = stream, ...)
+    } else {
+        params <- list(track = stream, ...)
+    }
+    params[["filter_level"]] <- "low"
+    params
 }
 
 
@@ -173,102 +199,97 @@ stream_tweets <- function(q = "", timeout = 30, parse = TRUE,
 #' @param file_name name of file to be parsed. NOTE: if file
 #'   was created via \code{\link{stream_tweets}}, then it will
 #'   end in ".json" (see example below)
-#' @param clean_tweets logical indicating whether to remove non-ASCII
-#'   characters in text of tweets. defaults to TRUE.
-#' @param as_double logical indicating whether to handle ID variables
-#'   as double (numeric) class. By default, this is set to FALSE, meaning
-#'   ID variables are treated as character vectors. Setting this to
-#'   TRUE can provide performance (speed and memory) boost but can also
-#'   lead to issues when printing and saving, depending on the format.
-#'
-#' @return Parsed tweets data with users data attribute.
-#'
-#' @examples
-#' \dontrun{
-#' stream_tweets(q = "", file_name = "tw", parse = FALSE)
-#' tw <- parse_stream("tw.json")
-#' tw
-#' }
-#' @importFrom jsonlite stream_in
-#' @export
-parse_stream <- function(file_name, clean_tweets = TRUE,
-                         as_double = FALSE) {
-
-	s <- tryCatch(suppressWarnings(
-    stream_in(file(file_name),
-		verbose = TRUE)), error = function(e) return(NULL))
-
-	if (is.null(s)) {
-		rl <- readLines(file_name, warn = FALSE)
-		cat(paste0(rl[seq_len(length(rl) - 1)],
-		  collapse = "\n"),
-      file = file_name)
-
-		s <- tryCatch(suppressWarnings(
-      stream_in(file(file_name),
-			verbose = TRUE)), error = function(e) return(NULL))
-	}
-	if (is.null(s)) {
-		cat("\n", file = file_name, append = TRUE)
-
-		s <- tryCatch(suppressWarnings(
-      stream_in(file(file_name),
-			verbose = TRUE)), error = function(e) return(NULL))
-	}
-	if (is.null(s)) stop("it's not right. -luther",
-    call. = FALSE)
-
-	s <- parser(s, clean_tweets = clean_tweets,
-	  as_double = as_double)
-
-	attr_tweetusers(s)
-}
-
-#' @keywords internal
-stream_params <- function(stream, ...) {
-  if (length(stream) > 1) {
-    params <- list(location = paste(stream, collapse = ","))
-  } else if (!all(suppressWarnings(is.na(as.numeric(stream))))) {
-    if (all(is.integer(as.numeric(stream)))) {
-      params <- list(follow = stream, ...)
-    }
-  } else {
-    params <- list(track = stream, ...)
-  }
-
-  params[["filter_level"]] <- "low"
-  params
-}
-
-#' parse_stream_xl
-#'
-#' Returns tweets data frame from large json file
-#'
-#' @param x Path name for json file
-#' @param by Number of Tweets to per chunk. By default this is set to
-#'   10,000 tweets.
-#' @return Data frame of tweets data
+#' @param \dots For developmental purposes.
+#' @return Data frame of tweets data with attributes users data
 #' @details Reading and simplifying json files can be very slow. To
 #'   make things more managable, \code{parse_stream_xl} does one chunk
 #'   of Tweets at a time and then compiles the data into a data frame.
+#'
+#' @examples
+#' \dontrun{
+#' ## file extension automatically converted to .json whether or
+#' ## not file_name already includes .json
+#' stream_tweets(q = "", timeout = 30,
+#'               file_name = "rtweet-stream", parse = FALSE)
+#' rt <- parse_stream("rtweet-stream.json")
+#' ## preview tweets data
+#' head(rt)
+#' ## preview users data
+#' head(users_data(rt))
+#' ## plot time series
+#' ts_plot(rt, "secs")
+#' }
+#' @importFrom jsonlite stream_in
 #' @export
-parse_stream_xl <- function(x, by = 10000) {
-  stopifnot(is.character(x), is.numeric(by))
-  x <- readLines(x)
-  n <- length(x)
-  N <- ceiling(n / by)
-  jmin <- 1L
-  df <- vector("list", N)
-  for (i in seq_len(N)) {
-    tmp <- tempfile()
-    jmax <- jmin + (by - 1)
-    if (jmax > n) jmax <- n
-    cat(paste(x[jmin:jmax], collapse = "\n"),
-      file = tmp, append = FALSE)
-    df[[i]] <- parse_stream(tmp)
-    if (jmax >= n) break
-    jmin <- jmax + 1
-    message(i, " of ", N)
-  }
-  do.call("rbind", df)
+parse_stream <- function(file_name, ...) {
+    parse_stream_xl(file_name, ...)
+}
+
+.parse_stream <- function(file_name) {
+
+    if (!identical(getOption("encoding"), "UTF-8")) {
+        op <- getOption("encoding")
+        options(encoding = "UTF-8")
+        on.exit(options(encoding = op))
+    }
+
+    s <- tryCatch(suppressWarnings(
+        stream_in(file(file_name),
+                  verbose = TRUE)),
+        error = function(e) return(NULL))
+
+    if (is.null(s)) {
+        rl <- readLines(file_name, warn = FALSE)
+        cat(paste0(rl[seq_len(length(rl) - 1)],
+                   collapse = "\n"),
+            file = file_name)
+
+        s <- tryCatch(suppressWarnings(
+            stream_in(file(file_name),
+                      verbose = TRUE)),
+            error = function(e) return(NULL))
+    }
+    if (is.null(s)) {
+        cat("\n", file = file_name, append = TRUE)
+
+        s <- tryCatch(suppressWarnings(
+            stream_in(file(file_name),
+                      verbose = TRUE)),
+            error = function(e) return(NULL))
+    }
+    if (is.null(s)) stop(paste0(
+                        "it's not right. -luther\n",
+                        "wasn't able to parse-in json file. ",
+                        "normal fixes didn't work. perhaps you should try ",
+                        "starting a new R session.",
+                        call. = FALSE))
+    parse.piper(s, usr = TRUE) %>%
+        tryCatch(error = function(e) return(s))
+}
+
+
+parse_stream_xl <- function(x, by = 100000) {
+    stopifnot(is.character(x), is.numeric(by))
+    x <- readLines(x, warn = FALSE)
+    n <- length(x)
+    N <- ceiling(n / by)
+    jmin <- 1L
+    df <- vector("list", N)
+    for (i in seq_len(N)) {
+        tmp <- tempfile()
+        jmax <- jmin + (by - 1)
+        if (jmax > n) jmax <- n
+        cat(paste(x[jmin:jmax], collapse = "\n"),
+            file = tmp, append = FALSE)
+        df[[i]] <- .parse_stream(tmp)
+        if (jmax >= n) break
+        jmin <- jmax + 1
+        message(i, " of ", N)
+    }
+    usr <- do.call("rbind", users_data(df)) %>%
+        tryCatch(error = function(e) return(NULL))
+    df <- do.call("rbind", df) %>%
+        tryCatch(error = function(e) return(NULL))
+    attr(df, "usr") <- usr
+    df
 }

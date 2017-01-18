@@ -1,20 +1,14 @@
-parse_tweets <- function(x, clean_tweets = FALSE, as_double = FALSE) {
-  lookup <- FALSE
+parse_tweets <- function(x, clean_tweets = FALSE,
+  as_double = FALSE) {
   if ("statuses" %in% names(x)) {
     x <- x[["statuses"]]
   } else if ("status" %in% names(x)) {
-    lookup <- TRUE
-    screen_name <- x[["screen_name"]]
-    user_id <- x[["id_str"]]
     x <- x[["status"]]
   }
 
   if (!"friends_count" %in% names(x)) {
-    x <- tweets_df(x, clean_tweets = clean_tweets, as_double = as_double)
-    if (lookup) {
-      x[["screen_name"]] <- screen_name
-      x[["user_id"]] <- user_id
-    }
+    x <- tweets_df(x, clean_tweets = clean_tweets,
+      as_double = as_double)
     return(x)
   }
 
@@ -30,11 +24,7 @@ tweets_df <- function(dat, as_double = FALSE, clean_tweets = FALSE) {
   if ("statuses" %in% names(dat)) {
     dat <- dat[["statuses"]]
   }
-  lookup <- FALSE
   if ("status" %in% names(dat)) {
-    lookup <- TRUE
-    screen_name <- dat[["screen_name"]]
-    user_id <- dat[["id_str"]]
     dat <- dat[["status"]]
   }
 
@@ -47,35 +37,13 @@ tweets_df <- function(dat, as_double = FALSE, clean_tweets = FALSE) {
   if (clean_tweets) {
     tweets_df[["text"]] <- cleantweets(tweets_df[["text"]])
   }
-  if (lookup) {
-    tweets_df[["screen_name"]] <- screen_name
-    tweets_df[["user_id"]] <- user_id
-  }
   tweets_df <- tweets_df[row.names(unique(tweets_df[, 1:13])), ]
   row.names(tweets_df) <- NULL
   tweets_df
 }
 
-#' cleantweets
-#'
-#' @description Converts tweets to to ASCII
-#' @param x Twitter text
-#'
-#' @export
 cleantweets <- function(x) {
   iconv(x, "UTF-8", "ASCII", "")
-  #iconv(x, "latin1", "ASCII", "")
-}
-
-#' utf8_tweets
-#'
-#' @description Converts tweets to UTF-8 encoding
-#' @param x Twitter text
-#'
-#' @export
-utf8_tweets <- function(x) {
-  unlist(lapply(x, function(.) if (Encoding(.) != "UTF-8") enc2utf8(x)),
-    recursive = FALSE, use.names = FALSE)
 }
 
 tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
@@ -161,8 +129,10 @@ tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
   if (as_double) {
     toplevel_df[["status_id"]] <- as.double(
       toplevel_df[["status_id"]])
-    toplevel_df[["user_id"]] <- as.double(
-      toplevel_df[["user_id"]])
+    if ("user_id" %in% names(toplevel_df)) {
+      toplevel_df[["user_id"]] <- as.double(
+        toplevel_df[["user_id"]])
+    }
     toplevel_df[["quoted_status_id"]] <- as.double(
       toplevel_df[["quoted_status_id"]])
     toplevel_df[["in_reply_to_status_id"]] <- as.double(
@@ -172,8 +142,10 @@ tweets_toplevel_df <- function(dat, n = NULL, names = NULL,
   } else {
     toplevel_df[["status_id"]] <- as.character(
       toplevel_df[["status_id"]])
-    toplevel_df[["user_id"]] <- as.character(
-      toplevel_df[["user_id"]])
+    if ("user_id" %in% names(toplevel_df)) {
+      toplevel_df[["user_id"]] <- as.character(
+        toplevel_df[["user_id"]])
+    }
     toplevel_df[["quoted_status_id"]] <- as.character(
       toplevel_df[["quoted_status_id"]])
     toplevel_df[["in_reply_to_status_id"]] <- as.character(
@@ -198,7 +170,7 @@ tweets_entities_df <- function(dat, n = NULL) {
     mentions_user_id = rep(NA_real_, n),
   	mentions_screen_name = rep(NA_character_, n),
     hashtags = rep(NA_character_, n),
-    urls = rep(NA_character_, n), stringsAsFactors = FALSE)
+    entitites_urls = rep(NA_character_, n), stringsAsFactors = FALSE)
 
   if ("entities" %in% names(dat)) {
     entities <- dat[["entities"]]
@@ -219,7 +191,7 @@ tweets_entities_df <- function(dat, n = NULL) {
     }
 
     if ("urls" %in% names(entities)) {
-      ent_df$urls <- flatten(lapply(entities[["urls"]],
+      ent_df$entitites_urls <- flatten(lapply(entities[["urls"]],
         function(x) return_with_NA(x[["expanded_url"]], 1)))
     }
   }

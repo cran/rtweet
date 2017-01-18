@@ -4,12 +4,24 @@
 \alias{search_users}
 \title{search_users}
 \usage{
-search_users(q, n = 20, parse = TRUE, clean_tweets = FALSE,
-  as_double = FALSE, token = NULL, verbose = TRUE)
+search_users(q, n = 20, parse = TRUE, tw = TRUE, token = NULL,
+  verbose = TRUE)
 }
 \arguments{
-\item{q}{Character, search query of no greater than
-500 characters maximum.}
+\item{q}{Query to be searched, used in filtering relevant tweets
+to return from Twitter's REST API. Should be a character
+string not to exceed 500 characters maximum. Spaces are assumed
+to function like boolean "AND" operators. To search for tweets
+including one of multiple possible terms, separate search terms
+with spaces and the word "OR". For example, the search
+\code{query = "data science"} searches for tweets using both
+"data" and "science" though the words can appear anywhere and
+in any order in the tweet. However, when OR is added between
+search terms, \code{query = "data OR science"}, Twitter's REST
+API should return any tweet that includes either "data" or
+"science" appearing in the tweets. At this time, Twitter's users/search
+API does not allow complex searches or queries targetting exact phrases
+as is allowed by \code{search_tweets}.}
 
 \item{n}{Numeric, specifying the total number of desired users to
 return. Defaults to 100. Maximum number of users returned from
@@ -21,14 +33,8 @@ a single search is 1,000.}
 [and frustrations] associated with disentangling the Twitter
 API return objects.}
 
-\item{clean_tweets}{logical indicating whether to remove non-ASCII
-characters in text of tweets. defaults to FALSE.}
-
-\item{as_double}{logical indicating whether to handle ID variables
-as double (numeric) class. By default, this is set to FALSE, meaning
-ID variables are treated as character vectors. Setting this to
-TRUE can provide performance (speed and memory) boost but can also
-lead to issues when printing and saving, depending on the format.}
+\item{tw}{Logical indicating whether to return tweets data frame.
+Defaults to true.}
 
 \item{token}{OAuth token. By default \code{token = NULL} fetches a
 non-exhausted token from an environment variable. Find instructions

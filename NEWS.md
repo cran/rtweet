@@ -1,22 +1,88 @@
+# rtweet 0.4.0
+* CRAN release featuring major additions to documentation and support in 
+  addition to new and improved functions like `ts_plot()`, `ts_filter()`
+  and more!
+
+# rtweet 0.3.96
+* For dev: added package builder for better versioning and
+  more frequent updates to NEWS.md file.
+* Added new live streaming vignette as well as updated 
+  and improved tokens vignette
+* Various bug fixes and improvements to tokens, parse, and plot functions.
+
+# rtweet 0.3.93
+* All interactive/posting functions have been modified with the prefix
+  `post_`. This was done to clearly distinguish write functions from
+  retrieval functions.
+* More bug fixes and various improvements.
+* The `ts_plot()` function is now more robust with more adaptive
+  characteristics for variations in the number of filters, the method
+  of distiguishing lines, the position of the legend, and the
+  aesthetics of the themes.
+* Added `ts_filter()` function which allows users to convert Twitter
+  data into a time series-like data frame. Users may also provide
+  filtering rules with which `ts_filter()` will subset the data as it
+  converts it to multiple time series, which it then outputs as a
+  long-form (tidy) data frame.
+
+# rtweet 0.3.92
+
+* `search_tweets` now includes `retryonratelimit` argument to
+allow for searches requesting more than 18,000 tweets. This
+automates what was previously possible through use of `max_id`.
+* Various bug fixes and improvements to parsing and pagination-
+assisting functions.
+* Fixed bug in encoding with `stream_tweets`.
+
+# rtweet 0.3.91
+
+* Major improvements to ts_plot including SIX different
+themes from which users may choose
+* More parsing fixes and misc stability improvements
+* Minor renamig of variables along with returning more
+variables overall
+
+# rtweet 0.3.9
+
+* Fixes minor problems with `parse.piper` function
+* More additions to plotting and data wrangling for the
+purpose of plotting
+
+# rtweet 0.3.8
+
+* Functions by default use a new faster parser that returns more
+variables
+* Text analysis functions provided for convenience
+* Plotting with maps
+* Tidyverse consistencies
+
+# rtweet 0.3.8
+
+* Fixed issue with geo tracking in stream_tweets
+* Various bug fixes and stability improvements
+
 # rtweet 0.3.7
+
 * Reworked `ts_plot` to enable different filtered time series and
 an aesthetic overhaul of the plot function as well.
 
 # rtweet 0.3.6
-* Added `as_double` argument to provide flexibility in handling 
+
+* Added `as_double` argument to provide flexibility in handling
 id variables (as_double provides performance boost but can create
 problems when printing and saving, depending on format). By default
 functions will return IDs as character vectors.
 * Numerous improvements made to parsing and bug fixes to lookup
 and search functions.
- 
+
 # rtweet 0.3.5
 * `clean_tweets` argument provided to allow user more control over
 encoding and handling of non-ascii characters.
-* Fixed issue with `search_users` and implemented several 
+* Fixed issue with `search_users` and implemented several
 improvements to `stream_tweets` and `plot_ts`.
 
 # rtweet 0.3.4
+
 * Implemented robust methods to fetch tokens (whether set as
 environment variable, .httr-oauth file, or if the tokens exist
 in the global environment). Functions now search for variations
@@ -27,21 +93,25 @@ will find it.
 * Stability improvements to `search_tweets` and `stream_tweeets`
 
 # rtweet 0.3.3
+
 * Flattened recursive columns for more reliable parsing and various
 speed enhancements
 
 # rtweet 0.3.2
+
 * Added built-in, encrypted tokens
 * Fixed issues with tweets parsing and reading streams
 * Numerous speed improvements
 
 # rtweet 0.3.1
+
 * `include_retweets` arg added to `search_tweets()` function.
 * `user_id` class changed to double when parsed. double is significantly
 faster and consumes less space. it's also capable of handling the length of
 id scalars, so the only downside is truncated printing.
 
 # rtweet 0.3.0
+
 * New CRAN version!
 * Lots of improvements to stability and entirely new functions to
 play around with (see previous news updates for more info).
@@ -49,23 +119,28 @@ play around with (see previous news updates for more info).
 vignette infrastructure.
 
 # rtweet 0.2.92
+
 * Added gzip option for `stream_tweets()`
 
 # rtweet 0.2.91
+
 * Added sample method for `stream_tweets()` function. By default,
 the streaming query argument, `q`, is now set to an empty string,
 `q = ""`, which returns a random sample of all Tweets
 (pretty cool, right?).
 
 # rtweet 0.2.9
+
 * Added `post_tweet()` function. Users can now post tweets from their R console.
 
 # rtweet 0.2.8
+
 * Added `get_favorites()` function
 * Update tests
 * Exports tweets and users classes with show and plot methods
 
 # rtweet 0.2.7
+
 * Added screen_name variable for user mentions (in addition to user_id).
 
 # rtweet 0.2.6

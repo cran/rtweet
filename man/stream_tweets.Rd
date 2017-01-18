@@ -4,9 +4,9 @@
 \alias{stream_tweets}
 \title{stream_tweets}
 \usage{
-stream_tweets(q = "", timeout = 30, parse = TRUE, clean_tweets = TRUE,
-  as_double = FALSE, token = NULL, file_name = NULL, gzip = FALSE,
-  verbose = TRUE, ...)
+stream_tweets(q = "", timeout = 30, parse = TRUE, token = NULL,
+  file_name = NULL, gzip = FALSE, verbose = TRUE, fix.encoding = TRUE,
+  ...)
 }
 \arguments{
 \item{q}{Character vector with desired phrases and keywords
@@ -31,15 +31,6 @@ the messy list structure returned by Twitter. (Note: if you set parse
 to false, you can use the \code{\link{parse_stream}} function to
 parse the json file at a later point in time.)}
 
-\item{clean_tweets}{logical indicating whether to remove non-ASCII
-characters in text of tweets. defaults to TRUE.}
-
-\item{as_double}{logical indicating whether to handle ID variables
-as double (numeric) class. By default, this is set to FALSE, meaning
-ID variables are treated as character vectors. Setting this to
-TRUE can provide performance (speed and memory) boost but can also
-lead to issues when printing and saving, depending on the format.}
-
 \item{token}{OAuth token. By default \code{token = NULL} fetches a
 non-exhausted token from an environment variable. Find instructions
 on how to create tokens and setup an environment variable in the
@@ -59,7 +50,11 @@ a chance Twitter cuts you off for getting behind).}
 \item{verbose}{Logical, indicating whether or not to include output
 processing/retrieval messages.}
 
-\item{\dots}{Insert magical paramaters, spell, or potion here.}
+\item{fix.encoding}{Logical indicating whether to internally specify encoding to
+prevent possible errors caused by things such as non-ascii characters.}
+
+\item{\dots}{Insert magical paramaters, spell, or potion here. Or filter for
+tweets by language, e.g., \code{language = "en"}.}
 }
 \value{
 Tweets data returned as data frame with users data as attribute.
