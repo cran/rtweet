@@ -2,58 +2,57 @@
 % Please edit documentation in R/users.R
 \name{lookup_users}
 \alias{lookup_users}
-\title{lookup_users}
+\title{Get Twitter users data for given users (user IDs or screen names).}
 \usage{
-lookup_users(users, token = NULL, parse = TRUE, tw = TRUE,
-  clean_tweets = TRUE, as_double = FALSE)
+lookup_users(users, parse = TRUE, token = NULL)
 }
 \arguments{
 \item{users}{User id or screen name of target user.}
 
-\item{token}{OAuth token (1.0 or 2.0). By default
-\code{token = NULL} fetches a non-exhausted token from
-an environment variable @describeIn tokens.}
-
 \item{parse}{Logical, indicating whether or not to parse
 return object into data frame(s).}
 
-\item{tw}{Logical indicating whether to return tweets data frame.
-Defaults to true.}
-
-\item{clean_tweets}{logical indicating whether to remove non-ASCII
-characters in text of tweets. defaults to TRUE.}
-
-\item{as_double}{logical indicating whether to handle ID variables
-as double (numeric) class. By default, this is set to FALSE, meaning
-ID variables are treated as character vectors. Setting this to
-TRUE can provide performance (speed and memory) boost but can also
-lead to issues when printing and saving, depending on the format.}
+\item{token}{OAuth token. By default \code{token = NULL} fetches a
+non-exhausted token from an environment variable. Find
+instructions on how to create tokens and setup an environment
+variable in the tokens vignette (in r, send \code{?tokens} to
+console).}
 }
 \value{
-json response object (max is 18000 per token)
+A tibble of users data.
 }
 \description{
-Returns Twitter user data_frame object for
-  specified user_ids or screen_names.
+Returns data on up to 90,000 Twitter users. To return data on more
+than 90,000 users, code must be written to iterate through user IDs
+whilst avoiding rate limits, which reset every 15 minutes.
 }
 \examples{
-\dontrun{
-# lookup vector of 1 or more user_id or screen_name
-users <- c("potus", "hillaryclinton", "realdonaldtrump",
-  "fivethirtyeight", "cnn", "espn", "twitter")
 
+\dontrun{
+
+## select one or more twitter users to lookup
+users <- c(
+  "potus", "hillaryclinton", "realdonaldtrump",
+  "fivethirtyeight", "cnn", "espn", "twitter"
+)
+
+## get users data
 usr_df <- lookup_users(users)
+
+## view users data
 usr_df
 
-# view tweet data for these users via tweets_data()
+## view tweet data for these users via tweets_data()
 tweets_data(usr_df)
+
 }
 
 }
 \seealso{
-\url{https://dev.twitter.com/overview/documentation}
+\url{https://developer.twitter.com/en/docs/accounts-and-users/follow-search-get-users/api-reference/get-users-lookup}
 
-Other users: \code{\link{search_users}},
-  \code{\link{users_data}}
+Other users: \code{\link{as_screenname}},
+  \code{\link{lists_subscribers}},
+  \code{\link{search_users}},
+  \code{\link{tweets_with_users}}, \code{\link{users_data}}
 }
-

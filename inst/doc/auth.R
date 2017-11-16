@@ -21,9 +21,9 @@ knitr::opts_chunk$set(
 #  
 #  ## create token named "twitter_token"
 #  twitter_token <- create_token(
-#      app = appname,
-#      consumer_key = key,
-#      consumer_secret = secret)
+#    app = appname,
+#    consumer_key = key,
+#    consumer_secret = secret)
 
 ## ------------------------------------------------------------------------
 #  ## path of home directory

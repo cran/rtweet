@@ -2,12 +2,14 @@
 % Please edit documentation in R/friends.R
 \name{lookup_friendships}
 \alias{lookup_friendships}
-\title{lookup_friendships}
+\title{Lookup friendship information between two specified users.}
 \usage{
-lookup_friendships(user, parse = TRUE, token = NULL)
+lookup_friendships(source, target, parse = TRUE, token = NULL)
 }
 \arguments{
-\item{user}{Screen name or user id of target user.}
+\item{source}{Screen name or user id of source user.}
+
+\item{target}{Screen name or user id of target user.}
 
 \item{parse}{Logical indicating whether to return parsed data frame.
 Defaults to true.}
@@ -17,8 +19,13 @@ non-exhausted token from an environment variable. Find instructions
 on how to create tokens and setup an environment variable in the
 tokens vignette (in r, send \code{?tokens} to console).}
 }
-\description{
-Look up informaiton on friendship between authenticated
-  user and up to 100 users.
+\value{
+Data frame converted form returned JSON object. If parse is
+  not true, the HTTP response object is returned instead.
 }
-
+\description{
+Gets information on friendship between two Twitter users.
+}
+\seealso{
+Other friends: \code{\link{my_friendships}}
+}

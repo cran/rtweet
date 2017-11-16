@@ -1,12 +1,97 @@
+# rtweet 0.6.0
+- Introduced new API authorization method, which leverages an embedded
+  rtweet Twitter app that is authorized locally by the user. Creating
+  Twitter apps is non longer necessary. Users need only click "okay"
+  to create and store their API authorization token.
+- Improved parsing and line-reading internals for `stream_tweets()`
+- Added `stream_tweets2()` function for more robust streaming
+  method. Streams JSON files to directory and reconnects following
+  premature disruptions.
+- Various bug fixes nad numerous documentation improvements.
+
+# rtweet 0.5.0
+- Added access to direct messages, mentions, list subscriptions, list
+  users, list members, and list memberships
+- Various fixes to parsing, integrating tibble for output, and
+  streamling geolocation-related functions and data.
+- Fixed issues with streaming and parsing streamed data.
+
+# rtweet 0.4.9
+- Functions `get_timeline()`, `get_favorites()`, `get_friends()`, and
+ `get_followers()` now accept vectors of length > 1.
+- Fixed bugs related to users data and its extracter, `users_data()`
+- New stream parser, `stream_data()`, designed to parse files that cannot
+  wholely fit into memory. `stream_data()` can now work in parallel as well.
+
+# rtweet 0.4.8
+- Support for additional APIs has been added--including APIs designed
+  to return information related to lists and retweets.
+- The `post_status()` function has been fixed and can now be used to
+  upload media.
+- Several adjustments have been made in response to various changes in
+  Twitter's APIs.
+- Thanks to all the great feedback on Github, numerous bug fixes
+  and improvements have been included as well. In general, things
+  should become a lot more stable across functions and data
+  structures.
+
+# rtweet 0.4.7
+- The relatively lightweight tibble package is now a package dependency.
+- Speed boosts to parsing process. It's possible to convert from json to
+  data frames in parallel, but I'm not sure minimal gains are worth the
+  headache. Regardless, the current version should return more data,
+  more reliably, and faster.
+- By default, functions now return data frames (tibbles) with recursive
+  lists (e.g., the 3rd observation of `mentions_screen_name` may consist of
+  4 screen names).
+- To revert back to the flattened/delim object, use the `flatten()` function.
+  Exporting functions such as `save_as_csv` will apply flatten by default.
+- Three different sets of coordinate variables are now returned: `coords_coords`,
+  `geo_coords`, and `bbox_coords` bounding box. The first two come in
+  pairs of coords (a list column) and bbox_coords comes with 8
+  values (longX4 latX4). This should allow users to maximize returns
+  on
+  geo-location data.
+
+# rtweet 0.4.6
+- More efficient iterations through pages of results.
+- Added to documentation, including new package documentation domain:
+  http://rtweet.info.
+- Improvements made in collecting and using geo data.
+
+# rtweet 0.4.5
+- Convenience function `plain_tweets()` added for textual analysis.
+- Overhaul of `ts_plot()` with improved time-aggregating method. Now a
+  wrapper around `ts_data()`, deprecating `ts_filter`.
+
+# rtweet 0.4.4
+- Lots of query-building features added to search tweets, including
+  ability to search by geolocation.
+- Post actions now include replying to status ID.
+- Other various bug fixes and speed improvements.
+
+# rtweet 0.4.3
+- Now returns tibbles (tibble is a recommended dependency)
+- Various bug fixes and code improvements.
+
+# rtweet 0.4.2
+* Various bug fixes
+* Integration with ggplot2 as a suggested dependency
+
+# rtweet 0.4.1
+* Fixed bugs with `mutate_coords()` and `retryonratelimit`.
+* Now returns full text of tweets exceeding 140 characters. This
+  change was necessary due to recent changes in Twitter's API.
+
 # rtweet 0.4.0
-* CRAN release featuring major additions to documentation and support in 
+* CRAN release featuring major additions to documentation and support in
   addition to new and improved functions like `ts_plot()`, `ts_filter()`
   and more!
 
 # rtweet 0.3.96
 * For dev: added package builder for better versioning and
   more frequent updates to NEWS.md file.
-* Added new live streaming vignette as well as updated 
+* Added new live streaming vignette as well as updated
   and improved tokens vignette
 * Various bug fixes and improvements to tokens, parse, and plot functions.
 

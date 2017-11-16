@@ -2,74 +2,68 @@
 % Please edit documentation in R/favorites.R
 \name{get_favorites}
 \alias{get_favorites}
-\title{get_favorites}
+\title{Get tweets data for statuses favorited by one or more target users.}
 \usage{
-get_favorites(user, n = 3000, since_id = NULL, max_id = NULL,
-  parse = TRUE, clean_tweets = FALSE, as_double = FALSE, usr = TRUE,
-  token = NULL)
+get_favorites(user, n = 200, since_id = NULL, max_id = NULL,
+  parse = TRUE, token = NULL)
 }
 \arguments{
-\item{user}{Screen name or user id of target user.}
+\item{user}{Vector of user names, user IDs, or a mixture of both.}
 
-\item{n}{Specifies the number of records to retrieve. Must be
-less than or equal to 200; defaults to 3000, which is the max
-number of favorites returned per token. Due to suspended or
-deleted content, this function may return fewer tweets than
-the desired (n) number.}
+\item{n}{Specifies the number of records to retrieve. Defaults to
+200. 3000 is the max number of favorites returned per token. Due
+to suspended or deleted content, this function may return fewer
+tweets than the desired (n) number. Must be of length 1 or of
+length equal to the provided number of users.}
 
-\item{since_id}{Returns results with an status_id greater
-than (that is, more recent than) the specified status_id.
-There are limits to the number of tweets returned by the REST
-API. If the limit is hit, since_id is adjusted (by Twitter) to
-the oldest ID available.}
+\item{since_id}{Returns results with an status_id greater than
+(that is, more recent than) the specified status_id.  There are
+limits to the number of tweets returned by the REST API. If the
+limit is hit, since_id is adjusted (by Twitter) to the oldest ID
+available.}
 
 \item{max_id}{Returns results with status_id less (older) than or
 equal to (if hit limit) the specified status_id.}
 
-\item{parse}{Logical, indicating whether to return parsed
-vector or nested list (fromJSON) object. By default,
-\code{parse = TRUE} saves you the time [and frustrations]
-associated with disentangling the Twitter API return objects.}
-
-\item{clean_tweets}{logical indicating whether to remove non-ASCII
-characters in text of tweets. defaults to FALSE.}
-
-\item{as_double}{logical indicating whether to handle ID variables
-as double (numeric) class. By default, this is set to FALSE, meaning
-ID variables are treated as character vectors. Setting this to
-TRUE can provide performance (speed and memory) boost but can also
-lead to issues when printing and saving, depending on the format.}
-
-\item{usr}{Logical indicating whether to return users data frame.
-Defaults to true.}
+\item{parse}{Logical, indicating whether to return parsed vector or
+nested list object. By default, \code{parse = TRUE}
+saves you the time [and frustrations] associated with
+disentangling the Twitter API return objects.}
 
 \item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find instructions
-on how to create tokens and setup an environment variable in the
-tokens vignette (in r, send \code{?tokens} to console).}
+non-exhausted token from an environment variable. Find
+instructions on how to create tokens and setup an environment
+variable in the tokens vignette (in r, send \code{?tokens} to
+console).}
 }
 \value{
-Tweets data frame.
+A tbl data frame of tweets data with users data attribute.
 }
 \description{
-Returns the 20 most recent Tweets liked by
-  the authenticating or specified user.
+Returns up to 3,000 statuses favorited by each of one or more
+specific Twitter users.
 }
 \examples{
-\dontrun{
-# get ids of users following the president of the US
-pres <- get_followers(user = "potus")
-pres
 
-# get ids of users following the Environmental Protection Agency
-epa <- get_followers(user = "epa")
-epa
+\dontrun{
+
+## get max number of statuses favorited by KFC
+kfc <- get_favorites("KFC", n = 3000)
+kfc
+
+## get 400 statuses favorited by each of three users
+favs <- get_favorites(c("Lesdoggg", "pattonoswalt", "meganamram"))
+favs
+
 }
+
 }
 \seealso{
-Other tweets: \code{\link{get_timeline}},
-  \code{\link{lookup_statuses}},
-  \code{\link{search_tweets}}, \code{\link{stream_tweets}},
-  \code{\link{tweets_data}}
-}
+\url{https://developer.twitter.com/en/docs/tweets/post-and-engage/api-reference/get-favorites-list}
 
+Other tweets: \code{\link{get_mentions}},
+  \code{\link{get_timeline}}, \code{\link{lists_statuses}},
+  \code{\link{lookup_statuses}},
+  \code{\link{search_tweets}}, \code{\link{tweets_data}},
+  \code{\link{tweets_with_users}}
+}

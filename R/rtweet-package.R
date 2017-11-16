@@ -1,8 +1,7 @@
-#' @title rtweet
+#' rtweet: Collecting Twitter data
 #'
-#' @description rtweet provides users a range of functions
-#'   designed to extract data from Twitter's REST and
-#'   streaming APIs.
+#' rtweet provides users a range of functions designed to extract data
+#' from Twitter's REST and streaming APIs.
 #'
 #' It has three main goals:
 #'
@@ -14,19 +13,11 @@
 #' @examples
 #' \dontrun{
 #' ## for instructions on access tokens, see the tokens vignette
-#' vignette("tokens")
+#' vignette("auth")
 #'
 #' ## for a quick demo check the rtweet vignette
 #' vignette("rtweet")
 #' }
-#'
-#' @docType package
-#' @aliases tokens rtwitter rtweets
-#' @name rtweet
-NULL
-
-.onAttach <- function(libname, pkgname) {
-    packageStartupMessage("Welcome to rtweet v0.4.0!")
-}
+"_PACKAGE"
 
 .state <- new.env(parent = emptyenv())

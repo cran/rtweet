@@ -2,82 +2,85 @@
 % Please edit documentation in R/timeline.R
 \name{get_timeline}
 \alias{get_timeline}
-\title{get_timeline}
+\alias{get_timelines}
+\title{Get one or more user timelines (tweets posted by target user(s)).}
 \usage{
-get_timeline(user, n = 200, max_id = NULL, home = FALSE, parse = TRUE,
-  check = TRUE, usr = TRUE, token = NULL, ...)
+get_timeline(user, n = 100, max_id = NULL, home = FALSE, parse = TRUE,
+  check = TRUE, token = NULL, ...)
+
+get_timelines(user, n = 100, max_id = NULL, home = FALSE, parse = TRUE,
+  check = TRUE, token = NULL, ...)
 }
 \arguments{
-\item{user}{Screen name or user id of target user.}
+\item{user}{Vector of user names, user IDs, or a mixture of both.}
 
-\item{n}{Numeric, number of tweets to return.}
+\item{n}{Number of tweets to return per timeline. Defaults to 100.
+Must be of length 1 or equal to length of user.}
 
 \item{max_id}{Character, status_id from which returned tweets
 should be older than.}
 
 \item{home}{Logical, indicating whether to return a user-timeline
-or home-timeline. By default, home is set to FALSe, which means
-\code{get_timeline} returns tweets posted by the given user.
-To return a user's home timeline feed, that is, the tweets posted
-by accounts followed by a user, set the home to false.}
+or home-timeline. By default, home is set to FALSE, which means
+\code{get_timeline} returns tweets posted by the given user. To
+return a user's home timeline feed, that is, the tweets posted by
+accounts followed by a user, set the home to false.}
 
 \item{parse}{Logical, indicating whether to return parsed
-(data.frames) or nested list (fromJSON) object. By default,
-\code{parse = TRUE} saves users from the time
-[and frustrations] associated with disentangling the Twitter
-API return objects.}
+(data.frames) or nested list object. By default, \code{parse =
+TRUE} saves users from the time [and frustrations] associated
+with disentangling the Twitter API return objects.}
 
 \item{check}{Logical indicating whether to remove check available
-rate limit. Ensures the request does not exceed the maximum remaining
-number of calls. Defaults to TRUE.}
-
-\item{usr}{Logical indicating whether to return users data frame.
-Defaults to true.}
+rate limit. Ensures the request does not exceed the maximum
+remaining number of calls.  Defaults to TRUE.}
 
 \item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find instructions
-on how to create tokens and setup an environment variable in the
-tokens vignette (in r, send \code{?tokens} to console).}
+non-exhausted token from an environment variable. Find
+instructions on how to create tokens and setup an environment
+variable in the tokens vignette (in r, send \code{?tokens} to
+console).}
 
-\item{\dots}{Futher arguments passed on to \code{make_url}.
-All named arguments that do not match the above arguments
-(i.e., count, type, etc.) will be built into the request.
-To return only English language tweets, for example, use
-\code{lang = "en"}. Or, to exclude retweets, use
-\code{include_rts = FALSE}. For more options see Twitter's
-API documentation.}
+\item{...}{Further arguments passed on as parameters in API query.}
 }
 \value{
-List consisting of two data frames. One with the tweets
-  data for a specified user and the second is a single row for
-  the user provided.
+A tbl data frame of tweets data with users data attribute.
 }
 \description{
-Returns timeline of tweets from a specified
-  Twitter user. By default, get_timeline returns tweets
-  posted by a given user. To return a user's timeline feed,
-  that is, tweets posted by accounts you follow, set the
-  home argument to true.
+Returns up to 3,200 statuses posted to the timelines of each of one
+or more specified Twitter users.
 }
 \examples{
-\dontrun{
-# get 2000 from Donald Trump's account
-djt <- get_timeline("realDonaldTrump", n = 2000)
 
-# data frame where each observation (row) is a different tweet
+\dontrun{
+
+## get most recent 3200 tweets posted by Donald Trump's account
+djt <- get_timeline("realDonaldTrump", n = 3200)
+
+## data frame where each observation (row) is a different tweet
 djt
 
-# users data for realDonaldTrump is also retrieved.
-# access it via users_data() users_data(hrc)
+## users data for realDonaldTrump is also retrieved
 users_data(djt)
+
+## retrieve timelines of mulitple users
+tmls <- get_timeline(c("KFC", "ConanOBrien", "NateSilver538"), n = 1000)
+
+## it's returned as one data frame
+tmls
+
+## count observations for each timeline
+table(tmls$screen_name)
+
 }
+
 }
 \seealso{
-\url{https://dev.twitter.com/overview/documentation}
+\url{https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline}
 
 Other tweets: \code{\link{get_favorites}},
+  \code{\link{get_mentions}}, \code{\link{lists_statuses}},
   \code{\link{lookup_statuses}},
-  \code{\link{search_tweets}}, \code{\link{stream_tweets}},
-  \code{\link{tweets_data}}
+  \code{\link{search_tweets}}, \code{\link{tweets_data}},
+  \code{\link{tweets_with_users}}
 }
-

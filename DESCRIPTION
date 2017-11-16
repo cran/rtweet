@@ -1,25 +1,27 @@
 Package: rtweet
 Type: Package
+Version: 0.6.0
 Title: Collecting Twitter Data
-Version: 0.4.0
-Date: 2017-01-17
-Authors@R: person("Michael W.", "Kearney", "", "mkearney@ku.edu", c("aut", "cre"))
-Description: An implementation of calls designed to extract and organize Twitter data via
-    Twitter's REST and stream APIs. Functions formulate and send API requests, convert
-    response objects to more user friendly data structures---e.g., data frames---and
-    provide some aesthetically pleasing visualizations for exploring the data.
+Date: 2017-11-14
+Authors@R: person("Michael W.", "Kearney", "", "kearneymw@missouri.edu", c("aut", "cre"))
+Description: An implementation of calls designed to collect and
+    organize Twitter data via Twitter's REST and stream Application
+    Program Interfaces (API), which can be found at the following URL:
+    <https://developer.twitter.com/en/docs>.
 Depends: R (>= 3.1.0)
-Imports: httr (>= 1.0.0), jsonlite, magrittr, openssl
+Imports: bit64, httr (>= 1.0.0), jsonlite, magrittr, openssl, readr,
+        tibble, utils
 License: MIT + file LICENSE
-LazyData: TRUE
 URL: https://CRAN.R-project.org/package=rtweet
 BugReports: https://github.com/mkearney/rtweet/issues
-RoxygenNote: 5.0.1
-Suggests: knitr, rmarkdown, testthat
+Encoding: UTF-8
+Suggests: ggplot2, knitr, parallel, rmarkdown, testthat
 VignetteBuilder: knitr
+LazyData: yes
+RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2017-01-18 20:40:04 UTC; mwk
+Packaged: 2017-11-16 14:48:21 UTC; mwk
 Author: Michael W. Kearney [aut, cre]
-Maintainer: Michael W. Kearney <mkearney@ku.edu>
+Maintainer: Michael W. Kearney <kearneymw@missouri.edu>
 Repository: CRAN
-Date/Publication: 2017-01-18 23:54:58
+Date/Publication: 2017-11-16 16:20:31 UTC

@@ -2,7 +2,7 @@
 % Please edit documentation in R/trends.R
 \name{trends_available}
 \alias{trends_available}
-\title{trends_available}
+\title{Available Twitter trends along with associated WOEID.}
 \usage{
 trends_available(token = NULL, parse = TRUE)
 }
@@ -13,37 +13,27 @@ on how to create tokens and setup an environment variable in the
 tokens vignette (in r, send \code{?tokens} to console).}
 
 \item{parse}{Logical, indicating whether to return parsed
-(data.frames) or nested list (fromJSON) object. By default,
+(data.frames) or nested list object. By default,
 \code{parse = TRUE} saves users from the time
 [and frustrations] associated with disentangling the Twitter
 API return objects.}
 }
 \value{
-Data frame with WOEIDs. WOEID is a Yahoo! Where On
+Data frame with WOEID column. WOEID is a Yahoo! Where On
   Earth ID.
 }
 \description{
-Returns Twitter trends based on requested WOEID.
+Available Twitter trends along with associated WOEID.
 }
 \examples{
 \dontrun{
-# Retrieve available trends
-trends <- available_trends()
+## Retrieve available trends
+trends <- trends_available()
 trends
 
-# Store WOEID for Worldwide trends
-worldwide <- subset(trends, name == "Worldwide")[["woeid"]]
-
-# Retrieve worldwide trends datadata
-ww_trends <- get_trends(woeid = Worldwide)
-
-# Preview Worldwide trends data
-ww_trends
 }
 
 }
 \seealso{
-Other trends: \code{\link{find_woeid}},
-  \code{\link{get_trends}}
+Other trends: \code{\link{get_trends}}
 }
-

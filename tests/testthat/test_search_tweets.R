@@ -6,7 +6,7 @@ test_that("search_tweets returns tweets data", {
   n <- 50
   token <- readRDS("twitter_tokens")
   x <- search_tweets("tweet tweet", n = n, type = "recent",
-    token = token, lang = "en")
+                     token = token, lang = "en")
 
   expect_equal(is.data.frame(x), TRUE)
   expect_named(x)
@@ -40,8 +40,11 @@ test_that("search_tweets returns tweets data", {
   expect_true(any(c("user_id", "friends_count") %in% names(users_data(x))))
   expect_true(all(FALSE %in% x$is_retweet))
 
-  expect_error(search_tweets(verbose = FALSE, token = token))
+  expect_error(search_tweets(c(1:10), verbose = FALSE, token = token))
   expect_error(search_tweets("tweet", token = "token"))
   expect_error(search_tweets("stats", type = "all", token = token))
   expect_error(search_tweets("stats", type = "all", n = -1, token = token))
+
+  expect_equal(nrow(users_data(letters)), 0L)
+
 })
