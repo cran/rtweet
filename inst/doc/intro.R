@@ -3,7 +3,7 @@ knitr::opts_chunk$set(
   echo = TRUE, eval = FALSE, comment = "#>", collapse = TRUE)
 
 ## ---- eval=FALSE---------------------------------------------------------
-#  ## search for 5000 tweets using the rstats hashtag
+#  ## search for 18000 tweets using the rstats hashtag
 #  rt <- search_tweets(
 #    "#rstats", n = 18000, include_rts = FALSE
 #  )

@@ -10,6 +10,7 @@
 #'   seconds.
 #' @param trim The number of observations to drop off the beginning
 #'   and end of the time series.
+#' @param tz Time zone to be used, defaults to "UTC" (Twitter default)
 #' @param ... Other arguments passed to
 #'   \code{\link[ggplot2]{geom_line}}.
 #' @return If
@@ -50,41 +51,32 @@
 #' }
 #' @family ts_data
 #' @export
-ts_plot <- function(data, by = "days", trim = 0L, ...) {
-  do.call("ts_plot_", list(data = data, by = by, trim = trim, ...))
+ts_plot <- function(data, by = "days", trim = 0L, tz ="UTC", ...) {
+  do.call("ts_plot_", list(data = data, by = by, trim = trim, tz = tz, ...))
 }
 
 
 #' @importFrom graphics legend
-ts_plot_ <- function(data, by = "days", trim = 0L, ...) {
-  data <- ts_data(data, by, trim)
-  if (requireNamespace("ggplot2", quietly = TRUE)) {
-    if (ncol(data) == 3L) {
-      ggplot2::ggplot(
-        data, ggplot2::aes_string(
-          x = "time", y = "n", colour = names(data)[3])
-      ) +
-      ggplot2::geom_line(...)
-    } else if (ncol(data) == 4L) {
-      ggplot2::ggplot(
-        data, ggplot2::aes_string(
-          x = "time", y = "n", colour = names(data)[3], linetype = names(data)[4])
-      ) +
-      ggplot2::geom_line(...)
-    } else {
-      ggplot2::ggplot(
-        data, ggplot2::aes_string(x = "time", y = "n")) +
-        ggplot2::geom_line(...)
-    }
+ts_plot_ <- function(data, by = "days", trim = 0L, tz ="UTC", ...) {
+  data <- ts_data(data, by, trim, tz)
+  try_require("ggplot2")
+  if (ncol(data) == 3L) {
+    ggplot2::ggplot(
+      data, ggplot2::aes_string(
+        x = "time", y = "n", colour = names(data)[3])
+    ) +
+    ggplot2::geom_line(...)
+  } else if (ncol(data) == 4L) {
+    ggplot2::ggplot(
+      data, ggplot2::aes_string(
+        x = "time", y = "n", colour = names(data)[3], linetype = names(data)[4])
+    ) +
+    ggplot2::geom_line(...)
   } else {
-    stop("please install ggplot2 to use ts_plot", call. = FALSE)
+    ggplot2::ggplot(
+      data, ggplot2::aes_string(x = "time", y = "n")) +
+      ggplot2::geom_line(...)
   }
-}
-
-#' @importFrom grDevices hcl
-ggcols <- function(n) {
-  hues = seq(15, 375, length = n + 1)
-  grDevices::hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
 
@@ -100,6 +92,7 @@ ggcols <- function(n) {
 #'   seconds.
 #' @param trim Number of observations to trim off the front and end of
 #'   each time series
+#' @param tz Time zone to be used, defaults to "UTC" (Twitter default)
 #' @return Data frame with time, n, and grouping column if applicable.
 #' @examples
 #'
@@ -125,12 +118,12 @@ ggcols <- function(n) {
 #' }
 #'
 #' @export
-ts_data <- function(data, by = "days", trim = 0L) {
-  args <- list(data = data, by = by, trim = trim)
+ts_data <- function(data, by = "days", trim = 0L, tz ="UTC") {
+  args <- list(data = data, by = by, trim = trim, tz = tz)
   do.call("ts_data_", args)
 }
 
-ts_data_ <- function(data, by = "days", trim = 0L) {
+ts_data_ <- function(data, by = "days", trim = 0L, tz = "UTC") {
   stopifnot(is.data.frame(data), is.atomic(by))
   if (has_name_(data, "created_at")) {
     dtvar <- "created_at"
@@ -144,8 +137,9 @@ ts_data_ <- function(data, by = "days", trim = 0L) {
   data <- data[order(data[[dtvar]]), ]
   ## reformat time var
   .unit <- parse_unit(by)
-  data[[dtvar]] <- round_time(data[[dtvar]], by)
-  data[[dtvar]] <- trim_time(data[[dtvar]], by)
+  ## adjust to desired tz
+  data[[dtvar]] <- as.POSIXct(format(data[[dtvar]], tz = "UTC"), tz = tz)
+  data[[dtvar]] <- round_time(data[[dtvar]], by, tz)
   ## get unique values of time in series
   dtm <- unique(
     seq(data[[dtvar]][1], data[[dtvar]][length(data[[dtvar]])], .unit)
@@ -160,7 +154,7 @@ ts_data_ <- function(data, by = "days", trim = 0L) {
     }
     group1 <- groups[1]
     lv1 <- unique(data[[group1]])
-    df1 <- as.POSIXct(character(), tz = "UTC")
+    df1 <- as.POSIXct(character(), tz = tz)
     df2 <- integer()
     df3 <- list()
     if (!is.null(group2)) {
@@ -225,28 +219,10 @@ ts_data_ <- function(data, by = "days", trim = 0L) {
   df
 }
 
-
-
-trim_time <- function(dt, by, tz = "UTC", ...) {
-  if (grepl("year", by)) {
-    as.POSIXct(paste0(substr(dt, 1, 5), "01-01 00:00:00"), tz = tz, ...)
-  } else if (grepl("month", by)) {
-    as.POSIXct(paste0(substr(dt, 1, 8),    "01 00:00:00"), tz = tz, ...)
-  } else if (grepl("week|day", by)) {
-    as.POSIXct(paste0(substr(dt, 1, 12),      "00:00:00"), tz = tz, ...)
-  } else if (grepl("hour", by)) {
-    as.POSIXct(paste0(substr(dt, 1, 15),         "00:00"), tz = tz, ...)
-  } else if (grepl("min", by)) {
-    as.POSIXct(paste0(substr(dt, 1, 18),            "00"), tz = tz, ...)
-  } else {
-    dt
-  }
-}
-
 parse_unit <- function(by) {
   stopifnot(is.atomic(by))
   if (is.numeric(by)) {
-    n <- by
+    return(by)
   } else if (grepl("year", by)) {
     n <- 60 * 60 * 24 * 365
   } else if (grepl("month", by)) {
@@ -273,7 +249,49 @@ parse_unit <- function(by) {
 }
 
 
-round_time <- function(x, interval = 60, center = TRUE) {
+#' A generic function for rounding date and time values
+#'
+#' @param x A vector of class POSIX or Date.
+#' @param n Unit to round to. Defaults to mins. Numeric values treated
+#'   as seconds. Otherwise this should be one of "mins", "hours", "days",
+#'   "weeks", "months", "years" (plural optional).
+#' @param tz Time zone to be used, defaults to "UTC" (Twitter default)
+#' @return If POSIXct then POSIX. If date then Date.
+#' @export
+#' @examples
+#'
+#' ## class posixct
+#' round_time(Sys.time(), "12 hours")
+#'
+#' ## class date
+#' unique(round_time(seq(Sys.Date(), Sys.Date() + 100, "1 day"), "weeks"))
+round_time <- function(x, n, tz) UseMethod("round_time")
+
+#' @export
+round_time.POSIXt <- function(x, n = "mins", tz = "UTC") {
+  n <- parse_to_secs(n)
+  #as.POSIXct(hms::hms(as.numeric(x) %/% n * n), tz = tz)
+  hms(as.numeric(x) %/% n * n, tz = tz)
+}
+
+
+hms <- function(secs = NULL, tz = "UTC") {
+  if (is.null(secs)) {
+    secs <- numeric()
+  }
+  structure(secs, tzone = tz,
+    class = c("POSIXct", "POSIXt"))
+}
+
+
+#' @export
+round_time.Date <- function(x, n = "months", tz = "UTC") {
+  x <- as.POSIXct(format(x, tz = "UTC"), tz = tz)
+  as.Date(round_time(x, n, tz = tz))
+}
+
+
+round_time2 <- function(x, interval = 60, center = TRUE, tz = "UTC") {
   stopifnot(inherits(x, "POSIXct"))
   ## parse interval
   interval <- parse_unit(interval)
@@ -284,7 +302,7 @@ round_time <- function(x, interval = 60, center = TRUE) {
     rounded <- rounded + round(interval * .5, 0)
   }
   ## return to date-time
-  as.POSIXct(rounded, tz = "UTC", origin = "1970-01-01")
+  as.POSIXct(rounded, tz = tz, origin = "1970-01-01")
 }
 
 
@@ -314,4 +332,33 @@ trim_ots <- function(x, f = 1L, l = 1L) {
     return(x)
   }
   x[-c(f, l), ]
+}
+
+
+parse_to_secs <- function(x) {
+  if (is.numeric(x)) {
+    n <- x
+  } else if (grepl("year", x)) {
+    n <- 60 * 60 * 24 * 365
+  } else if (grepl("month", x)) {
+    n <- 60 * 60 * 24 * 30
+  } else if (grepl("week", x)) {
+    n <- 60 * 60 * 24 * 7
+  } else if (grepl("day", x)) {
+    n <- 60 * 60 * 24
+  } else if (grepl("hour", x)) {
+    n <- 60 * 60
+  } else if (grepl("min", x)) {
+    n <- 60
+  } else if (grepl("sec", x)) {
+    n <- 1
+  } else {
+    stop("must express time interval in secs, mins, hours, days, weeks, months, or years",
+      call. = FALSE)
+  }
+  x <- as.double(gsub("[^[:digit:]|\\.]", "", x))
+  if (any(is.na(x), identical(x, ""))) {
+    x <- 1
+  }
+  n * x
 }

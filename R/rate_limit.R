@@ -65,6 +65,19 @@ rate_limit.default <- function(token = NULL, query = NULL, parse = TRUE) {
   rate_limit_(token, query, parse)
 }
 
+#' @export
+rate_limit.function <- function(token = NULL, query = NULL, parse = TRUE) {
+  token <- as.character(substitute(token))
+  if (is.character(token) && length(token) == 1L &&
+      (is.null(query) || inherits(query, "Token") || is.list(query))) {
+    fix_query <- token
+    token <- query
+    query <- fix_query
+  }
+  rate_limit_(token, query, parse)
+}
+
+
 token_name <- function(x) {
   x$app$appname
 }
@@ -74,8 +87,17 @@ rate_limit.NULL <- function(token = NULL, query = NULL, parse = TRUE) {
   if (is.null(token)) {
     token <- get_tokens()
   }
+  if (is.function(query)) {
+    query <- as.character(substitute(query))
+  }
   rate_limit(token = token, query = query, parse = parse)
 }
+
+#' @export
+rate_limit.bearer <- function(token = NULL, query = NULL, parse = TRUE) {
+  rate_limit_(token, query, parse)
+}
+
 
 #' @export
 rate_limit.character <- function(token = NULL, query = NULL, parse = TRUE) {
@@ -118,15 +140,22 @@ rate_limit.list <- function(token = NULL,
 rate_limit_ <- function(token,
                         query = NULL,
                         parse = TRUE) {
-  token <- check_token(token, query = NULL)
+  token <- check_token(token)
   url <- make_url(
     restapi = TRUE,
     query = "application/rate_limit_status")
-  r <- TWIT(get = TRUE, url, config = token)
+  if (inherits(token, "bearer")) {
+    r <- TWIT(get = TRUE, url, token)
+  } else {
+    r <- TWIT(get = TRUE, url, config = token)
+  }
   warn_for_twitter_status(r)
   r <- from_js(r)
   if (parse) {
     rl_df <- .rl_df(r)
+    if (is.null(rl_df) || nrow(rl_df) == 0) {
+      return(data.frame())
+    }
     rl_df$app <- token_name(token)
     if (!is.null(query)) {
       query <- fun2api(query)
@@ -144,14 +173,19 @@ rate_limit_ <- function(token,
   }
 }
 
+
 .rl_df <- function(r) {
   if (has_name_(r, "errors")) return(data.frame())
   if (!has_name_(r, "resources")) return(data.frame())
   data <- r$resources
-  rl_df <- data.frame(
-    query = gsub(".limit|.remaining|.reset", "",
+  if (!all(c("lists", "application", "search", "users") %in% names(data))) {
+    return(data.frame())
+  }
+  rl_df <- tryCatch({
+    data.frame(
+    query = gsub("\\.limit$|\\.remaining$|\\.reset$", "",
                  gsub(".*[.][/]", "",
-                      grep(".limit$", names(unlist(data)),
+                      grep("\\.limit$", names(unlist(data)),
                            value = TRUE))),
     limit = unlist(lapply(data, function(y)
       lapply(y, function(x) getElement(x, "limit")))),
@@ -161,7 +195,11 @@ rate_limit_ <- function(token,
       lapply(y, function(x) getElement(x, "reset")))),
     stringsAsFactors = FALSE,
     row.names = NULL
-  )
+  )},
+    error = function(e) NULL)
+  if (is.null(rl_df)) {
+    return(data.frame())
+  }
   rl_df$reset_at <- format_rate_limit_reset(rl_df$reset)
   if (inherits(rl_df$reset_at, "POSIXt")) {
     rl_df$reset <- difftime(
@@ -170,6 +208,7 @@ rate_limit_ <- function(token,
   } else {
     rl_df$reset <- structure(NA_character_, class = "difftime", units = "mins")
   }
+  rl_df$timestamp <- Sys.time()
   tibble::as_tibble(rl_df, validate = FALSE)
 }
 
@@ -193,8 +232,12 @@ format_rate_limit_reset <- function(x) {
 
 funs_and_apis <- function() {
   list(
+    `account/verify_credentials` = "authenticating_user_name",
+    `application/rate_limit_status` = "rate_limit",
+
     `favorites/list` = "get_favorites",
     `favorites/list` = "favorites",
+
     `followers/ids` = "get_followers",
     `followers/ids` = "followers",
     `friends/ids` = "get_friends",
@@ -205,6 +248,7 @@ funs_and_apis <- function() {
     `lists/memberships` = "lists_memberships",
     `lists/subscribers` = "lists_subscribers",
     `lists/subscriptions` = "lists_subscriptions",
+    `lists/statuses` = "lists_statuses",
 
     `search/tweets` = "search_tweets",
     `search/tweets` = "search_twitter",
@@ -250,7 +294,8 @@ funs_and_apis <- function() {
 
     `friendships/lookup` = "lookup_friendships",
     `users/suggestions` = "suggested_users",
-    `users/suggestions/:slug` = "suggested_slugs"
+    `users/suggestions/:slug` = "suggested_slugs",
+    `users/suggestions/:slug$|^users/suggestions` = "suggested_users_all"
   )
 }
 
@@ -263,13 +308,37 @@ stream_api_funs <- function() {
 
 post_api_funs <- function() {
   list(
+    ## post status
     `statuses/update` = "post_status",
     `media/upload` = "post_status",
+    `statuses/update` = "post_tweet",
+    `media/upload` = "post_tweet",
+    `statuses/destroy/:id` = "post_tweet",
+    `statuses/destroy/:id` = "post_status",
+
+    ## dms
     `direct_messages/new` = "post_direct_message",
-    `friendships/update` = "post_follow",
+    `direct_messages` = "direct_messages_received",
+    `direct_messages/events/list` = "direct_messages",
+    `direct_messages/events/list` = "direct_messages_received",
+
+    ## mute
     `mutes/users/create` = "post_mute",
+
+    ## friendship status
+    `friendships/update` = "post_friendship",
     `friendships/destroy` = "post_unfollow",
-    `friendships/create` = "post_follow"
+    `friendships/create` = "post_follow",
+
+    ## favs
+    `favorites/create` = "post_favorite",
+    `favorites/destroy` = "post_unfavorite",
+
+    ## lists
+    `lists/create` = "post_list",
+    `lists/members/create_all` = "post_list",
+    `lists/destroy` = "post_list",
+    `lists/members/destroy_all` = "post_list"
   )
 }
 

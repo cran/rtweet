@@ -11,13 +11,26 @@
 #'   Note: in line with the Twitter API, this parameter is ignored unless the
 #'   author of the tweet this parameter references is mentioned within the
 #'   status text.
+#' @param destroy_id To delete a status, supply the single status ID here.
+#'   If a character string is supplied, overriding the default (NULL),
+#'   then a destroy request is made (and the status text and media attachments)
+#'   are irrelevant.
+#' @param retweet_id To retweet a status, supply the single status ID here.
+#'   If a character string is supplied, overriding the default (NULL),
+#'   then a retweet request is made (and the status text and media attachments)
+#'   are irrelevant.
 #' @examples
 #' \dontrun{
+#' ## generate data to make/save plot (as a .png file)
 #' x <- rnorm(300)
 #' y <- x + rnorm(300, 0, .75)
 #' col <- c(rep("#002244aa", 50), rep("#440000aa", 50))
 #' bg <- c(rep("#6699ffaa", 50), rep("#dd6666aa", 50))
-#' tmp <- tempfile(fileext = "png")
+#'
+#' ## crate temporary file name
+#' tmp <- tempfile(fileext = ".png")
+#'
+#' ## save as png
 #' png(tmp, 6, 6, "in", res = 127.5)
 #' par(tcl = -.15, family = "Inconsolata",
 #'     font.main = 2, bty = "n", xaxt = "l", yaxt = "l",
@@ -27,15 +40,23 @@
 #'      main = "This image was uploaded by rtweet")
 #' grid(8, lwd = .15, lty = 2, col = "#00000088")
 #' dev.off()
-#' browseURL(tmp)
-#' post_tweet(".Call(\"oops\", ...)",
-#'            media = tmp)
+#'
+#' ## post tweet with media attachment
+#' post_tweet("a tweet with media attachment", media = tmp)
 #'
 #' # example of replying within a thread
+#' ## first post
 #' post_tweet(status="first in a thread")
-#' my_timeline <- get_timeline(self_user_name, n=1, token=twitter_token)
-#' reply_id <- my_timeline[1,]$status_id
-#' post_tweet(status="second in the thread", in_reply_to_status_id=reply_id)
+#'
+#' ## lookup status_id
+#' my_timeline <- get_timeline(rtweet:::home_user())
+#'
+#' ## ID for reply
+#' reply_id <- my_timeline$status_id[1]
+#'
+#' ## post reply
+#' post_tweet("second in the thread",
+#'   in_reply_to_status_id = reply_id)
 #' }
 #' @family post
 #' @aliases post_status
@@ -43,12 +64,66 @@
 post_tweet <- function(status = "my first rtweet #rstats",
                        media = NULL,
                        token = NULL,
-                       in_reply_to_status_id = NULL) {
+                       in_reply_to_status_id = NULL,
+                       destroy_id = NULL,
+                       retweet_id = NULL) {
+
+  ## check token
+  token <- check_token(token)
+
+  ## if delete
+  if (!is.null(destroy_id)) {
+    ## validate destroy_id
+    stopifnot(is.character(destroy_id) && length(destroy_id) == 1)
+    ## build query
+    query <- sprintf("statuses/destroy/%s", destroy_id)
+    ## make URL
+    url <- make_url(query = query)
+
+    ## send request
+    r <- TWIT(get = FALSE, url, token)
+
+    ## if it didn't work return message
+    if (r$status_code != 200) {
+      return(httr::content(r))
+    }
+    ## if it did, print message and silently return response object
+    message("your tweet has been deleted!")
+    return(invisible(r))
+  }
+
+  ## if retweet
+  if (!is.null(retweet_id)) {
+    ## validate destroy_id
+    stopifnot(is.character(retweet_id) && length(retweet_id) == 1)
+    ## build query
+    query <- sprintf("statuses/retweet/%s", retweet_id)
+    ## make URL
+    url <- make_url(query = query)
+
+    ## send request
+    r <- TWIT(get = FALSE, url, token)
+
+    ## wait for status
+    warn_for_twitter_status(r)
+
+    ## if it didn't work return message
+    if (r$status_code != 200) {
+      return(r)
+    }
+
+    ## if it did, print message and silently return response object
+    message("the tweet has been retweeted!")
+    return(invisible(r))
+  }
 
   ## validate
   stopifnot(is.character(status))
   stopifnot(length(status) == 1)
+
+  ## update statuses query
   query <- "statuses/update"
+  ## validate status text
   if (all(nchar(status) > 280, !grepl("http", status))) {
     stop("cannot exceed 280 characters.", call. = FALSE)
   }
@@ -56,7 +131,6 @@ post_tweet <- function(status = "my first rtweet #rstats",
     stop("can only post one status at a time",
          call. = FALSE)
   }
-  token <- check_token(token, query)
 
   ## media if provided
   if (!is.null(media)) {
@@ -128,7 +202,7 @@ post_message <- function(text, user, media = NULL, token = NULL) {
     stop("can only post one message at a time",
          call. = FALSE)
   }
-  token <- check_token(token, query)
+  token <- check_token(token)
   ## media if provided
   if (!is.null(media)) {
     media2upload <- httr::upload_file(media)
@@ -365,4 +439,284 @@ post_friendship <- function(user,
     return(httr::content(r))
   }
   invisible(r)
+}
+
+
+
+post_list_create <- function(name,
+                             description = NULL,
+                             private = FALSE,
+                             token = NULL) {
+
+  stopifnot(is.atomic(name), length(name) == 1, is.logical(private))
+
+  token <- check_token(token)
+
+  query <- "lists/create"
+
+  if (private) {
+    mode <- "private"
+  } else {
+    mode <- "public"
+  }
+
+  params <- list(
+    name = name,
+    mode = mode,
+    description = description)
+
+  url <- make_url(query = query, param = params)
+
+  r <- TWIT(get = FALSE, url, token)
+
+  warn_for_twitter_status(r)
+
+  r
+}
+
+
+post_list_destroy <- function(list_id = NULL,
+                              slug = NULL,
+                              token = NULL) {
+  if (!is.null(list_id)) {
+
+    stopifnot(is.atomic(list_id), length(list_id) == 1)
+    params <- list(list_id = list_id)
+
+  } else if (!is.null(slug)) {
+
+    stopifnot(is.atomic(slug), length(slug) == 1)
+    params <- list(slug = slug, owner_screen_name = home_user())
+
+  } else {
+    stop("must supply list_id or slug")
+  }
+
+  token <- check_token(token)
+
+  query <- "lists/destroy"
+
+  url <- make_url(query = query, param = params)
+
+  r <- TWIT(get = FALSE, url, token)
+
+  warn_for_twitter_status(r)
+
+  r
+}
+
+post_list_create_all <- function(users,
+                                 list_id = NULL,
+                                 slug = NULL,
+                                 token = NULL) {
+  ## must id list via numeric ID or slug
+  if (is.null(list_id) && is.null(slug)) {
+    stop("must supply either list_id or slug to identify pre-existing list")
+  }
+
+  ## check and reformat users
+  stopifnot(is.character(users))
+  if (length(users) > 100) {
+    warning("Can only add 100 users at a time. Adding users[1:100]...",
+      call. = FALSE)
+    users <- users[1:100]
+  }
+  users <- paste(users, collapse = ",")
+
+  ## check token
+  token <- check_token(token)
+
+  ## specify API path
+  query <- "lists/members/create_all"
+
+  ## if list id
+  if (!is.null(list_id)) {
+    stopifnot(is.atomic(list_id), length(list_id) == 1)
+    params <- list(
+      list_id = list_id,
+      users = users
+    )
+
+  ## if slug
+  } else {
+    stopifnot(is.atomic(slug), length(slug) == 1)
+    params <- list(
+      slug = slug,
+      owner_screen_name = home_user(),
+      users = users
+    )
+  }
+  ## rename last param
+  names(params)[length(params)] <- .ids_type(users)
+
+  ## build URL
+  url <- make_url(query = query, param = params)
+
+  ## send request
+  r <- TWIT(get = FALSE, url, token)
+
+  ## check status
+  warn_for_twitter_status(r)
+
+  ## return response object
+  r
+}
+
+post_list_destroy_all <- function(users,
+                                  list_id = NULL,
+                                  slug = NULL,
+                                  token = NULL) {
+  ## must id list via numeric ID or slug
+  if (is.null(list_id) && is.null(slug)) {
+    stop("must supply either list_id or slug to identify pre-existing list")
+  }
+
+  ## check and reformat users
+  stopifnot(is.character(users))
+  if (length(users) > 100) {
+    warning("Can only drop 100 users at a time. Dropping users[1:100]...",
+      call. = FALSE)
+    users <- users[1:100]
+  }
+
+  users <- paste(users, collapse = ",")
+
+  ## check token
+  token <- check_token(token)
+
+  ## specify API path
+  query <- "lists/members/destroy_all"
+
+  ## if list id
+  if (!is.null(list_id)) {
+    stopifnot(is.atomic(list_id), length(list_id) == 1)
+    params <- list(
+      list_id = list_id,
+      users = users
+    )
+
+  ## if slug
+  } else {
+    stopifnot(is.atomic(slug), length(slug) == 1)
+    params <- list(
+      slug = slug,
+      owner_screen_name = home_user(),
+      users = users
+    )
+  }
+  ## rename last param
+  names(params)[length(params)] <- .ids_type(users)
+
+  ## build URL
+  url <- make_url(query = query, param = params)
+
+  ## send request
+  r <- TWIT(get = FALSE, url, token)
+
+  ## check status
+  warn_for_twitter_status(r)
+
+  ## return response object
+  r
+}
+
+
+#' Manage Twitter lists
+#'
+#' Create, add users, and destroy Twitter lists
+#'
+#' @param users Character vectors of users to be added to list.
+#' @param name Name of new list to create.
+#' @param description Optional, description of list (single character string).
+#' @param private Logical indicating whether created list should be private.
+#'   Defaults to false, meaning the list would be public. Not applicable if list
+#'   already exists.
+#' @param destroy Logical indicating whether to delete a list. Either `list_id` or
+#'   `slug` must be provided if `destroy = TRUE`.
+#' @param list_id Optional, numeric ID of list.
+#' @param slug Optional, list slug.
+#' @param token OAuth token associated with user who owns [or will own] the list
+#'   of interest. Token must have write permissions!
+#' @return Response object from HTTP request.
+#' @examples
+#' \dontrun{
+#'
+#' ## CNN twitter accounts
+#' users <- c("cnn", "cnnbrk", "cnni", "cnnpolitics", "cnnmoney",
+#'   "cnnnewsroom", "cnnspecreport", "CNNNewsource",
+#'   "CNNNSdigital", "CNNTonight")
+#'
+#' ## create CNN-accounts list with 9 total users
+#' (cnn_lst <- post_list(users,
+#'   "cnn-accounts", description = "Official CNN accounts"))
+#'
+#' ## view list in browser
+#' browseURL(sprintf("https://twitter.com/%s/lists/cnn-accounts",
+#'   rtweet:::home_user()))
+#'
+#' ## search for more CNN users
+#' cnn_users <- search_users("CNN", n = 200)
+#'
+#' ## filter and select more users to add to list
+#' more_users <- cnn_users %>%
+#'   subset(verified & !tolower(screen_name) %in% tolower(users)) %>%
+#'   .$screen_name %>%
+#'   grep("cnn", ., ignore.case = TRUE, value = TRUE)
+#'
+#' ## add more users to list- note: can only add up to 100 at a time
+#' post_list(users = more_users, slug = "cnn-accounts")
+#'
+#' ## view updated list in browser (should be around 100 users)
+#' browseURL(sprintf("https://twitter.com/%s/lists/cnn-accounts",
+#'   rtweet:::home_user()))
+#'
+#' ## select users on list without "cnn" in their name field
+#' drop_users <- cnn_users %>%
+#'   subset(screen_name %in% more_users & !grepl("cnn", name, ignore.case = TRUE)) %>%
+#'   .$screen_name
+#'
+#' ## drop these users from the cnn list
+#' post_list(users = drop_users, slug = "cnn-accounts",
+#'   destroy = TRUE)
+#'
+#' ## view updated list in browser (should be around 100 users)
+#' browseURL(sprintf("https://twitter.com/%s/lists/cnn-accounts",
+#'   rtweet:::home_user()))
+#'
+#' ## delete list entirely
+#' post_list(slug = "cnn-accounts", destroy = TRUE)
+#'
+#' }
+#' @export
+post_list <- function(users = NULL,
+                      name = NULL,
+                      description = NULL,
+                      private = FALSE,
+                      destroy = FALSE,
+                      list_id = NULL,
+                      slug = NULL,
+                      token = NULL) {
+  ## destroy list
+  if (destroy && is.null(users)) {
+    return(post_list_destroy(list_id, slug, token))
+  }
+
+  ## drop users from list
+  if (destroy) {
+    return(post_list_destroy_all(users, list_id, slug, token))
+  }
+
+  ## create list
+  if (is.null(list_id) && is.null(slug)) {
+    r <- post_list_create(name, description, private, token)
+    if (r$status_code != 200) {
+      stop("failed to create list")
+    }
+    ## use returned list ID to add users
+    tl <- from_js(r)
+    list_id <- tl$id_str
+  }
+
+  ## add users to list
+  post_list_create_all(users, list_id, slug, token)
 }

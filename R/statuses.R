@@ -7,11 +7,12 @@
 #' @param statuses User id or screen name of target user.
 #' @param parse Logical, indicating whether or not to parse
 #'   return object into data frame(s).
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @seealso \url{https://developer.twitter.com/en/docs/tweets/post-and-engage/api-reference/get-statuses-lookup}
 #' @examples
 #'
@@ -27,9 +28,6 @@
 #' ## lookup tweets data for given statuses
 #' tw <- lookup_statuses(statuses)
 #' tw
-#'
-#' ## view users data for these statuses via users_data()
-#' users_data(tw)
 #'
 #' }
 #'
@@ -65,9 +63,7 @@ lookup_statuses_ <- function(statuses,
     if (to > length(statuses)) {
       to <- length(statuses)
     }
-    twt[[i]] <- .status_lookup(
-      statuses[from:to],
-      token, parse = parse)
+    twt[[i]] <- .status_lookup(statuses[from:to], token = token)
     from <- to + 1
     if (from > length(statuses)) break
   }
@@ -77,12 +73,8 @@ lookup_statuses_ <- function(statuses,
   twt
 }
 
-.status_lookup <- function(statuses, token = NULL, parse) {
+.status_lookup <- function(statuses, token = NULL) {
   query <- "statuses/lookup"
-  if (is.list(statuses)) {
-    statuses <- unlist(statuses)
-  }
-  stopifnot(is.atomic(statuses))
   if (length(statuses) > 100) {
     statuses <- statuses[1:100]
   }
@@ -92,7 +84,12 @@ lookup_statuses_ <- function(statuses,
   url <- make_url(
     query = query,
     param = params)
-  token <- check_token(token, query = "statuses/lookup")
-  resp <- TWIT(get = TRUE, url, token)
+  token <- check_token(token)
+  if (length(statuses) > 20L) {
+    get <- FALSE
+  } else {
+    get <- TRUE
+  }
+  resp <- TWIT(get = get, url, token)
   from_js(resp)
 }

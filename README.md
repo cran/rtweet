@@ -1,16 +1,23 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-rtweet <img src="man/figures/logo.png" align="right" />
-=======================================================
 
-[![Build Status](https://travis-ci.org/mkearney/rtweet.svg?branch=master)](https://travis-ci.org/mkearney/rtweet) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/rtweet)](https://CRAN.R-project.org/package=rtweet) ![Downloads](https://cranlogs.r-pkg.org/badges/rtweet) ![Downloads](https://cranlogs.r-pkg.org/badges/grand-total/rtweet) <!-- [![Travis-CI Build Status](https://travis-ci.org/mkearney/rtweet.svg?branch=master)](https://travis-ci.org/mkearney/rtweet) --> <!-- [![Coverage Status](https://img.shields.io/codecov/c/github/mkearney/rtweet/master.svg)](https://codecov.io/gh/mkearney/rtweet) --> [![Rdoc](http://www.rdocumentation.org/badges/version/rtweet)](http://www.rdocumentation.org/packages/rtweet)
+# rtweet <img src="man/figures/logo.png" width="160px" align="right" />
 
-R client for accessing Twitter's REST and stream APIs.
+[![Build
+Status](https://travis-ci.org/mkearney/rtweet.svg?branch=master)](https://travis-ci.org/mkearney/rtweet)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/rtweet)](https://cran.r-project.org/package=rtweet)
+[![Coverage
+Status](https://codecov.io/gh/mkearney/rtweet/branch/master/graph/badge.svg)](https://codecov.io/gh/mkearney/rtweet?branch=master)
 
-Check out the [rtweet package documentation website](http://rtweet.info).
+![Downloads](https://cranlogs.r-pkg.org/badges/rtweet)
+![Downloads](https://cranlogs.r-pkg.org/badges/grand-total/rtweet)
+[![lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 
-Install
--------
+R client for accessing Twitter’s REST and stream APIs. Check out the
+[rtweet package documentation website](http://rtweet.info).
+
+## Installation
 
 To get the current released version from CRAN:
 
@@ -37,28 +44,91 @@ devtools::install_github("mkearney/rtweet")
 library(rtweet)
 ```
 
-Getting started
----------------
+## Usage
 
-**NEW**: All you need is a **Twitter account** and **rtweet** and you're up and running!
+All you need is a **Twitter account** and you can be up in running in
+minutes\!
 
-### API authorization
+  - See the `auth` vignette (or the API authorization section below) for
+    instructions on obtaining access to Twitter’s APIs:
+    <http://rtweet.info/articles/auth.html>.
 
--   The first time you make an API request---e.g., `search_tweets()`, `stream_tweets()`, `get_followers()`---a browser window will open.
--   Log in to your Twitter account.
--   Agree/authorize the rtweet application.
+## API authorization
 
-And that's it! You're ready to start collecting and analyzing Twitter data!
+All users must be authorized to interact with Twitter’s APIs. To become
+authorized, follow the instructions below to (1) make a Twitter app and
+(2) create and save your access token (using one of the two
+authorization methods described below).
 
-Package features
-----------------
+### 1\. Create an app
 
-### Search tweets
+  - To gain access Twitter’s APIs, first go to
+    [apps.twitter.com](https://apps.twitter.com/) and create a new app
+    by completing the form fields (note: **users must enter the value
+    for `Callback URL` exactly as it appears below**):
+      - **`Name`**: Name of Twitter app e.g., `my_twitter_research_app`
+      - **`Description`**: Describe use case e.g., `for researching
+        trends and behaviors on twitter`
+      - **`Website`**: Valid website e.g.,
+        `https://twitter.com/kearneymw`
+      - **`***Callback URL***`**: `http://127.0.0.1:1410`
+  - Check yes if you agree and then click “Create your Twitter
+    application”
 
-Search for up to 18,000 (non-retweeted) tweets containing the rstats hashtag.
+### 2a. Authenticate via web browser (interactive)
+
+  - Go to your app’s page at
+    [apps.twitter.com](https://apps.twitter.com/) and click the tab
+    labeled **`Keys and Access Tokens`**
+
+  - Copy the **`Consumer Key`** and **`Consumer Secret`** values and
+    pass them, along with the name of your app, to the `create_token()`
+    function
+    
+    ``` r
+    ## web browser method: create token and save it as an environment variable
+    create_token(
+      app = "my_twitter_research_app",
+      consumer_key = "XYznzPFOFZR2a39FwWKN1Jp41",
+      consumer_secret = "CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD")
+    ```
+
+### 2b. Authenticate via access token
+
+  - Go to your app’s page at
+    [apps.twitter.com](https://apps.twitter.com/) and click the tab
+    labeled **`Keys and Access Tokens`**
+
+  - Scroll down to **`Token Actions`** and click **`Create my access
+    token`**
+
+  - Copy the **`Consumer Key`**, **`Consumer Secret`**, **`Access
+    Token`**, and **`Access Token Secret`** values and pass them, along
+    with the name of your app, to the `create_token()`
+    function
+    
+    ``` r
+    ## access token method: create token and save it as an environment variable
+    create_token(
+      app = "my_twitter_research_app",
+      consumer_key = "XYznzPFOFZR2a39FwWKN1Jp41",
+      acess_token = "9551451262-wK2EmA942kxZYIwa5LMKZoQA4Xc2uyIiEwu2YXL",
+      access_secret = "9vpiSGKg1fIPQtxc5d5ESiFlZQpfbknEN1f1m2xe5byw7")
+    ```
+
+And that’s it\! You’re ready to start collecting and analyzing Twitter
+data\! And because `create_token()` automatically saves your token as an
+environment variable, you’ll be set for future sessions as well\!
+
+### Package features
+
+#### Search tweets
+
+Search for up to 18,000 (non-retweeted) tweets containing the rstats
+hashtag.
 
 ``` r
-## search for 5000 tweets using the rstats hashtag
+## search for 18000 tweets using the rstats hashtag
 rt <- search_tweets(
   "#rstats", n = 18000, include_rts = FALSE
 )
@@ -81,7 +151,10 @@ ts_plot(rt, "3 hours") +
 
 ![](tools/readme/example-rstatsts.png)
 
-Twitter rate limits cap the number of search results returned to 18,000 every 15 minutes. To request more than that, simply set `retryonratelimit = TRUE` and rtweet will wait for rate limit resets for you.
+Twitter rate limits cap the number of search results returned to 18,000
+every 15 minutes. To request more than that, simply set
+`retryonratelimit = TRUE` and rtweet will wait for rate limit resets for
+you.
 
 ``` r
 ## search for 250,000 tweets containing the word data
@@ -90,7 +163,10 @@ rt <- search_tweets(
 )
 ```
 
-Search by geo-location---for example, find 10,000 tweets in the English language sent from the United States.
+Search by geo-location—for example, find 10,000 tweets in the English
+language sent from the United States. *Note: `lookup_coords()` requires
+users have [a Google API
+key](https://developers.google.com/maps/documentation/javascript/tutorial)*
 
 ``` r
 ## search for 10,000 tweets sent from the US
@@ -111,7 +187,7 @@ with(rt, points(lng, lat, pch = 20, cex = .75, col = rgb(0, .3, .7, .75)))
 
 ![](tools/readme/example-statemap.png)
 
-### Stream tweets
+#### Stream tweets
 
 Randomly sample (approximately 1%) from the live stream of all tweets.
 
@@ -127,7 +203,8 @@ Stream all geo enabled tweets from London for 60 seconds.
 rt <- stream_tweets(lookup_coords("london, uk"), timeout = 60)
 ```
 
-Stream all tweets mentioning realDonaldTrump or Trump for a week.
+Stream all tweets mentioning realDonaldTrump or Trump for a
+week.
 
 ``` r
 ## stream london tweets for a week (60 secs x 60 mins * 24 hours *  7 days)
@@ -142,7 +219,7 @@ stream_tweets(
 djt <- parse_stream("tweetsabouttrump.json")
 ```
 
-### Get friends
+#### Get friends
 
 Retrieve a list of all the accounts a **user follows**.
 
@@ -154,7 +231,7 @@ cnn_fds <- get_friends("cnn")
 cnn_fds_data <- lookup_users(cnn_fds$user_id)
 ```
 
-### Get followers
+##### Get followers
 
 Retrieve a list of the **accounts following** a user.
 
@@ -178,7 +255,7 @@ cnn_flw <- get_followers(
 )
 ```
 
-### Get timelines
+#### Get timelines
 
 Get the most recent 3,200 tweets from cnn, BBCWorld, and foxnews.
 
@@ -207,7 +284,7 @@ tmls %>%
 
 ![](tools/readme/example-tmls.png)
 
-### Get favorites
+#### Get favorites
 
 Get the 3,000 most recently favorited statuses by JK Rowling.
 
@@ -215,7 +292,7 @@ Get the 3,000 most recently favorited statuses by JK Rowling.
 jkr <- get_favorites("jk_rowling", n = 3000)
 ```
 
-### Search users
+#### Search users
 
 Search for 1,000 users with the rstats hashtag in their profile bios.
 
@@ -224,29 +301,37 @@ Search for 1,000 users with the rstats hashtag in their profile bios.
 usrs <- search_users("#rstats", n = 1000)
 ```
 
-### Get trends
+#### Get trends
 
-Discover what's currently trending in San Francisco.
+Discover what’s currently trending in San Francisco.
 
 ``` r
 sf <- get_trends("san francisco")
 ```
 
-For posting (tweeting from R console) or read DM permissions
-------------------------------------------------------------
+#### Post actions
 
--   If you'd like to post Twitter statuses, follow or unfollow accounts, and/or read your direct messages, you'll need to create your own Twitter app.
--   To create your own Twitter app, follow the instructions in the authorization vignette on [obtaining and using access tokens](http://rtweet.info/articles/auth.html).
+  - Posting (tweeting from R console) or reading direct messages require
+    additional permissions
+  - If you’d like to post Twitter statuses, follow or unfollow accounts,
+    and/or read your direct messages, you’ll need to create your own
+    Twitter app
+  - To create your own Twitter app, follow the instructions in the
+    authorization vignette on [obtaining and using access
+    tokens](http://rtweet.info/articles/auth.html)
+
+#### Vignettes
+
+[Obtaining and using Twitter API
+tokens](http://rtweet.info/articles/auth.html)
 
 ``` r
-## authorizing API access
+## quick overview of rtweet functions
 vignette("auth", package = "rtweet")
 ```
 
-Other vignettes
----------------
-
-[Quick overview of rtweet package](http://rtweet.info/articles/intro.html)
+[Quick overview of rtweet
+package](http://rtweet.info/articles/intro.html)
 
 ``` r
 ## quick overview of rtweet functions
@@ -260,7 +345,19 @@ vignette("intro", package = "rtweet")
 vignette("stream", package = "rtweet")
 ```
 
-Contact
--------
+[Troubleshooting common rtweet
+problems](http://rtweet.info/articles/FAQ.html)
 
-Communicating with Twitter's APIs relies on an internet connection, which can sometimes be inconsistent. With that said, if you encounter an obvious bug for which there is not already an active [issue](https://github.com/mkearney/rtweet/issues), please [create a new issue](https://github.com/mkearney/rtweet/issues/new) with all code used (preferably a reproducible example) on Github.
+``` r
+## working with the stream
+vignette("FAQ", package = "rtweet")
+```
+
+## Contact
+
+Communicating with Twitter’s APIs relies on an internet connection,
+which can sometimes be inconsistent. With that said, if you encounter an
+obvious bug for which there is not already an active
+[issue](https://github.com/mkearney/rtweet/issues), please [create a new
+issue](https://github.com/mkearney/rtweet/issues/new) with all code used
+(preferably a reproducible example) on Github.

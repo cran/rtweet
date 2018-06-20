@@ -5,35 +5,30 @@
 #' @return Data reformatted with ascii encoding and normal ampersands and
 #'   without URL links, line breaks, fancy spaces/tabs, fancy apostrophes,
 #' @export
-plain_tweets <- function(x) UseMethod("plain_tweets")
-
-#' @export
-plain_tweets.default <- function(x) x
-
-#' @export
-plain_tweets.data.frame <- function(x) {
-  if (has_name_(x, "text")) {
-    stopifnot(is.character(x[["text"]]))
-    x[["text"]] <- plain_tweets(x[["text"]])
+plain_tweets <- function(x) {
+  if (is.data.frame(x)) {
+    if (has_name_(x, "text")) {
+      x$text <- plain_tweets_(x$text)
+    } else {
+      stop("Couldn't find \"text\" variable.", call. = FALSE)
+    }
+  } else if (is.list(x)) {
+    if (has_name_(x, "text")) {
+      x$text <- plain_tweets_(x$text)
+    } else {
+      stop("Couldn't find \"text\" variable.", call. = FALSE)
+    }
   } else {
-    stop("Couldn't find \"text\" variable.", call. = FALSE)
+    x <- plain_tweets_(x)
   }
   x
 }
 
-#' @export
-plain_tweets.list <- function(x) {
-  if (has_name_(x, "text")) {
-    stopifnot(is.character(x[["text"]]))
-    x[["text"]] <- plain_tweets(x[["text"]])
-  } else {
-    stop("Couldn't find \"text\" variable.", call. = FALSE)
+plain_tweets_ <- function(x) {
+  if (is.factor(x)) {
+    x <- as.character(x)
   }
-  x
-}
-
-#' @export
-plain_tweets.character <- function(x) {
+  stopifnot(is.character(x))
   x <- rm_links(x)
   x <- rm_linebreaks(x)
   x <- rm_fancy_spaces(x)
@@ -55,8 +50,8 @@ rm_fancy_spaces <- function(x) {
 }
 
 rm_links <- function(x) {
-  x <- gsub("\\s{0,1}http\\S{1,}\\s{0,1}", "", x)
-  gsub("\\s{0,1}\\S{1,}(\\.com|\\.net|\\.gov|\\.io|\\.org)\\b\\s{0,1}", "", x)
+  x <- gsub("\\s?https?[[:graph:]]", "", x)
+  gsub("\\s?\\b[[:graph:]]+(\\.com|\\.net|\\.gov|\\.io|\\.org)\\b", "", x)
 }
 
 rm_linebreaks <- function(x, y = " ") {
@@ -75,6 +70,6 @@ rm_amp <- function(x, y = "&") {
 }
 
 trim_ws <- function(x) {
-  x <- gsub("\\s{2,}", " ", x)
-  gsub("^\\s|\\s$", "", x)
+  x <- gsub("[ ]{2,}", " ", x)
+  gsub("^[ ]+|[ ]+$", "", x)
 }

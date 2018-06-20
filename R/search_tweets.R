@@ -39,9 +39,9 @@
 #'   are distinct from quotes (retweets with additional text provided
 #'   from sender) or manual retweets (old school method of manually
 #'   entering "RT" into the text of one's tweets).
-#' @param max_id Character string specifying the [oldest] status id
-#'   beyond which search results should resume returning.  Especially
-#'   useful large data returns that require multiple iterations
+#' @param max_id Character, returns results with an ID less
+#'   than (that is, older than) or equal to `max_id`.  Especially
+#'   useful for large data returns that require multiple iterations
 #'   interrupted by user time constraints. For searches exceeding
 #'   18,000 tweets, users are encouraged to take advantage of rtweet's
 #'   internal automation procedures for waiting on rate limits by
@@ -65,11 +65,12 @@
 #'   Twitter. However, users may occasionally encounter new or
 #'   omitted variables. In these rare cases, the nested list object
 #'   will be the only way to access these variables.
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @param retryonratelimit Logical indicating whether to wait and
 #'   retry when rate limited. This argument is only relevant if the
 #'   desired return (n) exceeds the remaining limit of available
@@ -223,13 +224,9 @@ search_tweets_ <- function(q = "",
                            ...) {
 
   ## check token and get rate limit data
-  token <- check_token(token, "search/tweets")
-  rtlimit <- rate_limit(token, "search/tweets")
-  remaining <- rtlimit[["remaining"]] * 100
-  reset <- rtlimit[["reset"]]
-  reset <- as.numeric(reset, "secs")
+  token <- check_token(token)
 
-  if (n <= remaining || !retryonratelimit) {
+  if (!retryonratelimit) {
     rt <- .search_tweets(
       q = q, n = n,
       type = type,
@@ -241,6 +238,11 @@ search_tweets_ <- function(q = "",
       verbose = verbose,
       ...)
   } else {
+    rtlimit <- rate_limit(token, "search/tweets")
+    remaining <- rtlimit[["remaining"]] * 100
+    reset <- rtlimit[["reset"]]
+    reset <- as.numeric(reset, "secs")
+
     if (identical(remaining, 0)) {
       ntimes <- ceiling((n - remaining) / 18000)
     } else {
@@ -317,7 +319,7 @@ search_tweets_ <- function(q = "",
   ## path name
   query <- "search/tweets"
   ## validate
-  stopifnot(is_n(n), is.atomic(q), is.atomic(max_id))
+  stopifnot(is_n(n), is.atomic(q), length(q) == 1L, is.atomic(max_id))
   ## number of loops
   n.times <- ceiling(n / 100)
   if (n < 100) {
@@ -444,16 +446,4 @@ add_var <- function(x, ...) {
   }
   x[[varname]] <- unlist(dots, use.names = FALSE)
   x
-}
-
-
-
-
-next_id <- function(df) {
-  if (!all(c("created_at", "status_id") %in% names(df))) {
-    stop("wrong data frame - function requires tweets data")
-  }
-  df <- df[!is.na(df$status_id), ]
-  df <- df[order(df$created_at), ]
-  df$status_id[1]
 }

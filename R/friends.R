@@ -38,11 +38,12 @@
 #' @param verbose Logical indicating whether or not to include output
 #'   messages. Defaults to TRUE, which includes printing a success message
 #'   for each inputted user.
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @seealso \url{https://developer.twitter.com/en/docs/accounts-and-users/follow-search-get-users/api-reference/get-friends-ids}
 #' @examples
 #'
@@ -110,7 +111,7 @@ get_friends_ <- function(users,
   n <- length(users)
   ## build URL
   query <- "friends/ids"
-  token <- check_token(token, query)
+  token <- check_token(token)
   ## for larger requests implement Sys.sleep
   if (n > 1) {
     ## initialize output object
@@ -154,16 +155,20 @@ get_friends_ <- function(users,
       }
       ## make call
       f[[i]] <- get_friend(url, token = token)
-      if (has_name(f[[i]], "errors")) {
+      if (has_name_(f[[i]], "errors")) {
         warning(f[[i]]$errors[["message"]], call. = FALSE)
         return(list(data.frame()))
       } else if (parse) {
-        nextcursor <- f[["next_cursor"]]
-        f[[i]] <- tibble::as_tibble(
-          list(user = users[[i]], user_id = f[[i]][["ids"]]),
-          validate = FALSE
-        )
-        attr(f[[i]], "next_cursor") <- nextcursor
+        if (length(f[[i]][["ids"]]) == 0) {
+          f[[i]] <- tibble::as_tibble()
+        } else {
+          nextcursor <- f[["next_cursor"]]
+          f[[i]] <- tibble::as_tibble(
+            list(user = users[[i]], user_id = f[[i]][["ids"]]),
+            validate = FALSE
+          )
+          attr(f[[i]], "next_cursor") <- nextcursor
+        }
       }
       if (verbose) {
         message(paste(i, "friend networks collected!"))
@@ -196,16 +201,20 @@ get_friends_ <- function(users,
     )
     ## if !retryonratelimit then if necessary exhaust what can with token
     f <- get_friend(url, token = token)
-      if (has_name(f, "errors")) {
+      if (has_name_(f, "errors")) {
         warning(f$errors[["message"]], call. = FALSE)
         return(list(data.frame()))
       } else if (parse) {
         nextcursor <- f[["next_cursor"]]
-        f <- tibble::as_tibble(
-          list(user = users, user_id = f[["ids"]]),
-          validate = FALSE
-        )
-        attr(f, "next_cursor") <- nextcursor
+        if (length(f[["ids"]]) == 0) {
+          f <- tibble::as_tibble()
+        } else {
+          f <- tibble::as_tibble(
+            list(user = users, user_id = f[["ids"]]),
+            validate = FALSE
+          )
+          attr(f, "next_cursor") <- nextcursor
+        }
       }
   }
   f
@@ -214,38 +223,17 @@ get_friends_ <- function(users,
 #' @importFrom jsonlite fromJSON
 #' @importFrom httr GET
 get_friend <- function(url, token = NULL) {
-  from_js(httr::GET(url, token))
-}
-
-
-#' @importFrom jsonlite fromJSON
-parse.piper.fnd <- function(r) {
-  if (isTRUE("content" %in% names(r))) {
-    r <- tryCatch(
-      jsonlite::fromJSON(rawToChar(r[["content"]])),
-      error = function(e) return(NULL))
-    r <- fnd_internal(r)
-  } else {
-    if (length(r) > 1L) {
-      r <- lapply(r, fnd_internal)
-      r <- do.call("rbind", r)
-
-    } else {
-      r <- fnd_internal(r)
+  r <- httr::GET(url, token)
+  if (!warn_for_twitter_status(r)) {
+    if (has_name_(url, "query") &&
+        any(grepl("user_id|screen_name", names(url$query)))) {
+      warning("^^ warning regarding user: ",
+        url$query[[grep("screen_name|user_id", names(url$query))]],
+        call. = FALSE, immediate. = TRUE)
     }
+    return(list(ids = character()))
   }
-  tibble::as_tibble(r, validate = FALSE)
-}
-
-fnd_internal <- function(r) {
-  if (is.null(r)) return(data.frame(user_id = NA_character_))
-  next_cursor <- as.character(r[["next_cursor_str"]])
-  usrs <- data.frame(as.character(r[["ids"]]),
-                     stringsAsFactors = FALSE)
-  names(usrs) <- "user_id"
-  if (is.null(next_cursor)) next_cursor <- NA_character_
-  attr(usrs, "next_cursor") <- next_cursor
-  usrs
+  from_js(r)
 }
 
 
@@ -324,10 +312,12 @@ lookup_friendships_ <- function(source,
 #' @param target Screen name or user id of target user.
 #' @param parse Logical indicating whether to return parsed data frame.
 #'   Defaults to true.
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find instructions
-#'   on how to create tokens and setup an environment variable in the
-#'   tokens vignette (in r, send \code{?tokens} to console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @return Data frame converted form returned JSON object. If parse is
 #'   not true, the HTTP response object is returned instead.
 #' @family friends

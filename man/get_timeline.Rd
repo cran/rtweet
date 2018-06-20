@@ -17,8 +17,8 @@ get_timelines(user, n = 100, max_id = NULL, home = FALSE, parse = TRUE,
 \item{n}{Number of tweets to return per timeline. Defaults to 100.
 Must be of length 1 or equal to length of user.}
 
-\item{max_id}{Character, status_id from which returned tweets
-should be older than.}
+\item{max_id}{Character, returns results with an ID less than (that is,
+older than) or equal to `max_id`.}
 
 \item{home}{Logical, indicating whether to return a user-timeline
 or home-timeline. By default, home is set to FALSE, which means
@@ -35,11 +35,12 @@ with disentangling the Twitter API return objects.}
 rate limit. Ensures the request does not exceed the maximum
 remaining number of calls.  Defaults to TRUE.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 
 \item{...}{Further arguments passed on as parameters in API query.}
 }
@@ -79,8 +80,11 @@ table(tmls$screen_name)
 \url{https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline}
 
 Other tweets: \code{\link{get_favorites}},
-  \code{\link{get_mentions}}, \code{\link{lists_statuses}},
+  \code{\link{get_mentions}},
+  \code{\link{get_my_timeline}},
+  \code{\link{lists_statuses}},
   \code{\link{lookup_statuses}},
   \code{\link{search_tweets}}, \code{\link{tweets_data}},
   \code{\link{tweets_with_users}}
 }
+\concept{tweets}

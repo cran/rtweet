@@ -4,10 +4,10 @@
 \alias{lat_lng}
 \title{Adds single-point latitude and longitude variables to tweets data.}
 \usage{
-lat_lng(x, coords = c("bbox_coords", "coords_coords", "geo_coords"))
+lat_lng(x, coords = c("coords_coords", "bbox_coords", "geo_coords"))
 }
 \arguments{
-\item{x}{Parsed tweets data as returned by various rtweet
+\item{x}{Parsed Twitter data as returned by various rtweet
 functions. This should be a data frame with variables such as
 "bbox_coords", "coords_coords", and "geo_coords" (among
 other non-geolocation Twitter variables).}
@@ -24,7 +24,7 @@ Returns updated data object with full information latitude
   and longitude vars.
 }
 \description{
-Appends parsed tweets data with latitude and longitude variables
+Appends parsed Twitter data with latitude and longitude variables
 using all available geolocation information.
 }
 \details{
@@ -55,3 +55,4 @@ with(rtll, plot(lng, lat))
 \seealso{
 Other geo: \code{\link{lookup_coords}}
 }
+\concept{geo}

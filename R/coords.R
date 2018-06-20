@@ -4,7 +4,8 @@
 #' Convenience function for looking up latitude/longitude coordinate
 #' information for a given location. Returns data as a special
 #' "coords" object, which is specifically designed to interact
-#' smoothly with other relevant package functions.
+#' smoothly with other relevant package functions. NOTE: USE OF THIS FUNCTION
+#' REQUIRES A VALID GOOGLE MAPS API KEY.
 #'
 #' @param address Desired location typically in the form of place
 #'   name, subregion, e.g., address = "lawrence, KS". Also accepts the
@@ -14,6 +15,9 @@
 #' @param components Unit of analysis for address e.g., components =
 #'   "country:US". Potential components include postal_code, country,
 #'   administrative_area, locality, route.
+#' @param apikey A valid Google Maps API key. If NULL, `lookup_coords()` will
+#'   look for a relevant API key stored as an environment variable (e.g.,
+#'   `GOOGLE_MAPS_KEY`).
 #' @param ... Additional arguments passed as parameters in the HTTP
 #'   request
 #' @return Object of class coords.
@@ -38,7 +42,7 @@
 #' @importFrom jsonlite fromJSON
 #' @family geo
 #' @export
-lookup_coords <- function(address, components = NULL, ...) {
+lookup_coords <- function(address, components = NULL, apikey = NULL, ...) {
   if (missing(address)) stop("must supply address", call. = FALSE)
   stopifnot(is.atomic(address), is.atomic(components))
   place <- address
@@ -79,8 +83,11 @@ lookup_coords <- function(address, components = NULL, ...) {
              names(params), params),
       collapse = "&")
     ## build URL
-    geourl <- paste0("https://maps.googleapis.com/maps/api/geocode/json?",
-                     params)
+    if (is.null(apikey)) {
+      apikey <- find_google_geocode_key()
+    }
+    geourl <- paste0("https://maps.googleapis.com/maps/api/geocode/json?key=",
+      apikey, "&", params)
     ## read and convert to list obj
     r <- jsonlite::fromJSON(geourl)
     ## extract and name box and point data frames
@@ -98,71 +105,34 @@ lookup_coords <- function(address, components = NULL, ...) {
   as.coords(place = place, box = boxp, point = point)
 }
 
-
-mean.dbls <- function(x) mean(as.double(x, na.rm = TRUE))
-
-
-mutate.coords <- function(x) {
-  if (is.data.frame(x)) {
-    if ("place.bounding_box.coordinates" %in% names(x)) {
-      coordinates <- x[["place.bounding_box.coordinates"]]
-    } else if ("bounding_box_coordinates" %in% names(x)) {
-      coordinates <- x[["bounding_box_coordinates"]]
-    } else if ("coordinates" %in% names(x)) {
-      coordinates <- x[["coordinates"]]
+find_google_geocode_key <- function() {
+  evs <- names(Sys.getenv())
+  if (any(grepl("GOOGLE.*MAP", evs, ignore.case = TRUE))) {
+    p <- grep("GOOGLE.*MAP", evs, ignore.case = TRUE)
+    p <- p[length(p)]
+    key <- Sys.getenv(evs[p])
+  } else if (any(grepl("GOOGLE.*KEY", evs, ignore.case = TRUE))) {
+    p <- grep("GOOGLE.*KEY", evs, ignore.case = TRUE)
+    p <- p[length(p)]
+    key <- Sys.getenv(evs[p])
+  } else if (interactive) {
+    yn <- menuline("lookup_users() requires a Google Maps API key (for instructions on how to acquire one, see: https://developers.google.com/maps/documentation/javascript/tutorial), Do you have a Google Maps API key you'd like to use?", c("Yes", "No"))
+    if (yn == 2) {
+      stop("sorry, lookup_users() requires a Google Maps API key")
     }
+    key <- readline("Please enter your Google Maps API key:")
+    key <- gsub("\\s+|\"|'", "", key)
+    set_renv(GOOGLE_MAPS_KEY = key)
   } else {
-    coordinates <- x
+    stop("sorry, lookup_users() requires a Google Maps API key stored as a GOOGLE_MAPS_KEY environment variable")
   }
-
-  if (is.character(coordinates)) {
-    coordinates <- gsub(
-      ",", " ", coordinates
-    )
-    coordinates <- strsplit(
-      coordinates, " "
-    )
-  }
-
-  if (is.list(coordinates)) {
-    lns <- lengths(coordinates)
-    if (all(lns < 3)) {
-      coordinates <- do.call(
-        "rbind",
-        lapply(coordinates, function(x) matrix(x, 1, 2))
-      )
-    } else if (all(lns < 9)) {
-      coordinates <- do.call(
-        "rbind",
-        lapply(coordinates, function(x) matrix(x, 1, 8))
-      )
-    }
-  }
-
-  if (any(is.data.frame(coordinates),
-      is.matrix(coordinates))) {
-    coordinates <- apply(coordinates, 2, as.double)
-    if (ncol(coordinates) == 8) {
-      coordinates <- cbind(
-      rowMeans(coordinates[, 1:4], na.rm = TRUE),
-      rowMeans(coordinates[, 5:8], na.rm = TRUE)
-      )
-    }
-  }
-
-  if (!any(is.data.frame(coordinates),
-          is.matrix(coordinates),
-          isTRUE(ncol(coordinates) == 2))) {
-    lat <- rep(NA, NROW(x))
-    lng <- rep(NA, NROW(x))
-  } else {
-    lat <- coordinates[, 2]
-    lng <- coordinates[, 1]
-  }
-  latlng <- cbind(x, lat, lng)
-  tibble::as_tibble(latlng, validate = FALSE)
+  key
 }
 
+menuline <- function(q, a) {
+  message(q)
+  utils::menu(a)
+}
 
 
 as.coords <- function(place, box, point) {
@@ -171,18 +141,3 @@ as.coords <- function(place, box, point) {
   coords
 }
 
-
-max_coords <- function(x) {
-  ypt <- apply(x@point, 1, function(.) all(is.na(.)))
-  lng <- x@point[, 1]
-  lat <- x@point[, 2]
-  b <- x@box[ypt, ]
-  lng[ypt] <- rowMeans(b[, 1:4], na.rm = TRUE)
-  lat[ypt] <- rowMeans(b[, 5:8], na.rm = TRUE)
-  lng[is.nan(lng)] <- NA_real_
-  lat[is.nan(lat)] <- NA_real_
-  cbind(
-    lng = lng,
-    lat = lat
-  )
-}

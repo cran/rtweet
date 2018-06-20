@@ -15,11 +15,9 @@ home <- function() {
 }
 
 
-is_named <- function(x) UseMethod("is_named")
-is_named.default <- function(x) !is.null(names(x))
+is_named <- function(x) !is.null(names(x))
 
-are_named <- function(x) UseMethod("are_named")
-are_named.default <- function(x) is_named(x) && !"" %in% names(x)
+are_named <- function(x) is_named(x) && !"" %in% names(x)
 
 readlines <- function(x, ...) {
   con <- file(x)
@@ -32,7 +30,7 @@ define_args <- function(args, ...) {
   dots <- list(...)
   nms <- names(dots)
   for (i in nms) {
-    if (!has_name(args, i)) {
+    if (!has_name_(args, i)) {
       args[[i]] <- dots[[i]]
     }
   }
@@ -49,26 +47,38 @@ append_lines <- function(x, ...) {
 }
 
 is_incomplete <- function(x) {
-  if (!file.exists(x)) return(FALSE)
   con <- file(x)
   x <- tryCatch(readLines(con), warning = function(w) return(TRUE))
   close(con)
   ifelse(isTRUE(x), TRUE, FALSE)
 }
 
+clean_renv <- function(var) {
+  x <- readlines(.Renviron())
+  x <- grep(sprintf("^%s=", var), x, invert = TRUE, value = TRUE)
+  writeLines(x, .Renviron())
+}
 
-check_renv <- function() {
+check_renv <- function(var = NULL) {
+  if (!file.exists(.Renviron())) return(invisible())
   if (is_incomplete(.Renviron())) {
     append_lines("", file = .Renviron())
   }
+  if (!is.null(var)) {
+    clean_renv(var)
+  }
+  invisible()
 }
 
 set_renv <- function(...) {
   dots <- list(...)
   stopifnot(are_named(dots))
+  vars <- names(dots)
   x <- paste0(names(dots), "=", dots)
   x <- paste(x, collapse = "\n")
-  check_renv()
+  for (var in vars) {
+    check_renv(var)
+  }
   append_lines(x, file = .Renviron())
   readRenviron(.Renviron())
 }

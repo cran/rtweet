@@ -5,7 +5,7 @@
 \title{Get a timeline of tweets authored by members of a specified list.}
 \usage{
 lists_statuses(list_id = NULL, slug = NULL, owner_user = NULL,
-  since_id = NULL, max_id = NULL, n = 5000, include_rts = TRUE,
+  since_id = NULL, max_id = NULL, n = 200, include_rts = TRUE,
   parse = TRUE, token = NULL)
 }
 \arguments{
@@ -39,11 +39,12 @@ home_timeline.}
 \item{parse}{Logical indicating whether to convert the response object into
 an R list. Defaults to TRUE.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 }
 \value{
 data
@@ -54,11 +55,16 @@ Get a timeline of tweets authored by members of a specified list.
 \seealso{
 Other lists: \code{\link{lists_members}},
   \code{\link{lists_subscribers}},
+  \code{\link{lists_subscriptions}},
   \code{\link{lists_users}}
 
 Other tweets: \code{\link{get_favorites}},
-  \code{\link{get_mentions}}, \code{\link{get_timeline}},
+  \code{\link{get_mentions}},
+  \code{\link{get_my_timeline}},
+  \code{\link{get_timeline}},
   \code{\link{lookup_statuses}},
   \code{\link{search_tweets}}, \code{\link{tweets_data}},
   \code{\link{tweets_with_users}}
 }
+\concept{lists}
+\concept{tweets}

@@ -22,25 +22,63 @@
 #'   home_timeline.
 #' @param parse Logical indicating whether to convert the response object into
 #'   an R list. Defaults to TRUE.
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @family lists
 #' @family tweets
 #' @return data
+#' @export
 lists_statuses <- function(list_id = NULL,
                            slug = NULL,
                            owner_user = NULL,
                            since_id = NULL,
                            max_id = NULL,
-                           n = 5000,
+                           n = 200,
                            include_rts = TRUE,
                            parse = TRUE,
                            token = NULL) {
+  out <- vector("list", ceiling(n / 200))
+  if (n > 200) {
+    n <- 200
+  }
+  for (i in seq_along(out)) {
+    out[[i]] <- tryCatch(lists_statuses_(
+      list_id = list_id,
+      slug = slug,
+      owner_user = owner_user,
+      since_id = since_id,
+      max_id = max_id,
+      n = n,
+      include_rts = include_rts,
+      token = token
+    ), error = function(e) return(NULL))
+    if (is.null(out[[i]])) break
+    maxid <- max_id(out[[i]])
+    if (is.null(maxid) || length(maxid) == 0L) break
+    if (identical(maxid, max_id)) break
+    max_id <- maxid
+  }
+  out <- out[!vapply(out, is.null, logical(1))]
+  if (parse) {
+    out <- tweets_with_users(out)
+  }
+  out
+}
+
+lists_statuses_ <- function(list_id = NULL,
+                            slug = NULL,
+                            owner_user = NULL,
+                            since_id = NULL,
+                            max_id = NULL,
+                            n = 200,
+                            include_rts = TRUE,
+                            token = NULL) {
   query <- "lists/statuses"
-  if (is.null(list_id) && !is.null(slug) & !is.null(owner_user)) {
+  if (is.null(list_id) && !is.null(slug) && !is.null(owner_user)) {
     params <- list(
       slug = slug,
       owner_user = owner_user,
@@ -59,13 +97,8 @@ lists_statuses <- function(list_id = NULL,
       include_rts = include_rts
     )
   }
-  token <- check_token(token, query)
+  token <- check_token(token)
   url <- make_url(query = query, param = params)
   r <- httr::GET(url, token)
-  if (parse) {
-    r <- from_js(r)
-    r <- as_lists_statuses(r)
-    r <- as.data.frame(r)
-  }
-  r
+  from_js(r)
 }

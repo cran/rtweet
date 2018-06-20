@@ -15,11 +15,12 @@ lookup_tweets(statuses, parse = TRUE, token = NULL)
 \item{parse}{Logical, indicating whether or not to parse
 return object into data frame(s).}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 }
 \value{
 A tibble of tweets data.
@@ -44,9 +45,6 @@ statuses <- c(
 tw <- lookup_statuses(statuses)
 tw
 
-## view users data for these statuses via users_data()
-users_data(tw)
-
 }
 
 }
@@ -54,8 +52,10 @@ users_data(tw)
 \url{https://developer.twitter.com/en/docs/tweets/post-and-engage/api-reference/get-statuses-lookup}
 
 Other tweets: \code{\link{get_favorites}},
-  \code{\link{get_mentions}}, \code{\link{get_timeline}},
-  \code{\link{lists_statuses}},
+  \code{\link{get_mentions}},
+  \code{\link{get_my_timeline}},
+  \code{\link{get_timeline}}, \code{\link{lists_statuses}},
   \code{\link{search_tweets}}, \code{\link{tweets_data}},
   \code{\link{tweets_with_users}}
 }
+\concept{tweets}

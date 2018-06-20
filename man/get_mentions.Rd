@@ -20,17 +20,18 @@ number of Tweets which can be accessed through the API. If the
 limit of Tweets has occurred since the since_id, the since_id
 will be forced to the oldest ID available.}
 
-\item{max_id}{Returns results with an ID less than (that is, older
-than) or equal to the specified ID.}
+\item{max_id}{Character, returns results with an ID less than (that is,
+older than) or equal to `max_id`.}
 
 \item{parse}{Logical indicating whether to convert the response
 object into an R list. Defaults to TRUE.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 
 \item{...}{Other arguments passed as parameters in composed API
 query.}
@@ -64,8 +65,10 @@ mymentions
 \url{https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-mentions_timeline}
 
 Other tweets: \code{\link{get_favorites}},
+  \code{\link{get_my_timeline}},
   \code{\link{get_timeline}}, \code{\link{lists_statuses}},
   \code{\link{lookup_statuses}},
   \code{\link{search_tweets}}, \code{\link{tweets_data}},
   \code{\link{tweets_with_users}}
 }
+\concept{tweets}

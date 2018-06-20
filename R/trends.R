@@ -17,11 +17,12 @@
 #' @param exclude_hashtags Logical, indicating whether or not to
 #'   exclude hashtags. Defaults to FALSE--meaning, hashtags are
 #'   included in returned trends.
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @param parse Logical, indicating whether or not to parse return
 #'   trends data. Defaults to true.
 #' @examples
@@ -112,7 +113,7 @@ get_trends_ <- function(woeid = 1,
     woeid <- check_woeid(woeid)
   }
   query <- "trends/place"
-  token <- check_token(token, query)
+  token <- check_token(token)
   if (exclude) {
     exclude <- "hashtags"
   } else {
@@ -135,7 +136,7 @@ get_trends_ <- function(woeid = 1,
 
 trends_closest <- function(lat, long, token = NULL) {
   query <- "trends/closest"
-  token <- check_token(token, query)
+  token <- check_token(token)
   url <- make_url(query = query,
                   param = list(lat = lat, long = long))
   trd <- TWIT(get = TRUE, url, token)
@@ -200,7 +201,7 @@ format_trend_date <- function(x) {
 #' @export
 trends_available <- function(token = NULL, parse = TRUE) {
   query <- "trends/available"
-  token <- check_token(token, query)
+  token <- check_token(token)
   url <- make_url(query = query,
                   param = NULL)
   trd <- TWIT(get = TRUE, url, token)
@@ -251,8 +252,6 @@ check_woeid <- function(x) {
   x <- find_woeid(x)
   as.character(x)
 }
-
-is_zero <- function(x) isTRUE(identical(length(x), 0L))
 
 match_woeid <- function(x) {
   if (tolower(x) %in% c("world", "worldwide",

@@ -14,17 +14,18 @@
 #'   limits to the number of tweets returned by the REST API. If the
 #'   limit is hit, since_id is adjusted (by Twitter) to the oldest ID
 #'   available.
-#' @param max_id Returns results with status_id less (older) than or
-#'   equal to (if hit limit) the specified status_id.
+#' @param max_id Character, returns results with an ID less than (that is,
+#'   older than) or equal to `max_id`.
 #' @param parse Logical, indicating whether to return parsed vector or
 #'   nested list object. By default, \code{parse = TRUE}
 #'   saves you the time [and frustrations] associated with
 #'   disentangling the Twitter API return objects.
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @return A tbl data frame of tweets data with users data attribute.
 #' @examples
 #'
@@ -71,7 +72,7 @@ get_favorites_call <- function(user,
     token <- check_token(token)
   }
   ## check inputs
-  stopifnot(is.atomic(user), is.numeric(n))
+  stopifnot(is.atomic(user), is.numeric(n), sapply(user, is.valid.username))
   if (length(user) == 0L) {
     stop("No user found", call. = FALSE)
   }
@@ -133,7 +134,9 @@ get_favorites_call <- function(user,
     }
     ## add favoriter variable to data frames
     for (i in seq_along(user)) {
-      rt[[i]]$favorited_by <- user[i]
+      if (nrow(rt[[i]]) > 0) {
+        rt[[i]]$favorited_by <- user[i]
+      }
     }
     rt <- do_call_rbind(rt)
   }
@@ -155,13 +158,17 @@ get_favorites_ <- function(user,
     count <- 200
   } else if (n < 200) {
     count <- n
+  } else {
+    count <- 200
   }
   n.times <- rate_limit(token, query)[["remaining"]]
   if (n.times == 0L) stop("rate limit exceeded", call. = FALSE)
   params <- list(
     user_type = user,
     count = count,
-    tweet_mode = "extended"
+    tweet_mode = "extended",
+    max_id = max_id,
+    since_id = since_id
   )
   names(params)[1] <- .id_type(user)
   url <- make_url(
@@ -170,11 +177,6 @@ get_favorites_ <- function(user,
   fav <- scroller(url, n, n.times, type = "timeline", token)
   if (parse) {
     fav <- tweets_with_users(fav)
-    usr <- users_data(fav)
-    if (nrow(usr) > 0L) {
-      uq <- !duplicated(usr$user_id)
-      attr(fav, "users") <- usr[uq, ]
-    }
   }
   fav
 }

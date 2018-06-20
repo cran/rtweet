@@ -33,11 +33,12 @@ cursors to navigate collections for more information.}
 \item{parse}{Logical indicating whether to convert the response object into
 an R list. Defaults to TRUE.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 }
 \description{
 Get subscribers of a specified list.
@@ -58,9 +59,13 @@ rstats <- lists_subscribers(
 }
 \seealso{
 Other lists: \code{\link{lists_members}},
-  \code{\link{lists_statuses}}, \code{\link{lists_users}}
+  \code{\link{lists_statuses}},
+  \code{\link{lists_subscriptions}},
+  \code{\link{lists_users}}
 
 Other users: \code{\link{as_screenname}},
   \code{\link{lookup_users}}, \code{\link{search_users}},
   \code{\link{tweets_with_users}}, \code{\link{users_data}}
 }
+\concept{lists}
+\concept{users}

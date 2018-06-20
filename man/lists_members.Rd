@@ -3,12 +3,12 @@
 \name{lists_members}
 \alias{lists_members}
 \alias{lists_memberships}
-\title{Get the members of a specified Twitter list.}
+\title{Get Twitter list members (users on a given list).}
 \usage{
 lists_members(list_id = NULL, slug = NULL, owner_user = NULL, n = 5000,
   cursor = "-1", token = NULL, parse = TRUE, ...)
 
-lists_memberships(user, n = 20, cursor = "-1",
+lists_memberships(user = NULL, n = 100, cursor = "-1",
   filter_to_owned_lists = FALSE, token = NULL, parse = TRUE)
 }
 \arguments{
@@ -23,19 +23,21 @@ owner_user parameters.}
 who owns the list being requested by a slug.}
 
 \item{n}{Specifies the number of results to return
-per page (see cursor below). The default is 20, with a maximum
-of 5,000.}
+per page (see cursor below). For `list_memberships()`, the default, and
+max per page, is 100. For `lists_members()`, the default, and max number
+of users per list, is 5,000.}
 
 \item{cursor}{optional Breaks the results into pages. Provide a
 value of -1 to begin paging. Provide values as returned in the
 response body's next_cursor and previous_cursor attributes to
 page back and forth in the list.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 
 \item{parse}{Logical indicating whether to convert the response object into
 an R list. Defaults to TRUE.}
@@ -53,9 +55,9 @@ represented by user_id or screen_name is a member of.}
 Either a nested list (if parsed) or an HTTP response object.
 }
 \description{
-Get the members of a specified Twitter list.
+Get Twitter list members (users on a given list).
 
-Get the lists a specified user has been added to.
+Get Twitter list memeberships (lists containing a given user)
 }
 \details{
 Due to deleted or removed lists, the returned number of memberships
@@ -81,8 +83,8 @@ rstats
 
 \dontrun{
 
-## get up to 200 list memberships of Nate Silver
-ns538 <- lists_memberships("NateSilver538", n = 200)
+## get up to 300 Twitter lists that include Nate Silver
+ns538 <- lists_memberships("NateSilver538", n = 300)
 
 ## view data
 ns538
@@ -93,5 +95,7 @@ ns538
 \seealso{
 Other lists: \code{\link{lists_statuses}},
   \code{\link{lists_subscribers}},
+  \code{\link{lists_subscriptions}},
   \code{\link{lists_users}}
 }
+\concept{lists}

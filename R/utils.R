@@ -128,22 +128,6 @@ scroller <- function(url, n, n.times, type = NULL, ...) {
 }
 
 
-scroller_ <- function(url, n, n.times, type = NULL, ...) {
-  ## check args
-  stopifnot(is_n(n), is_url(url))
-  ## initialize vector and counter
-  x <- vector("list", n.times)
-  counter <- 0
-  x <- httr::GET(url, ...)
-  warn_for_twitter_status(x)
-  for (i in seq_along(x)) {
-    ## send GET request
-    x[[i]] <- httr::GET(url, ...)
-    url[["max_id"]] <- x[[i]]$search_metadata$max_id_str
-  }
-  x
-}
-
 unique_id_count <- function(x, type = NULL) {
   if (!is.null(type)) {
     if (type == "search") return(100)
@@ -175,6 +159,8 @@ unique_id <- function(x) {
     x[["id_str"]]
   } else if ("ids" %in% names(x)) {
     x[["ids"]]
+  } else if ("id" %in% names(x)) {
+    x[["id"]]
   } else if ("ids" %in% names(x[[1]])) {
     x[[1]][["ids"]]
   } else if ("status_id" %in% names(x)) {
@@ -312,14 +298,7 @@ return_last <- function(x, n = 1) {
 ##                                 check data                                 ##
 ##----------------------------------------------------------------------------##
 
-has_name_ <- function(x, ...) {
-  vars <- c(...)
-  stopifnot(is.character(vars))
-  if (!is.recursive(x)) {
-    return(FALSE)
-  }
-  all(vars %in% names(x))
-}
+has_name_ <- function(x, name) isTRUE(name %in% names(x))
 
 any_recursive <- function(x) {
   if (!is.recursive(x)) {
@@ -338,17 +317,6 @@ is_json <- function(x) {
 
 is.na.quiet <- function(x) {
   suppressWarnings(is.na(x))
-}
-
-is_empty_list <- function(x) {
-  if (is.null(x)) return(TRUE)
-  if (is.list(x)) {
-    return(identical(length(unlist(
-      x, use.names = FALSE)), 0))
-  } else if (identical(length(x), 0)) {
-    return(TRUE)
-  }
-  FALSE
 }
 
 is_n <- function(n) {
@@ -381,14 +349,7 @@ is_url <- function(url) {
 ##                                  wranglers                                 ##
 ##----------------------------------------------------------------------------##
 
-nanull <- function(x) {
-  if (is.null(x)) return(NA)
-  if (identical(x, "")) return(NA)
-  if (length(x) == 0) return(NA)
-  x[x == ""] <- NA
-  x[is.null(x)] <- NA
-  x
-}
+
 
 #' @importFrom jsonlite fromJSON
 from_js <- function(rsp) {
@@ -397,18 +358,7 @@ from_js <- function(rsp) {
     stop("API did not return json", call. = FALSE)
   }
   rsp <- httr::content(rsp, as = "text", encoding = "UTF-8")
-  rsp <- jsonlite::fromJSON(rsp)
-  if ("statuses" %in% names(rsp) && "full_text" %in% names(rsp$statuses)) {
-    names(rsp[["statuses"]])[names(rsp[["statuses"]]) == "text"] <- "texttrunc"
-    names(rsp[["statuses"]])[names(rsp[["statuses"]]) == "full_text"] <- "text"
-  } else if ("status" %in% names(rsp) && "full_text" %in% names(rsp$status)) {
-    names(rsp[["status"]])[names(rsp[["status"]]) == "text"] <- "texttrunc"
-    names(rsp[["status"]])[names(rsp[["status"]]) == "full_text"] <- "text"
-  } else if ("full_text" %in% names(rsp)) {
-    names(rsp)[names(rsp) == "text"] <- "texttrunc"
-    names(rsp)[names(rsp) == "full_text"] <- "text"
-  }
-  rsp
+  jsonlite::fromJSON(rsp)
 }
 
 na_omit <- function(x) {
@@ -454,30 +404,21 @@ na_omit <- function(x) {
 
 
 ##----------------------------------------------------------------------------##
-##                                flatten data                                ##
+##                                require pkgs                                ##
 ##----------------------------------------------------------------------------##
 
-flatten_rtweet <- function(x) {
-  lst <- vapply(x, is.list, logical(1))
-  x[lst] <- lapply(x[lst], vobs2string)
-  x
-}
+try_require <- function(pkg, f) {
 
-vobs2string <- function(x, sep = " ") {
-  x[lengths(x) == 0L] <- NA_character_
-  x[lengths(x) > 1L] <- vapply(
-    x[lengths(x) > 1L],
-    obs2string, sep = sep,
-    FUN.VALUE = character(1)
-  )
-  as.character(x)
-}
-
-obs2string <- function(x, sep) {
-  stopifnot(is.atomic(x))
-  if (all(is.na(x))) {
-    return(NA_character_)
+  if (requireNamespace(pkg, quietly = TRUE)) {
+    library(pkg, character.only = TRUE)
+    return(invisible())
   }
-  x[is.na(x)] <- ""
-  paste(x, collapse = sep)
+
+  stop("Package `", pkg, "` required for `", f , "`.\n",
+    "Please install and try again.", call. = FALSE)
 }
+
+is.valid.username <- function(username) {
+  !grepl(' ', username);
+}
+

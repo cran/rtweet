@@ -51,9 +51,9 @@ entering "RT" into the text of one's tweets).}
 "latitude,longitude,radius" e.g., \code{geocode =
 "37.78,-122.40,1mi"}.}
 
-\item{max_id}{Character string specifying the [oldest] status id
-beyond which search results should resume returning.  Especially
-useful large data returns that require multiple iterations
+\item{max_id}{Character, returns results with an ID less
+than (that is, older than) or equal to `max_id`.  Especially
+useful for large data returns that require multiple iterations
 interrupted by user time constraints. For searches exceeding
 18,000 tweets, users are encouraged to take advantage of rtweet's
 internal automation procedures for waiting on rate limits by
@@ -79,11 +79,12 @@ Twitter. However, users may occasionally encounter new or
 omitted variables. In these rare cases, the nested list object
 will be the only way to access these variables.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 
 \item{retryonratelimit}{Logical indicating whether to wait and
 retry when rate limited. This argument is only relevant if the
@@ -233,8 +234,10 @@ table(st2$query)
 \url{https://developer.twitter.com/en/docs/tweets/search/api-reference/get-search-tweets}
 
 Other tweets: \code{\link{get_favorites}},
-  \code{\link{get_mentions}}, \code{\link{get_timeline}},
-  \code{\link{lists_statuses}},
+  \code{\link{get_mentions}},
+  \code{\link{get_my_timeline}},
+  \code{\link{get_timeline}}, \code{\link{lists_statuses}},
   \code{\link{lookup_statuses}}, \code{\link{tweets_data}},
   \code{\link{tweets_with_users}}
 }
+\concept{tweets}

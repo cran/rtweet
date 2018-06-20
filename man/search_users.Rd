@@ -31,11 +31,12 @@ single search is 1,000.}
 \code{parse = TRUE} saves users from the time [and frustrations]
 associated with disentangling the Twitter API return objects.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 
 \item{verbose}{Logical, indicating whether or not to output
 processing/retrieval messages.}
@@ -51,14 +52,14 @@ query.
 
 \dontrun{
 
-## search for 1000 tweets mentioning Hillary Clinton
-pc <- search_users(q = "political communication", n = 1000)
+## search for up to 1000 users using the keyword rstats
+rstats <- search_users(q = "rstats", n = 1000)
 
 ## data frame where each observation (row) is a different user
-pc
+rstats
 
 ## tweets data also retrieved. can access it via tweets_data()
-users_data(hrc)
+tweets_data(rstats)
 
 }
 
@@ -71,3 +72,4 @@ Other users: \code{\link{as_screenname}},
   \code{\link{lookup_users}},
   \code{\link{tweets_with_users}}, \code{\link{users_data}}
 }
+\concept{users}

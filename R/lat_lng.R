@@ -4,10 +4,10 @@
 
 #' Adds single-point latitude and longitude variables to tweets data.
 #'
-#' Appends parsed tweets data with latitude and longitude variables
+#' Appends parsed Twitter data with latitude and longitude variables
 #' using all available geolocation information.
 #'
-#' @param x Parsed tweets data as returned by various rtweet
+#' @param x Parsed Twitter data as returned by various rtweet
 #'   functions. This should be a data frame with variables such as
 #'   "bbox_coords", "coords_coords", and "geo_coords" (among
 #'   other non-geolocation Twitter variables).
@@ -43,28 +43,30 @@
 #' }
 #'
 #' @export
-lat_lng <- function(x, coords = c("bbox_coords", "coords_coords", "geo_coords")) {
+lat_lng <- function(x, coords = c("coords_coords", "bbox_coords", "geo_coords")) {
   stopifnot(is.data.frame(x))
-  geodat <- lapply(coords, if_has_else_na, x = x, na_ = NA_real_)
-  if (any(grepl("box", coords))) {
-    bbox <- geodat[[grep("box", coords)[1]]]
-    x <- cbind(x, lnglat(bbox))
-  } else {
-    x$lng <- NA_real_
+  if (!has_name_(x, "lat")) {
     x$lat <- NA_real_
   }
-  if (!any(is.na(unlist(bbox)))) {
-    return(tibble::as_tibble(x, validate = FALSE))
+  if (!has_name_(x, "lng")) {
+    x$lng <- NA_real_
   }
-  coords <- grep("box", coords, invert = TRUE)
-  if (length(coords) == 0L) {
-    return(tibble::as_tibble(x, validate = FALSE))
+  x[coords] <- lapply(coords, if_has_else_na, x = x, na_ = NA_real_)
+  coords2 <- grep("box", coords, invert = TRUE, value = TRUE)
+  if (length(coords2) > 0L) {
+    for (i in seq_along(coords2)) {
+      x <- update_if_na(x, coords2[i])
+    }
   }
-  for (i in seq_along(coords)) {
-    x <- update_if_na(x, coords[i])
+  if (any(is.na(x$lat)) && any(grepl("box", coords))) {
+    bbox <- x[[grep("box", coords, value = TRUE)[1]]]
+    bbox <- lnglat(bbox)
+    x$lng[is.na(x$lng)] <- bbox[, 1][is.na(x$lng)]
+    x$lat[is.na(x$lat)] <- bbox[, 2][is.na(x$lat)]
   }
   tibble::as_tibble(x, validate = FALSE)
 }
+
 
 lnglat_ <- function(x) {
   stopifnot(is.atomic(x))
@@ -85,11 +87,6 @@ lnglat <- function(x) {
   cbind(lng, lat)
 }
 
-area <- function(x) {
-  f <- function(x) abs(x[1] - x[3]) * abs(x[5] - x[7])
-  vapply(x, f, numeric(1))
-}
-
 if_has_else_na <- function(var, x, na_ = NA) {
   if (has_name_(x, var)) {
     x[[var]]
@@ -100,16 +97,16 @@ if_has_else_na <- function(var, x, na_ = NA) {
 
 update_if_na <- function(x, coords) {
   ## if each element doesn't contain two numerics, return x
-  if (!all(lengths(coords) == 2L)) {
+  if (!all(lengths(x[[coords]]) == 2L)) {
     return(x)
   }
   ## if coords data contains any non-missing data
-  if (any(!is.na(unlist(coords)))) {
+  if (any(!is.na(unlist(x[[coords]])))) {
     ## first data point assumed to be longitude
-    coords_lng <- unlist(lapply(coords, "[[", 1L), use.names = FALSE)
+    coords_lng <- unlist(lapply(x[[coords]], "[[", 1L), use.names = FALSE)
     x$lng[is.na(x$lng)] <- coords_lng[is.na(x$lng)]
     ## second data point assumed to be latitude
-    coords_lat <- unlist(lapply(coords, "[[", 2L), use.names = FALSE)
+    coords_lat <- unlist(lapply(x[[coords]], "[[", 2L), use.names = FALSE)
     x$lat[is.na(x$lat)] <- coords_lat[is.na(x$lat)]
   }
   ## return data object

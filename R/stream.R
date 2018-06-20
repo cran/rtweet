@@ -35,11 +35,12 @@
 #'   Twitter. (Note: if you set parse to false, you can use the
 #'   \code{\link{parse_stream}} function to parse the JSON file at a
 #'   later point in time.)
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @param file_name Character with name of file. By default, a
 #'   temporary file is created, tweets are parsed and returned to
 #'   parent environment, and the temporary file is deleted.
@@ -55,9 +56,6 @@
 #'
 #' ## data frame where each observation (row) is a different tweet
 #' e
-#'
-#' ## users data also retrieved, access it via users_data()
-#' users_data(e)
 #'
 #' ## plot tweet frequency
 #' ts_plot(e, "secs")
@@ -140,6 +138,10 @@ stream_tweets <- function(q = "",
                           file_name = NULL,
                           verbose = TRUE,
                           ...) {
+  if ("append" %in% names(list(...))) {
+    stop("append should only be used with stream_tweets2() (which is in development)",
+         call. = FALSE)
+  }
   ## set encoding
   if (!identical(getOption("encoding"), "UTF-8")) {
     op <- getOption("encoding")
@@ -198,6 +200,7 @@ stream_tweets <- function(q = "",
       httr::progress()),
       error = function(e) return(e)
       )
+    message("Finished streaming tweets!")
   } else {
     r <- tryCatch(httr::POST(
       url = url,
@@ -206,9 +209,6 @@ stream_tweets <- function(q = "",
       httr::add_headers(`Accept-Encoding` = "deflate, gzip")),
       error = function(e) return(e)
       )
-  }
-  if (verbose) {
-    message("Finished streaming tweets!")
   }
   if (parse) {
     out <- parse_stream(file_name)
@@ -225,10 +225,16 @@ stream_tweets <- function(q = "",
 }
 
 tmp_json <- function() {
-  timestamp <- gsub("\\s|\\:|\\-", "", substr(Sys.time(), 1, 19))
+  timestamp <- gsub("[^[:digit:]_]", "", Sys.time())
   paste0("stream-", timestamp, ".json")
 }
 
+is_user_ids <- function(x) {
+  if (length(x) == 1L && grepl(",", x)) {
+    x <- strsplit(x, "\\,")[[1]]
+  }
+  isTRUE(all(!is.na(suppressWarnings(as.numeric(x)))))
+}
 
 stream_params <- function(stream, ...) {
   if (inherits(stream, "coords")) {
@@ -237,9 +243,9 @@ stream_params <- function(stream, ...) {
   ## if [coordinates] vector is > 1 then locations
   ## if comma separated stream of IDs then follow
   ## otherwise use query string to track
-  if (length(stream) > 1) {
+  if ((length(stream) %% 4 == 0) && is.numeric(stream)) {
     params <- list(locations = paste(stream, collapse = ","))
-  } else if (!all(suppressWarnings(is.na(as.numeric(stream))))) {
+  } else if (is_user_ids(stream)) {
     params <- list(follow = stream, ...)
   } else {
     params <- list(track = stream, ...)
@@ -268,20 +274,12 @@ limits_data <- function(x) {
   }
 }
 
-#' @importFrom jsonlite stream_in
 stream_data <- function(file_name, ...) {
   tw <- .parse_stream(file_name, ...)
-  usr <- users_data(tw)
-  if (nrow(tw) > 1L) {
-    tw <- tw[!is.na(tw$status_id), ]
-  }
-  if (nrow(usr) > 1L) {
-    usr <- usr[!is.na(usr$user_id), ]
-  }
-  attr(tw, "users") <- usr
   tw
 }
 
+#' @importFrom jsonlite stream_in
 .parse_stream <- function(file_name) {
   if (!identical(getOption("encoding"), "UTF-8")) {
     op <- getOption("encoding")
@@ -296,6 +294,10 @@ stream_data <- function(file_name, ...) {
 data_from_stream <- function(x, n = 10000L, n_max = -1L) {
   if (!file.exists(x)) {
     stop("No such file exists", call. = FALSE)
+  }
+  if (!requireNamespace("readr", quietly = TRUE)) {
+    warning("For better performance when reading large twitter .json files, try installing the readr package before using this function.")
+    return(stream_data(x))
   }
   ## initalize counters and output vector
   d <- NA_character_
@@ -321,7 +323,7 @@ data_from_stream <- function(x, n = 10000L, n_max = -1L) {
     data[[length(data) + 1L]] <- stream_data(tmp)
     if (NROW(data[[length(data)]]) == 0L) break
   }
-  do_call_rbind(data)
+  do.call("rbind", data)
 }
 
 
@@ -374,9 +376,11 @@ parse_stream <- function(path, ...) {
 #' @return Returns data as expected using original search_tweets
 #'   function.
 #' @export
-#' @importFrom readr read_lines write_lines
 #' @rdname stream_tweets
 stream_tweets2 <- function(..., dir = NULL, append = FALSE) {
+  if (!requireNamespace("readr", quietly = TRUE)) {
+    stop("this function requires the readr package. please install it first")
+  }
   if (is.null(dir)) {
     dir <- stream_dir()
   }
@@ -429,12 +433,6 @@ stream_tweets2 <- function(..., dir = NULL, append = FALSE) {
   pat <- paste0(file_name, "\\-[[:digit:]]{1,}\\.json$")
   jsons <- list.files(dir, pattern = pat, full.names = TRUE)
   file_name <- paste0(dir, ".json")
-  for (i in jsons) {
-    x <- readr::read_lines(i, progress = FALSE)
-    readr::write_lines(x, file_name, append = append)
-    ## set append to TRUE after first iteration
-    append <- TRUE
-  }
   unlink(dir, recursive = TRUE)
   if (!parse) {
     return(invisible())

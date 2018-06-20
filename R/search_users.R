@@ -24,11 +24,12 @@
 #'   (data.frames) or nested list object. By default,
 #'   \code{parse = TRUE} saves users from the time [and frustrations]
 #'   associated with disentangling the Twitter API return objects.
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @param verbose Logical, indicating whether or not to output
 #'   processing/retrieval messages.
 #' @seealso \url{https://dev.twitter.com/overview/documentation}
@@ -36,14 +37,14 @@
 #'
 #' \dontrun{
 #'
-#' ## search for 1000 tweets mentioning Hillary Clinton
-#' pc <- search_users(q = "political communication", n = 1000)
+#' ## search for up to 1000 users using the keyword rstats
+#' rstats <- search_users(q = "rstats", n = 1000)
 #'
 #' ## data frame where each observation (row) is a different user
-#' pc
+#' rstats
 #'
 #' ## tweets data also retrieved. can access it via tweets_data()
-#' users_data(hrc)
+#' tweets_data(rstats)
 #'
 #' }
 #'
@@ -71,7 +72,7 @@ search_users_call <- function(q, n = 20,
                               verbose = TRUE) {
   query <- "users/search"
   stopifnot(is_n(n), is.atomic(q))
-  token <- check_token(token, query)
+  token <- check_token(token)
   if (n > 1000) {
     warning(
       paste0("search only returns up to 1,000 users per ",
@@ -132,20 +133,10 @@ search_users_call <- function(q, n = 20,
     if (k >= n * 20) break
   }
   if (parse) {
-    usr2 <- users_with_tweets(usr)
-    if (nrow(usr2) > 0L) {
-      uq <- !duplicated(usr2$user_id)
-      usr <- usr2[uq, ]
-      attr(usr, "tweets") <- tweets_data(usr2)[uq, ]
-    }
+    usr <- tweets_with_users(usr)
   }
   if (verbose) {
     message("Finished collecting users!")
   }
   usr
-}
-
-count_users_returned <- function(x) {
-  length(unique(unlist(lapply(x, function(x) x[["id_str"]]),
-    use.names = FALSE)))
 }

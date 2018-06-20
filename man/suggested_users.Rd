@@ -7,20 +7,24 @@
 \usage{
 suggested_slugs(lang = NULL, token = NULL)
 
-suggested_users(slug, lang = NULL, token = NULL)
+suggested_users(slug, lang = NULL, parse = TRUE, token = NULL)
 }
 \arguments{
 \item{lang}{optional Restricts the suggested categories to the
 requested language. The language must be specified by the
 appropriate two letter ISO 639-1 representation.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{token}{Every user should have their own Oauth (Twitter API) token. By
+default \code{token = NULL} this function looks for the path to a saved
+Twitter token via environment variables (which is what `create_token()`
+sets up by default during initial token creation). For instruction on how
+to create a Twitter token see the tokens vignette, i.e.,
+`vignettes("auth", "rtweet")` or see \code{?tokens}.}
 
 \item{slug}{required The short name of list or a category}
+
+\item{parse}{Logical indicating whether to parse the returned data into
+a tibble data frame. See details for more on the returned users data.}
 }
 \value{
 List of recommended categories which can be passed along as
@@ -30,8 +34,13 @@ Recommended users
 }
 \description{
 Returns Twitter's list of suggested user categories.
-
-Returns users from a specific, suggested category
+}
+\details{
+Currently, this parsing process drops all
+  recursive (list) columns, which mostly means you are shorted some
+  entities data. To maximize users data, however, it is recommended to
+  make an additional \code{\link{lookup_users}} call using the user IDs
+  returned by this function.
 }
 \examples{
 
@@ -42,6 +51,18 @@ slugs <- suggested_slugs()
 
 ## use slugs to get suggested users
 suggested_users(slugs$slug[1])
+
+## alternatively, get all users from all slugs in one function
+sugs <- all_suggested_users()
+
+## print data
+sugs
+
+## for complete users data, lookup user IDs
+sugs_usr <- lookup_users(sugs$user_id)
+
+## view users data
+sugs_usr
 
 }
 

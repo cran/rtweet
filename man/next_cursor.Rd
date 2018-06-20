@@ -7,10 +7,12 @@
 \usage{
 next_cursor(x)
 
-max_id(x)
+max_id(.x)
 }
 \arguments{
 \item{x}{Data object returned by Twitter API.}
+
+\item{.x}{id}
 }
 \value{
 Character string of next cursor value used to retrieved
@@ -57,3 +59,5 @@ Other ids: \code{\link{get_followers}},
 Other extractors: \code{\link{tweets_data}},
   \code{\link{users_data}}
 }
+\concept{extractors}
+\concept{ids}

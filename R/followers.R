@@ -33,11 +33,12 @@
 #'   nested list object. By default, \code{parse = TRUE}
 #'   saves you the time [and frustrations] associated with
 #'   disentangling the Twitter API return objects.
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find
-#'   instructions on how to create tokens and setup an environment
-#'   variable in the tokens vignette (in r, send \code{?tokens} to
-#'   console).
+#' @param token Every user should have their own Oauth (Twitter API) token. By
+#'   default \code{token = NULL} this function looks for the path to a saved
+#'   Twitter token via environment variables (which is what `create_token()`
+#'   sets up by default during initial token creation). For instruction on how
+#'   to create a Twitter token see the tokens vignette, i.e.,
+#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
 #' @details When \code{retryonratelimit = TRUE} this function
 #'   internally makes a rate limit API call to get information on (a)
 #'   the number of requests remaining and (b) the amount of time until
@@ -126,7 +127,7 @@ get_followers_ <- function(user,
   }
   ## build URL
   query <- "followers/ids"
-  token <- check_token(token, query)
+  token <- check_token(token)
   params <- list(
     user_type = user,
     count = count,
@@ -209,15 +210,17 @@ more_followers <- function(f, i, n, ctr) {
   ##   then yes, TRUE, there are more followers to get
   all(
     n > ctr,
-    has_name(f, "next_cursor_str"),
+    has_name_(f, "next_cursor_str"),
     !isTRUE(identical(`[[`(f, "next_cursor_str"), "0"))
   )
 }
 
 ncs_ <- function(f) {
   if (length(f) == 0) return("0")
-  f <- f[[length(f)]]
-  if (has_name(f, "next_cursor_str")) {
+  if (!has_name_(f, "next_cursor_str")) {
+    f <- f[[length(f)]]
+  }
+  if (has_name_(f, "next_cursor_str")) {
     ## next cursor
     nc <- f[["next_cursor_str"]]
     if (is.null(nc)) return("0")
@@ -242,7 +245,7 @@ parse.piper.fs <- function(f, n = NULL) {
   nextcursor <- unlist(lapply(f, "[[[", "next_cursor_str"), use.names = FALSE)
   nextcursor <- na_omit(nextcursor)
   nextcursor <- nextcursor[length(nextcursor)]
-  df <- tibble::as_tibble(list(user_id = df), validate = FALSE)
+  df <- as_tbl(list(user_id = df))
   attr(df, "next_cursor") <- nextcursor
   if (!is.null(n)) {
     if (n < nrow(df)) {
