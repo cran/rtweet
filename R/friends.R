@@ -164,9 +164,7 @@ get_friends_ <- function(users,
         } else {
           nextcursor <- f[["next_cursor"]]
           f[[i]] <- tibble::as_tibble(
-            list(user = users[[i]], user_id = f[[i]][["ids"]]),
-            validate = FALSE
-          )
+            list(user = users[[i]], user_id = f[[i]][["ids"]]))
           attr(f[[i]], "next_cursor") <- nextcursor
         }
       }
@@ -210,9 +208,7 @@ get_friends_ <- function(users,
           f <- tibble::as_tibble()
         } else {
           f <- tibble::as_tibble(
-            list(user = users, user_id = f[["ids"]]),
-            validate = FALSE
-          )
+            list(user = users, user_id = f[["ids"]]))
           attr(f, "next_cursor") <- nextcursor
         }
       }
@@ -256,6 +252,11 @@ get_friend <- function(url, token = NULL) {
 my_friendships <- function(user,
                            parse = TRUE,
                            token = NULL) {
+  ## gotta have ut8-encoding for the comma separated IDs
+  op <- getOption("encoding")
+  on.exit(options(encoding = op), add = TRUE)
+  options(encoding = "UTF-8")
+
   stopifnot(is.atomic(user))
   token <- check_token(token)
   query <- "friendships/lookup"

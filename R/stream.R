@@ -146,7 +146,7 @@ stream_tweets <- function(q = "",
   if (!identical(getOption("encoding"), "UTF-8")) {
     op <- getOption("encoding")
     options(encoding = "UTF-8")
-    on.exit(options(encoding = op))
+    on.exit(options(encoding = op), add = TRUE)
   }
   token <- check_token(token)
   if (!timeout) {
@@ -191,37 +191,48 @@ stream_tweets <- function(q = "",
     )
   }
   r <- NULL
-  if (verbose) {
+  con <- file(file_name, "wt")
+  on.exit({sh <- tryCatch(close(con), error = function(e) return(NULL),
+    warning = function(w) return(NULL))}, add = TRUE)
+
+  start_time <- Sys.time()
+  stop_time <- Sys.time() + timeout
+  ctr <- 0
+  while (timeout > 0) {
     r <- tryCatch(httr::POST(
       url = url,
       httr::config(token = token, timeout = timeout),
-      httr::write_disk(file_name, overwrite = TRUE),
-      httr::add_headers(`Accept-Encoding` = "deflate, gzip"),
-      httr::progress()),
-      error = function(e) return(e)
-      )
-    message("Finished streaming tweets!")
-  } else {
-    r <- tryCatch(httr::POST(
-      url = url,
-      httr::config(token = token, timeout = timeout),
-      httr::write_disk(file_name, overwrite = TRUE),
-      httr::add_headers(`Accept-Encoding` = "deflate, gzip")),
-      error = function(e) return(e)
-      )
+      httr::write_stream(write_fun(con)),
+      httr::add_headers(Accept = "application/json"),
+      httr::add_headers(`Accept-Encoding` = "gzip, deflate")),
+      error = function(e) return(e))
+    timeout <- as.numeric(difftime(stop_time, Sys.time(), units = "secs"))
+    if (timeout > 0) {
+      ctr <- ctr + 1
+      if (ctr == 1 && verbose) message(
+        "The stream disconnected prematurely. Reconnecting...")
+      if (ctr == 2 && verbose) message("Reconnecting again...")
+      if (ctr == 5) break
+    } else if (verbose) {
+      message("Finished streaming tweets!")
+    }
   }
+  close(con)
   if (parse) {
-    out <- parse_stream(file_name)
+    out <- parse_stream(file_name, verbose = verbose)
     if (tmp) {
       file.remove(file_name)
-    } else {
-      if (verbose) message("streaming data saved as ", file_name)
     }
     return(out)
-  } else {
-    if (verbose) message("streaming data saved as ", file_name)
   }
+  if (verbose) message("streaming data saved as ", file_name)
   invisible(r)
+}
+
+write_fun <- function(con) {
+  function(x) {
+    writeLines(rawToChar(x), con)
+  }
 }
 
 tmp_json <- function() {
@@ -237,6 +248,11 @@ is_user_ids <- function(x) {
 }
 
 stream_params <- function(stream, ...) {
+  ## gotta have ut8-encoding for the comma separated IDs
+  op <- getOption("encoding")
+  on.exit(options(encoding = op), add = TRUE)
+  options(encoding = "UTF-8")
+
   if (inherits(stream, "coords")) {
     stream <- stream$box
   }
@@ -261,9 +277,8 @@ stream_params <- function(stream, ...) {
 
 
 good_lines <- function(x) {
-  grep("^\\{\"created.*ms\":\"[[:digit:]]{10,}\"\\}$", x, value = TRUE)
+  grep("^\\{\"created.*ms\":\"\\d+\"\\}$", x, value = TRUE)
 }
-
 
 
 limits_data <- function(x) {
@@ -275,29 +290,48 @@ limits_data <- function(x) {
 }
 
 stream_data <- function(file_name, ...) {
-  tw <- .parse_stream(file_name, ...)
-  tw
+  .parse_stream(file_name, ...)
 }
 
 #' @importFrom jsonlite stream_in
-.parse_stream <- function(file_name) {
+.parse_stream <- function(file_name, ...) {
   if (!identical(getOption("encoding"), "UTF-8")) {
     op <- getOption("encoding")
     options(encoding = "UTF-8")
-    on.exit(options(encoding = op))
+    on.exit(options(encoding = op), add = TRUE)
   }
-  s <- jsonlite::stream_in(file(file_name))
+  s <- tryCatch(jsonlite::stream_in(file(file_name), ...), error = function(e)
+    return(NULL))
+  if (is.null(s)) {
+    d <- readr::read_lines(file_name)
+    if (length(d) > 0) {
+      tmp <- tempfile()
+      on.exit(file.remove(tmp), add = TRUE)
+      d <- good_lines(d)
+    }
+    if (length(d) > 0) {
+      dd <- sapply(d, function(x) {
+        o <- tryCatch(jsonlite::fromJSON(x),
+          error = function(e) return(FALSE))
+        if (identical(o, FALSE)) return(FALSE)
+        return(TRUE)
+      }, USE.NAMES = FALSE)
+      writeLines(d[dd], tmp)
+      s <- jsonlite::stream_in(file(tmp, "rb"))
+    }
+  }
   if (length(s) == 0L) s <- NULL
   tweets_with_users(s)
 }
 
-data_from_stream <- function(x, n = 10000L, n_max = -1L) {
+data_from_stream <- function(x, n = 10000L, n_max = -1L, ...) {
   if (!file.exists(x)) {
     stop("No such file exists", call. = FALSE)
   }
   if (!requireNamespace("readr", quietly = TRUE)) {
-    warning("For better performance when reading large twitter .json files, try installing the readr package before using this function.")
-    return(stream_data(x))
+    warning("For better performance when reading large twitter .json files, ",
+      "try installing the readr package before using this function.")
+    return(stream_data(x, ...))
   }
   ## initalize counters and output vector
   d <- NA_character_
@@ -320,7 +354,7 @@ data_from_stream <- function(x, n = 10000L, n_max = -1L) {
     d <- good_lines(d)
     if (length(d) == 0) break
     readr::write_lines(d, tmp)
-    data[[length(data) + 1L]] <- stream_data(tmp)
+    data[[length(data) + 1L]] <- stream_data(tmp, ...)
     if (NROW(data[[length(data)]]) == 0L) break
   }
   do.call("rbind", data)
@@ -486,3 +520,5 @@ stream_dir <- function() {
   timestamp <- gsub("\\s|\\:|\\-", "", substr(Sys.time(), 1, 19))
   paste0("stream-", timestamp)
 }
+
+

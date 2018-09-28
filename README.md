@@ -15,7 +15,13 @@ Status](https://codecov.io/gh/mkearney/rtweet/branch/master/graph/badge.svg)](ht
 [![lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 
 R client for accessing Twitter’s REST and stream APIs. Check out the
-[rtweet package documentation website](http://rtweet.info).
+[rtweet package documentation website](https://rtweet.info).
+
+## Responsible use
+
+**{rtweet}}** should be used in strict accordance with Twitter’s
+[developer
+terms](https://developer.twitter.com/en/developer-terms/more-on-restricted-use-cases).
 
 ## Installation
 
@@ -51,7 +57,7 @@ minutes\!
 
   - See the `auth` vignette (or the API authorization section below) for
     instructions on obtaining access to Twitter’s APIs:
-    <http://rtweet.info/articles/auth.html>.
+    <https://rtweet.info/articles/auth.html>.
 
 ## API authorization
 
@@ -112,7 +118,8 @@ authorization methods described below).
     create_token(
       app = "my_twitter_research_app",
       consumer_key = "XYznzPFOFZR2a39FwWKN1Jp41",
-      acess_token = "9551451262-wK2EmA942kxZYIwa5LMKZoQA4Xc2uyIiEwu2YXL",
+      consumer_secret = "CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD",
+      access_token = "9551451262-wK2EmA942kxZYIwa5LMKZoQA4Xc2uyIiEwu2YXL",
       access_secret = "9vpiSGKg1fIPQtxc5d5ESiFlZQpfbknEN1f1m2xe5byw7")
     ```
 
@@ -318,12 +325,12 @@ sf <- get_trends("san francisco")
     Twitter app
   - To create your own Twitter app, follow the instructions in the
     authorization vignette on [obtaining and using access
-    tokens](http://rtweet.info/articles/auth.html)
+    tokens](https://rtweet.info/articles/auth.html)
 
 #### Vignettes
 
 [Obtaining and using Twitter API
-tokens](http://rtweet.info/articles/auth.html)
+tokens](https://rtweet.info/articles/auth.html)
 
 ``` r
 ## quick overview of rtweet functions
@@ -331,14 +338,14 @@ vignette("auth", package = "rtweet")
 ```
 
 [Quick overview of rtweet
-package](http://rtweet.info/articles/intro.html)
+package](https://rtweet.info/articles/intro.html)
 
 ``` r
 ## quick overview of rtweet functions
 vignette("intro", package = "rtweet")
 ```
 
-[Live streaming tweets data](http://rtweet.info/articles/stream.html)
+[Live streaming tweets data](https://rtweet.info/articles/stream.html)
 
 ``` r
 ## working with the stream
@@ -346,7 +353,7 @@ vignette("stream", package = "rtweet")
 ```
 
 [Troubleshooting common rtweet
-problems](http://rtweet.info/articles/FAQ.html)
+problems](https://rtweet.info/articles/FAQ.html)
 
 ``` r
 ## working with the stream

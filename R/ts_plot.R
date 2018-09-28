@@ -145,8 +145,16 @@ ts_data_ <- function(data, by = "days", trim = 0L, tz = "UTC") {
     seq(data[[dtvar]][1], data[[dtvar]][length(data[[dtvar]])], .unit)
   )
   ## if grouped df (up to 2 groups)
-  if (inherits(data, "grouped_df")) {
-    groups <- names(attr(data, "labels"))
+  if (inherits(data, "grouped_df") &&
+      ("groups" %in% names(attributes(data)) ||
+          "labels" %in% names(attributes(data)))) {
+    if (!"groups" %in% names(attributes(data)) &&
+        "labels" %in% names(attributes(data))) {
+      groups <- names(attr(data, "labels"))
+    } else {
+      groups <- names(attr(data, "groups"))
+      groups <- groups[!groups %in% ".rows"]
+    }
     if (length(groups) > 1L) {
       group2 <- groups[2]
     } else {
@@ -212,7 +220,7 @@ ts_data_ <- function(data, by = "days", trim = 0L, tz = "UTC") {
       stringsAsFactors = FALSE
     )
   }
-  df <- tibble::as_tibble(df, validate = FALSE)
+  df <- tibble::as_tibble(df)
   if (trim > 0L) {
     df <- trim_ts(df, trim)
   }

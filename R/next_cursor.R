@@ -1,4 +1,4 @@
-#' next_cursor/max_id
+#' next_cursor/previous_cursor/max_id
 #'
 #' Method for returning next value (used to request next page or results)
 #' object returned from Twitter APIs.
@@ -42,27 +42,13 @@
 #' @export
 next_cursor <- function(x) UseMethod("next_cursor")
 
-
-#next_cursor_ <- function(ids) {
-#  x <- attr(ids, "next_cursor")
-#  if (is.numeric(x)) {
-#    op <- options()
-#    on.exit(options(op))
-#    options(scipen = 14)
-#    x <- as.character(x)
-#  }
-#  x
-#}
-
-
-
 #' @export
 next_cursor.default <- function(x) return_last(x)
 
 #' @export
 next_cursor.numeric <- function(x) {
-  op <- options()
-  on.exit(options(op))
+  sp <- getOption("scipen")
+  on.exit(options(sp), add = TRUE)
   options(scipen = 14)
   x <- as.character(x)
   NextMethod()
@@ -102,21 +88,43 @@ next_cursor.response <- function(x) {
 }
 
 
+
+
+
+
+##----------------------------------------------------------------------------##
+##                                   MAX_ID                                   ##
+##----------------------------------------------------------------------------##
+
+
+
 get_max_id <- function(x) {
   if (!is.atomic(x)) {
     if (has_name_(x, "statuses")) {
       x <- x[["statuses"]]
     }
     if (has_name_(x, "next_cursor_str")) {
-        return(x[["next_cursor_str"]])
+      return(x[["next_cursor_str"]])
     }
-    if (has_name_(x, "id")) {
+    if (has_name_(x, "id_str")) {
+      x <- x[["id_str"]]
+    } else if (has_name_(x, "id")) {
       x <- x[["id"]]
     } else if (has_name_(x, "ids")) {
       x <- x[["ids"]]
     } else if (is.null(names(x))) {
       if (has_name_(x[[1]], "next_cursor_str")) {
         return(x[[1]][["next_cursor_str"]])
+      }
+      if (has_name_(x[[1]], "next_cursor")) {
+        return(x[[1]][["next_cursor"]])
+      }
+      if (has_name_(x[[1]], "id_str")) {
+        x <- x[[1]][["id_str"]]
+      } else if (has_name_(x[[1]], "id")) {
+        x <- x[[1]][["id"]]
+      } else if (has_name_(x[[1]], "ids")) {
+        x <- x[[1]][["ids"]]
       }
     } else if (has_name_(x, "status_id")) {
       x <- x[["status_id"]]
@@ -158,8 +166,8 @@ max_id.NULL <- function(.x) return(NULL)
 
 #' @export
 max_id.numeric <- function(.x) {
-  op <- getOption("scipen")
-  on.exit(options(scipen = op))
+  sp <- getOption("scipen")
+  on.exit(options(scipen = sp), add = TRUE)
   options(scipen = 15)
   .x <- as.character(.x)
   max_id(.x)
@@ -167,8 +175,8 @@ max_id.numeric <- function(.x) {
 
 #' @export
 max_id.integer <- function(.x) {
-  op <- getOption("scipen")
-  on.exit(options(scipen = op))
+  sp <- getOption("scipen")
+  on.exit(options(scipen = sp), add = TRUE)
   options(scipen = 15)
   .x <- as.character(.x)
   max_id(.x)
@@ -203,7 +211,7 @@ max_id.data.frame <- function(.x) {
 max_id.list <- function(.x) {
   if (has_name_(.x, "max_id_str")) return(.x[["max_id_str"]])
   if (has_name_(.x, "max_id")) return(.x[["max_id"]])
-  while(is_emptylist(.x)) {
+  while (is_emptylist(.x)) {
     .x <- .x[[1]]
   }
   if (is.null(names(.x)) &&
@@ -262,4 +270,182 @@ id_minus_one <- function(x) {
 
 is_emptylist <- function(x) {
   inherits(x, "list") && length(x) == 1L && is.null(names(x))
+}
+
+
+
+
+##----------------------------------------------------------------------------##
+##                               PREVIOUS CURSOR                              ##
+##----------------------------------------------------------------------------##
+
+#' Previous cursor
+#'
+#' Paginate in reverse (limited integration)
+#'
+#' @inheritParams next_cursor
+#' @family ids
+#' @family extractors
+#' @rdname next_cursor
+#' @export
+#' @export
+previous_cursor <- function(x) UseMethod("previous_cursor")
+
+#' @export
+previous_cursor.default <- function(x) return_last(x)
+
+#' @export
+previous_cursor.numeric <- function(x) {
+  sp <- getOption("scipen")
+  on.exit(options(scipen = sp), add = TRUE)
+  options(scipen = 14)
+  x <- as.character(x)
+  NextMethod()
+}
+
+#' @export
+previous_cursor.character <- function(x) {
+  return_last(x)
+}
+
+#' @export
+previous_cursor.data.frame <- function(x) {
+  if (has_name_(x, "previous_cursor_str")) return(x[["previous_cursor_str"]])
+  if (has_name_(x, "previous_cursor")) return(x[["previous_cursor"]])
+  if (has_name_(attributes(x), "previous_cursor")) return(attr(x, "previous_cursor"))
+  x <- x[[grep("id$", names(x))[1]]]
+  NextMethod()
+}
+
+#' @export
+previous_cursor.list <- function(x) {
+  if (has_name_(x, "previous_cursor_str")) return(x[["previous_cursor_str"]])
+  if (has_name_(x, "previous_cursor")) return(x[["previous_cursor"]])
+  if (has_name_(attributes(x), "previous_cursor")) return(attr(x, "previous_cursor"))
+  if (!is.null(names(x))) {
+    x <- list(x)
+  }
+  x <- lapply(x, function(x) x[[grep("id$", names(x))[1]]])
+  x <- unlist(lapply(x, previous_cursor))
+  return_last(x)
+}
+
+#' @export
+previous_cursor.response <- function(x) {
+  x <- from_js(x)
+  NextMethod()
+}
+
+
+
+
+
+##----------------------------------------------------------------------------##
+##                                  SINCE_ID                                  ##
+##----------------------------------------------------------------------------##
+
+
+
+#' since_id
+#'
+#' Get the newest ID collected to date.
+#'
+#' @rdname next_cursor
+#' @inheritParams next_cursor
+#' @export
+since_id <- function(.x) UseMethod("since_id")
+
+#' @export
+since_id.default <- function(.x) {
+  if (inherits(.x, "response")) {
+    .x <- from_js(.x)
+  } else {
+    return(NULL)
+  }
+  since_id(.x)
+}
+
+#' @export
+since_id.character <- function(.x) {
+  .x[1]
+}
+
+#' @export
+since_id.NULL <- function(.x) return(NULL)
+
+#' @export
+since_id.numeric <- function(.x) {
+  sp <- getOption("scipen")
+  on.exit(options(scipen = sp), add = TRUE)
+  options(scipen = 15)
+  .x <- as.character(.x)
+  since_id(.x)
+}
+
+#' @export
+since_id.integer <- function(.x) {
+  sp <- getOption("scipen")
+  on.exit(options(scipen = sp), add = TRUE)
+  options(scipen = 15)
+  .x <- as.character(.x)
+  since_id(.x)
+}
+
+
+#' @export
+since_id.factor <- function(.x) {
+  .x <- as.character(.x)
+  since_id(.x)
+}
+
+
+#' @export
+since_id.data.frame <- function(.x) {
+  if (has_name_(attributes(.x), "since_id_str")) return(attr(.x, "since_id_str"))
+  if (has_name_(attributes(.x), "since_id")) return(attr(.x, "since_id"))
+  idvar <- c("status_id", "id_str", "id")
+  if (nrow(.x) > 0L && any(idvar %in% names(.x))) {
+    idvar <- idvar[idvar %in% names(.x)][1]
+    .x <- .x[[idvar]]
+  } else if (nrow(.x) > 0L && "user_id" %in% names(.x) &&
+      any(c("description", "profile_image_url", "friends_count") %in% names(.x))) {
+    stop("Failed to find status ID variable. You may have specified users data by mistake.")
+  } else {
+    .x <- NULL
+  }
+  since_id(.x)
+}
+
+#' @export
+since_id.list <- function(.x) {
+  if (has_name_(.x, "since_id_str")) return(.x[["since_id_str"]])
+  if (has_name_(.x, "since_id")) return(.x[["since_id"]])
+  while (is_emptylist(.x)) {
+    .x <- .x[[1]]
+  }
+  if (is.null(names(.x)) &&
+      any(vapply(.x, function(x) isTRUE("statuses" %in% names(x)),
+        logical(1)))) {
+    .x <- lapply(.x, "[[", "statuses")
+  }
+  if (is.null(names(.x)) && any(vapply(.x, is.recursive, logical(1)))) {
+    .x <- .x[lengths(.x) > 0L & vapply(.x, is.recursive, logical(1))]
+    .x <- .x[[length(.x)]]
+  }
+  if (isTRUE("statuses" %in% names(.x))) {
+    .x <- .x[["statuses"]]
+  }
+  if (is.null(.x) || length(.x) == 0L) return(NULL)
+  .x <- tryCatch(
+    as.data.frame(.x[!vapply(.x, is.recursive, logical(1))],
+      row.names = NULL, stringsAsFactors = FALSE),
+    error = function(e) return(NULL)
+  )
+  since_id(.x)
+}
+
+#' @export
+since_id.response <- function(.x) {
+  .x <- from_js(.x)
+  since_id(.x)
 }
