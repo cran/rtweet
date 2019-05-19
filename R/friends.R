@@ -67,6 +67,11 @@
 #'   for a second time) until the next rate limit reset. Users should monitor
 #'   and test this before making especially large calls as any systematic issues
 #'   could create sizable inefficiencies.
+#'
+#'   At this time, results are ordered with the most recent following first —
+#'   however, this ordering is subject to unannounced change and eventual
+#'   consistency issues. While this remains true it is possible iteratively build
+#'   friends lists for a user over time.
 #' @return A tibble data frame with two columns, "user" for name or ID of target
 #'   user and "user_id" for follower IDs.
 #' @family ids
@@ -162,7 +167,7 @@ get_friends_ <- function(users,
         if (length(f[[i]][["ids"]]) == 0) {
           f[[i]] <- tibble::as_tibble()
         } else {
-          nextcursor <- f[["next_cursor"]]
+          nextcursor <- next_cursor(f)
           f[[i]] <- tibble::as_tibble(
             list(user = users[[i]], user_id = f[[i]][["ids"]]))
           attr(f[[i]], "next_cursor") <- nextcursor
@@ -199,19 +204,19 @@ get_friends_ <- function(users,
     )
     ## if !retryonratelimit then if necessary exhaust what can with token
     f <- get_friend(url, token = token)
-      if (has_name_(f, "errors")) {
-        warning(f$errors[["message"]], call. = FALSE)
-        return(list(data.frame()))
-      } else if (parse) {
-        nextcursor <- f[["next_cursor"]]
-        if (length(f[["ids"]]) == 0) {
-          f <- tibble::as_tibble()
-        } else {
-          f <- tibble::as_tibble(
-            list(user = users, user_id = f[["ids"]]))
-          attr(f, "next_cursor") <- nextcursor
-        }
+    if (has_name_(f, "errors")) {
+      warning(f$errors[["message"]], call. = FALSE)
+      return(list(data.frame()))
+    } else if (parse) {
+      nextcursor <- f[["next_cursor"]]
+      if (length(f[["ids"]]) == 0) {
+        f <- tibble::as_tibble()
+      } else {
+        f <- tibble::as_tibble(
+          list(user = users, user_id = f[["ids"]]))
+        attr(f, "next_cursor") <- nextcursor
       }
+    }
   }
   f
 }
@@ -280,9 +285,9 @@ my_friendships <- function(user,
 
 
 lookup_friendships_ <- function(source,
-                              target,
-                              parse = TRUE,
-                              token = NULL) {
+                                target,
+                                parse = TRUE,
+                                token = NULL) {
   stopifnot(is.atomic(source), is.atomic(target))
   token <- check_token(token)
   query <- "friendships/show"
@@ -346,7 +351,7 @@ parse_showfriendships <- function(x, source_user, target_user) {
   }
   if (has_name_(x, "source")) {
     src <- unlist(x$source)
-    src <- tibble::data_frame(
+    src <- tibble::tibble(
       relationship = "source",
       user = target_user,
       variable = names(src),
@@ -357,7 +362,7 @@ parse_showfriendships <- function(x, source_user, target_user) {
   }
   if (has_name_(x, "target")) {
     trg <- unlist(x$target)
-    trg <- tibble::data_frame(
+    trg <- tibble::tibble(
       relationship = "target",
       user = source_user,
       variable = names(trg),

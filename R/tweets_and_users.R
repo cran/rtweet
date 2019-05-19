@@ -100,33 +100,63 @@ users_df_ <- function(x) {
 ## get status object(s)
 ##-----------------------------------------------------
 status_object <- function(x) {
+  ## make sure each element is data returned from Twitter
+  if (is.list(x) && is.null(names(x)) && length(x) == 1 &&
+      is.recursive(x[[1]]) && is.null(names(x[[1]]))) {
+    x <- x[[1]]
+  }
   if (!(is.list(x) && is.null(names(x)))) {
     x <- list(x)
   }
   status_object_(x)
 }
+
+is_usr_obj <- function(x) {
+  sum(c("favourites_count", "description", "friends_count",
+    "location", "followers_count", "statuses_count") %in% names(x),
+    na.rm = TRUE) >= 3 %||% FALSE
+}
+is_twt_obj <- function(x) {
+  sum(c("favorite_count", "hashtags", "symbols",
+    "source", "retweet_count", "text") %in% names(x),
+    na.rm = TRUE) >= 3 %||% FALSE
+}
+
 status_object_ <- function(x) {
   s_o_ <- function(x) {
     if (is.atomic(x) && length(x) == 1L) {
       return(data.frame())
     }
+    ## peel back
     if (is.list(x) && length(x) == 1L) {
       x <- x[[1]]
     }
     if (is.list(x) && "statuses" %in% names(x)) {
       x <- x$statuses
+    } else if (is.list(x) && "results" %in% names(x)) {
+      x <- x$results
     }
-    if (`&&`(
-      is.data.frame(x),
-      c("favorite_count", "source") %in% names(x)
-    )) {
+    if (is.data.frame(x) && is_twt_obj(x)) {
       return(x)
     }
-    if (`&&`(
-      is.data.frame(x),
-      "status" %in% names(x)
-    )) {
+    if (is.list(x) && has_name_(x, "status")) {
       return(x$status)
+    }
+    if (has_name_(x, "id_str") && is.data.frame(x$id_str)) {
+      return(x)
+    }
+    if (has_name_(x, "id_str") && length(x$id_str)) {
+      for (i in seq_along(x)) {
+        if (length(x[[i]])) {
+          x[[i]] <- rep(x[[i]], length(x$id_str))
+        }
+        if (length(x$id_str) == 1 && length(x[[i]]) > 1) {
+          x[[i]] <- list(x[[i]])
+        }
+      }
+      x <- tryCatch(as.data.frame(x, stringsAsFactors = FALSE),
+        error = function(e) x)
+      return(x)
     }
     data.frame()
   }
@@ -288,6 +318,10 @@ tweets_to_tbl_ <- function(dat) {
 ## get user object(s)
 ##-----------------------------------------------------
 user_object <- function(x) {
+  if (is.list(x) && is.null(names(x)) && length(x) == 1 &&
+      is.recursive(x[[1]]) && is.null(names(x[[1]]))) {
+    x <- x[[1]]
+  }
   if (!(is.list(x) && is.null(names(x)))) {
     x <- list(x)
   }
@@ -295,26 +329,39 @@ user_object <- function(x) {
 }
 user_object_ <- function(x) {
   u_o_ <- function(x) {
-    if (is.atomic(x) && length(x) == 1L) {
+    if (is.atomic(x) && length(x) <= 1L) {
       return(data.frame())
     }
+    ## peel back
     if (is.list(x) && length(x) == 1L) {
       x <- x[[1]]
     }
     if (is.list(x) && "statuses" %in% names(x)) {
       x <- x$statuses
+    } else if (is.list(x) && "results" %in% names(x)) {
+      x <- x$results
     }
-    if (`&&`(
-      is.data.frame(x),
-      all(c("description", "location") %in% names(x))
-    )) {
+    if (is.data.frame(x) && is_usr_obj(x)) {
       return(x)
     }
-    if (`&&`(
-      is.data.frame(x),
-      "user" %in% names(x)
-    )) {
+    if (is.list(x) && has_name_(x, "user")) {
       return(x$user)
+    }
+    if (has_name_(x, "id_str") && is.data.frame(x$id_str)) {
+      return(x)
+    }
+    if (has_name_(x, "id_str") && length(x$id_str)) {
+      for (i in seq_along(x)) {
+        if (length(x[[i]])) {
+          x[[i]] <- rep(x[[i]], length(x$id_str))
+        }
+        if (length(x$id_str) == 1 && length(x[[i]]) > 1) {
+          x[[i]] <- list(x[[i]])
+        }
+      }
+      x <- tryCatch(as.data.frame(x, stringsAsFactors = FALSE),
+        error = function(e) x)
+      return(x)
     }
     data.frame()
   }
@@ -337,10 +384,16 @@ users_to_tbl_ <- function(dat) {
     }), use.names = FALSE
   )
   dat$created_at <- format_date(dat$created_at)
+  if (!has_name_(dat, "reply_count")) {
+    dat$reply_count <- NA_integer_
+  }
+  if (!has_name_(dat, "quote_count")) {
+    dat$quote_count <- NA_integer_
+  }
   usercols <- usercols_()
   nacols <- usercols[!usercols %in% names(dat)]
-  for (i in nacols) {
-    dat[[i]] <- NA
+  for (i in seq_along(nacols)) {
+    dat[[nacols[i]]] <- NA
   }
   dat <- dat[, usercols[usercols %in% names(dat)]]
   names(dat) <- names(usercols)[usercols %in% names(dat)]
@@ -395,8 +448,8 @@ statuscols_ <- function() {
     is_retweet = "is_retweet",
     favorite_count = "favorite_count",
     retweet_count = "retweet_count",
-    ##quote_count = "quote_count",
-    ##reply_count = "reply_count",
+    quote_count = "quote_count",
+    reply_count = "reply_count",
     hashtags = "hashtags",
     symbols = "symbols",
     urls_url = "urls_url",

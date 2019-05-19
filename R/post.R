@@ -1,24 +1,22 @@
 #' Posts status update to user's Twitter account
 #'
-#' @param status Character, tweet status. Must be 140
-#'   characters or less.
-#' @param media File path to image or video media to be
-#'   included in tweet.
-#' @param token OAuth token. By default \code{token = NULL}
-#'   fetches a non-exhausted token from an environment
-#'   variable tokens.
+#' @param status Character, tweet status. Must be 280 characters or less.
+#' @param media File path to image or video media to be included in tweet.
+#' @param token OAuth token. By default \code{token = NULL} fetches a
+#'   non-exhausted token from an environment variable tokens.
 #' @param in_reply_to_status_id Status ID of tweet to which you'd like to reply.
 #'   Note: in line with the Twitter API, this parameter is ignored unless the
 #'   author of the tweet this parameter references is mentioned within the
 #'   status text.
-#' @param destroy_id To delete a status, supply the single status ID here.
-#'   If a character string is supplied, overriding the default (NULL),
-#'   then a destroy request is made (and the status text and media attachments)
-#'   are irrelevant.
-#' @param retweet_id To retweet a status, supply the single status ID here.
-#'   If a character string is supplied, overriding the default (NULL),
-#'   then a retweet request is made (and the status text and media attachments)
-#'   are irrelevant.
+#' @param destroy_id To delete a status, supply the single status ID here. If a
+#'   character string is supplied, overriding the default (NULL), then a destroy
+#'   request is made (and the status text and media attachments) are irrelevant.
+#' @param retweet_id To retweet a status, supply the single status ID here. If a
+#'   character string is supplied, overriding the default (NULL), then a retweet
+#'   request is made (and the status text and media attachments) are irrelevant.
+#' @param auto_populate_reply_metadata If set to TRUE and used with
+#'   in_reply_to_status_id, leading @mentions will be looked up from the
+#'   original Tweet, and added to the new Tweet from there. Defaults to FALSE.
 #' @examples
 #' \dontrun{
 #' ## generate data to make/save plot (as a .png file)
@@ -66,7 +64,8 @@ post_tweet <- function(status = "my first rtweet #rstats",
                        token = NULL,
                        in_reply_to_status_id = NULL,
                        destroy_id = NULL,
-                       retweet_id = NULL) {
+                       retweet_id = NULL,
+                       auto_populate_reply_metadata = FALSE) {
 
   ## check token
   token <- check_token(token)
@@ -123,8 +122,14 @@ post_tweet <- function(status = "my first rtweet #rstats",
 
   ## update statuses query
   query <- "statuses/update"
+
+  ## make sure encoding is utf-8
+  enc <- getOption("encoding")
+  on.exit(options(encoding = enc), add = TRUE)
+  options(encoding = "UTF-8")
+
   ## validate status text
-  if (all(nchar(status) > 280, !grepl("http", status))) {
+  if (all(is_tweet_length(status), !grepl("http", status))) {
     stop("cannot exceed 280 characters.", call. = FALSE)
   }
   if (length(status) > 1) {
@@ -159,6 +164,10 @@ post_tweet <- function(status = "my first rtweet #rstats",
     params[["in_reply_to_status_id"]] <- in_reply_to_status_id
   }
 
+  if (auto_populate_reply_metadata) {
+    params[["auto_populate_reply_metadata"]] <- "true"
+  }
+
   url <- make_url(query = query, param = params)
 
   r <- TWIT(get = FALSE, url, token)
@@ -170,6 +179,13 @@ post_tweet <- function(status = "my first rtweet #rstats",
   invisible(r)
 }
 
+is_tweet_length <- function(.x, n = 280) {
+  .x <- gsub("https?://[[:graph:]]+\\s?", "", .x)
+  while (grepl("^@\\S+\\s+", .x)) {
+    .x <- sub("^@\\S+\\s+", "", .x)
+  }
+  nchar(.x) <= n
+}
 
 upload_media_to_twitter <- function(media, token) {
   media2upload <- httr::upload_file(media)
@@ -194,10 +210,17 @@ upload_media_to_twitter <- function(media, token) {
 #' @importFrom httr POST upload_file content
 #' @export
 post_message <- function(text, user, media = NULL, token = NULL) {
-    ## validate
+  ## get user id
+  user_id <- lookup_users(user)
+  user_id <- user_id$user_id[1]
   stopifnot(is.character(text))
   stopifnot(length(text) == 1)
-  query <- "direct_messages/new"
+  query <- "direct_messages/events/new"
+  body <- list(
+    event = list(type = "message_create",
+      message_create = list(target = list(recipient_id = user_id),
+    message_data = list(text = text))))
+  body <- jsonlite::toJSON(body, auto_unbox = TRUE)
   if (length(text) > 1) {
     stop("can only post one message at a time",
          call. = FALSE)
@@ -212,17 +235,16 @@ post_message <- function(text, user, media = NULL, token = NULL) {
     r <- httr::POST(rurl, body = list(media = media2upload), token)
     r <- httr::content(r, "parsed")
     params <- list(
-      text = text,
-      user = user,
       media_ids = r$media_id_string
     )
   } else {
-    params <- list(text = text, user = user)
+    params <- NULL
   }
-  names(params)[2] <- .id_type(user)
-  query <- "direct_messages/new"
+  #names(params)[2] <- .id_type(user)
+  query <- "direct_messages/events/new"
   url <- make_url(query = query, param = params)
-  r <- TWIT(get = FALSE, url, token)
+
+  r <- TWIT(get = FALSE, url, token, body = body)
   if (r$status_code != 200) {
     return(httr::content(r))
   }

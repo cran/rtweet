@@ -21,6 +21,20 @@
 #'   e.g., \code{q = '"data science"'} or escape each internal double
 #'   quote with a single backslash, e.g., \code{q =
 #'   "\"data science\""}.
+#'
+#' Some other useful query tips:
+#'
+#' \itemize{
+#'   \item Exclude retweets via \code{"-filter:retweets"}
+#'   \item Exclude quotes via \code{"-filter:quote"}
+#'   \item Exclude replies via \code{"-filter:replies"}
+#'   \item Filter (return only) verified via \code{"filter:verified"}
+#'   \item Exclude verified via \code{"-filter:verified"}
+#'   \item Get everything (firehose for free) via \code{"-filter:verified OR filter:verified"}
+#'   \item Filter (return only) tweets with links to news articles via \code{"filter:news"}
+#'   \item Filter (return only) tweets with media \code{"filter:media"}
+#' }
+#'
 #' @param n Integer, specifying the total number of desired tweets to
 #'   return. Defaults to 100. Maximum number of tweets returned from a
 #'   single token is 18,000. To return more than 18,000 tweets, users
@@ -323,6 +337,19 @@ search_tweets_ <- function(q = "",
 
   ## path name
   query <- "search/tweets"
+  safedir <- NULL
+  if ("premium" %in% names(list(...)) &&
+      all(c("env_name", "path") %in% names(list(...)$premium))) {
+    premium <- list(...)$premium
+    premium$path <- sub("tweets/search/?|search/tweets/?", "", premium$path)
+    query <- gsub("/+", "/",
+      paste0("tweets/search/", premium$path, "/", premium$env_name))
+    cat(query, "***")
+
+    if ("safedir" %in% names(list(...))) {
+      safedir <- list(...)$safedir
+    }
+  }
   ## validate
   stopifnot(is_n(n), is.atomic(q), length(q) == 1L, is.atomic(max_id))
   ## number of loops
@@ -368,22 +395,54 @@ search_tweets_ <- function(q = "",
     tweet_mode = "extended",
     geocode = geocode,
     ...)
-  ## make url
-  url <- make_url(
-    query = query,
-    param = params)
-
-  if (verbose) {
-    message("Searching for tweets...")
-    if (n > 10000) message("This may take a few seconds...")
+  if (grepl("fullarchive|30day", query)) {
+    params[["premium"]] <- NULL
+    params$result_type <- NULL
+    if (grepl("full", query)) {
+      params$maxResults <- 100
+    } else {
+      params$maxResults <- 100
+    }
+    names(params)[1] <- "query"
+    params$tweet_mode <- NULL
+    params$safedir <- NULL
+    # m <- regexpr("(?<=since:)\\S+", params$q, perl = TRUE)
+    # if (m[1] > 0) {
+    #   params$fromDate <- regmatches(params$q, m)
+    #   params$q <- sub("since:\\S+\\s?", "", params$q)
+    # }
+    # m <- regexpr("(?<=until:)\\S+", params$q, perl = TRUE)
+    # if (m[1] > 0) {
+    #   params$toDate <- regmatches(params$q, m)
+    #   params$q <- sub("until:\\S+\\s?", "", params$q)
+    # }
+    params$count <- NULL
+    type <- "premium"
+    ## make url
+    url <- make_url(
+      query = query,
+      param = params)
+  } else {
+    type <- "search"
+    ## make url
+    url <- make_url(
+      query = query,
+      param = params)
   }
-  tw <- scroller(url, n, n.times, type = "search", token)
+
+  #if (verbose) {
+  #  message("Searching for tweets...")
+  #  if (n > 10000) message("This may take a few seconds...")
+  #}
+  tw <- scroller(url, n, n.times, type = type, token, verbose = verbose,
+    safedir = safedir)
+
   if (parse) {
     tw <- tweets_with_users(tw)
   }
-  if (verbose) {
-    message("Finished collecting tweets!")
-  }
+  #if (verbose) {
+  #  message("Finished collecting tweets!")
+  #}
   tw
 }
 
