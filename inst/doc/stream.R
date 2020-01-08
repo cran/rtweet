@@ -1,14 +1,13 @@
-## ---- include=FALSE------------------------------------------------------
-knitr::opts_chunk$set(
-  echo = TRUE, eval = FALSE, comment = "#>", collapse = TRUE)
+## ---- include=FALSE-----------------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, comment = "#>", collapse = TRUE)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## Install rtweet
 #  install.packages("rtweet")
 #  ## Load rtweet
 #  library(rtweet)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## Stream keywords used to filter tweets
 #  q <- "hillaryclinton,imwithher,realdonaldtrump,maga,electionday"
 #  
@@ -22,11 +21,11 @@ knitr::opts_chunk$set(
 #  ## Filename to save json data (backup)
 #  filename <- "rtelect.json"
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## Stream election tweets
 #  rt <- stream_tweets(q = q, timeout = streamtime, file_name = filename)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## No upfront-parse save as json file instead method
 #  stream_tweets(
 #    q = q,
@@ -50,19 +49,19 @@ knitr::opts_chunk$set(
 #  ## Parse from json file
 #  rt <- parse_stream("congress-stream.json")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## Preview tweets data
 #  rt
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## Preview users data
 #  users_data(rt)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## Plot time series of all tweets aggregated by second
 #  ts_plot(rt, by = "secs")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## plot multiple time series by first grouping the data by screen name
 #  rt %>%
 #    dplyr::group_by(screen_name) %>%

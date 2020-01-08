@@ -1,33 +1,47 @@
-## ---- include=FALSE------------------------------------------------------
+## ---- include=FALSE-----------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, comment = "#>", collapse = TRUE)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## install httpuv if not already
 #  if (!requireNamespace("httpuv", quietly = TRUE)) {
 #    install.packages("httpuv")
 #  }
 
-## ------------------------------------------------------------------------
-#  ## autheticate via web browser
+## -----------------------------------------------------------------------------
+#  ## load rtweet
+#  library(rtweet)
+#  
+#  ## store api keys (these are fake example values; replace with your own keys)
+#  api_key <- "afYS4vbIlPAj096E60c4W1fiK"
+#  api_secret_key <- "bI91kqnqFoNCrZFbsjAWHD4gJ91LQAhdCJXCj3yscfuULtNkuu"
+#  
+#  ## authenticate via web browser
 #  token <- create_token(
-#    app = "rtweet_token",
-#    consumer_key = "XYznzPFOFZR2a39FwWKN1Jp41",
-#    consumer_secret = "CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD")
+#    app = "rstatsjournalismresearch",
+#    consumer_key = api_key,
+#    consumer_secret = api_secret_key)
 
-## ------------------------------------------------------------------------
-#  ## check to see if the token is loaded
-#  identical(token, get_token())
+## -----------------------------------------------------------------------------
+#  ## view token (you should see the correct app name)
+#  token
 
-## ------------------------------------------------------------------------
-#  ## authenticate via access token
+## -----------------------------------------------------------------------------
+#  ## store api keys (these are fake example values; replace with your own keys)
+#  api_key <- "afYS4vbIlPAj096E60c4W1fiK"
+#  api_secret_key <- "bI91kqnqFoNCrZFbsjAWHD4gJ91LQAhdCJXCj3yscfuULtNkuu"
+#  access_token <- "9551451262-wK2EmA942kxZYIwa5LMKZoQA4Xc2uyIiEwu2YXL"
+#  access_token_secret <- "9vpiSGKg1fIPQtxc5d5ESiFlZQpfbknEN1f1m2xe5byw7"
+#  
+#  ## authenticate via web browser
 #  token <- create_token(
-#    app = "my_twitter_research_app",
-#    consumer_key = "XYznzPFOFZR2a39FwWKN1Jp41",
-#    consumer_secret = "CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD",
-#    access_token = "9551451262-wK2EmA942kxZYIwa5LMKZoQA4Xc2uyIiEwu2YXL",
-#    access_secret = "9vpiSGKg1fIPQtxc5d5ESiFlZQpfbknEN1f1m2xe5byw7")
+#    app = "rstatsjournalismresearch",
+#    consumer_key = api_key,
+#    consumer_secret = api_secret_key,
+#    access_token = access_token,
+#    access_secret = access_token_secret)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #  ## check to see if the token is loaded
-#  identical(token, get_token())
+#  library(rtweet)
+#  get_token()
 

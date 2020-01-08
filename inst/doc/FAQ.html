@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -18,9 +18,9 @@
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode { white-space: pre; position: relative; }
 div.sourceCode { margin: 1em 0; }
@@ -30,14 +30,16 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -46,9 +48,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -94,7 +96,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -309,22 +311,22 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="context" class="section level4">
 <h4>Context</h4>
 <p>Occurs when attempting to create a token</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="co">## these are fake keys</span></a>
-<a class="sourceLine" id="cb1-2" title="2"><span class="co">#&gt; create_token(</span></a>
-<a class="sourceLine" id="cb1-3" title="3"><span class="co">#&gt;   app = &quot;rtweet_token&quot;,</span></a>
-<a class="sourceLine" id="cb1-4" title="4"><span class="co">#&gt;   consumer_key = &quot;XYznzPFOFZR2a39FwWKN1Jp41&quot;,</span></a>
-<a class="sourceLine" id="cb1-5" title="5"><span class="co">#&gt;   consumer_secret = &quot;CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD&quot;)</span></a>
-<a class="sourceLine" id="cb1-6" title="6"><span class="co"># `Error in init_oauth1.0(endpoint, app, permission = params$permission) :</span></a>
-<a class="sourceLine" id="cb1-7" title="7"><span class="co">#  client error: (401) Unauthorized`</span></a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">## these are fake keys</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="co">#&gt; create_token(</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt;   app = &quot;rtweet_token&quot;,</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="co">#&gt;   consumer_key = &quot;XYznzPFOFZR2a39FwWKN1Jp41&quot;,</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt;   consumer_secret = &quot;CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD&quot;)</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co"># `Error in init_oauth1.0(endpoint, app, permission = params$permission) :</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co">#  client error: (401) Unauthorized`</span></span></code></pre></div>
 </div>
 <div id="solutions" class="section level4">
 <h4>Solutions</h4>
 <ol style="list-style-type: decimal">
 <li>Make sure you have <strong>at least</strong> rtweet version <code>0.6.6</code></li>
 <li>Check callback URL</li>
-<li>Make sure <code>Callback URL</code> option in “Settings” tab at <a href="https://apps.twitter.com" class="uri">https://apps.twitter.com</a> <strong>match exactly</strong> the following: <code>http://127.0.0.1:1410</code></li>
-<li>Make sure API keys <strong>match exactly</strong> the values for your Twitter app (found under the <code>Keys and Access Tokens</code> tab at <a href="https://apps.twitter.com" class="uri">https://apps.twitter.com</a>)</li>
-<li>In your app page at <a href="https://apps.twitter.com/" class="uri">https://apps.twitter.com/</a> under the <code>Keys and Access Tokens</code> tab, click <code>Regenerate Consumer Key and Secret</code>. Create a new token using the new key and secret.</li>
+<li>Make sure <code>Callback URL</code> option in your app settings at <a href="https://developer.twitter.com/en/apps" class="uri">https://developer.twitter.com/en/apps</a> <strong>match exactly</strong> the following: <code>http://127.0.0.1:1410</code></li>
+<li>Make sure API keys <strong>match exactly</strong> the values for your Twitter app (found under the <code>Keys and Tokens</code> tab at <a href="https://developer.twitter.com/en/apps" class="uri">https://developer.twitter.com/en/apps</a>)</li>
+<li>In your app page at <a href="https://developer.twitter.com/en/apps/" class="uri">https://developer.twitter.com/en/apps/</a> under the <code>Keys and Tokens</code> tab, click to regenerate your access keys. Create a new token using the new key and secret.</li>
 <li>Update the <strong>{httr}</strong> package</li>
 <li>Update R</li>
 </ol>
@@ -335,20 +337,20 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="context-1" class="section level4">
 <h4>Context</h4>
 <p>Occurs when attempting to create a token (using in-browser authorization method)</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="co">## these are fake keys</span></a>
-<a class="sourceLine" id="cb2-2" title="2"><span class="co">#&gt; create_token(</span></a>
-<a class="sourceLine" id="cb2-3" title="3"><span class="co">#&gt;   app = &quot;rtweet_token&quot;,</span></a>
-<a class="sourceLine" id="cb2-4" title="4"><span class="co">#&gt;   consumer_key = &quot;XYznzPFOFZR2a39FwWKN1Jp41&quot;,</span></a>
-<a class="sourceLine" id="cb2-5" title="5"><span class="co">#&gt;   consumer_secret = &quot;CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD&quot;)</span></a>
-<a class="sourceLine" id="cb2-6" title="6"><span class="co">#Error in oauth_listener(authorize_url, is_interactive) :</span></a>
-<a class="sourceLine" id="cb2-7" title="7"><span class="co">#  httpuv package required to capture OAuth credentials.</span></a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co">## these are fake keys</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="co">#&gt; create_token(</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="co">#&gt;   app = &quot;rtweet_token&quot;,</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a><span class="co">#&gt;   consumer_key = &quot;XYznzPFOFZR2a39FwWKN1Jp41&quot;,</span></span>
+<span id="cb2-5"><a href="#cb2-5"></a><span class="co">#&gt;   consumer_secret = &quot;CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD&quot;)</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a><span class="co">#Error in oauth_listener(authorize_url, is_interactive) :</span></span>
+<span id="cb2-7"><a href="#cb2-7"></a><span class="co">#  httpuv package required to capture OAuth credentials.</span></span></code></pre></div>
 </div>
 <div id="solutions-1" class="section level4">
 <h4>Solutions</h4>
 <ol style="list-style-type: decimal">
 <li>Install the <strong>{httpuv}</strong> package</li>
 </ol>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">install.packages</span>(<span class="st">&quot;httpuv&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">install.packages</span>(<span class="st">&quot;httpuv&quot;</span>)</span></code></pre></div>
 </div>
 </div>
 <div id="warning-89---invalid-or-expired-token." class="section level2">
@@ -356,23 +358,26 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="context-2" class="section level4">
 <h4>Context</h4>
 <p>Occurs when sending request to Twitter API. It means you have invalid or expired keys stored in access token.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="co">#&gt; search_tweets(&quot;lang:en&quot;)</span></a>
-<a class="sourceLine" id="cb4-2" title="2"><span class="co">#Warning: 89 - Invalid or expired token.</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">#&gt; search_tweets(&quot;lang:en&quot;)</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#Warning: 89 - Invalid or expired token.</span></span></code></pre></div>
 </div>
 <div id="solutions-2" class="section level4">
 <h4>Solutions</h4>
 <ol style="list-style-type: decimal">
-<li>Create new token using the keys from your previously created Twitter application found at <a href="https://apps.twitter.com" class="uri">https://apps.twitter.com</a></li>
-<li>In your app page at <a href="https://apps.twitter.com/" class="uri">https://apps.twitter.com/</a> under the <code>Keys and Access Tokens</code> tab, click <code>Regenerate Consumer Key and Secret</code>. Create a new token using the new key and secret.</li>
+<li>Create new token using the keys from your previously created Twitter application found at <a href="https://developer.twitter.com/en/apps" class="uri">https://developer.twitter.com/en/apps</a></li>
+<li>In your app page at <a href="https://developer.twitter.com/en/apps/" class="uri">https://developer.twitter.com/en/apps/</a> under the <code>Keys and Tokens</code> tab, click to regenerate your access keys. Create a new token using the new key and secret.</li>
 </ol>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="co">## these are fake keys</span></a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt; create_token(</span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt;   app = &quot;rtweet_token&quot;,</span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt;   consumer_key = &quot;XYznzPFOFZR2a39FwWKN1Jp41&quot;,</span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt;   consumer_secret = &quot;CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD&quot;)</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co">## these are fake keys</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="co">#&gt; create_token(</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a><span class="co">#&gt;   app = &quot;rtweet_token&quot;,</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt;   consumer_key = &quot;XYznzPFOFZR2a39FwWKN1Jp41&quot;,</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt;   consumer_secret = &quot;CtkGEWmSevZqJuKl6HHrBxbCybxI1xGLqrD5ynPd9jG0SoHZbD&quot;)</span></span></code></pre></div>
 </div>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

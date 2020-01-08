@@ -12,8 +12,8 @@
 #'   multiple possible terms, separate each search term with spaces
 #'   and "OR" (in caps). For example, the search \code{q =
 #'   "data science"} looks for tweets containing both "data" and
-#'   "science" anywhere located anywhere in the tweets and in any
-#'   order. When "OR" is entered between search terms, \code{query =
+#'   "science" located anywhere in the tweets and in any order.
+#'   When "OR" is entered between search terms, \code{query =
 #'   "data OR science"}, Twitter's REST API should return any tweet
 #'   that contains either "data" or "science." It is also possible to
 #'   search for exact phrases using double quotes. To do this, either
@@ -359,8 +359,9 @@ search_tweets_ <- function(q = "",
   } else {
     count <- 100
   }
-  ## validate query length
-  if (nchar(q) > 500) {
+  ## validate query length–char count might not always be same here as with 
+  ## Twitter, so set this to 600 and let Twitter reject others
+  if (nchar(q) > 600) {
     stop("q cannot exceed 500 characters.", call. = FALSE)
   }
   ## only select one type
@@ -453,7 +454,6 @@ search_tweets_ <- function(q = "",
 #' search_tweets2 Passes all arguments to search_tweets. Returns data from
 #' one OR MORE search queries.
 #'
-#' @inheritParams search_tweets.
 #' @return A tbl data frame with additional "query" column.
 #' @rdname search_tweets
 #' @examples

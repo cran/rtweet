@@ -1,8 +1,8 @@
-## ---- include=FALSE------------------------------------------------------
+## ---- include=FALSE-----------------------------------------------------------
 knitr::opts_chunk$set(
   echo = TRUE, eval = FALSE, comment = "#>", collapse = TRUE)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## search for 18000 tweets using the rstats hashtag
 #  rt <- search_tweets(
 #    "#rstats", n = 18000, include_rts = FALSE
@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 #  ## plot time series (if ggplot2 is installed)
 #  ts_plot(rt)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## plot time series of tweets
 #  ts_plot(rt, "3 hours") +
 #    ggplot2::theme_minimal() +
@@ -29,13 +29,13 @@ knitr::opts_chunk$set(
 #      caption = "\nSource: Data collected from Twitter's REST API via rtweet"
 #    )
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## search for 250,000 tweets containing the word data
 #  rt <- search_tweets(
 #    "data", n = 250000, retryonratelimit = TRUE
 #  )
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## search for 10,000 tweets sent from the US
 #  rt <- search_tweets(
 #    "lang:en", geocode = lookup_coords("usa"), n = 10000
@@ -51,15 +51,15 @@ knitr::opts_chunk$set(
 #  ## plot lat and lng points onto state map
 #  with(rt, points(lng, lat, pch = 20, cex = .75, col = rgb(0, .3, .7, .75)))
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## random sample for 30 seconds (default)
 #  rt <- stream_tweets("")
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## stream tweets from london for 60 seconds
 #  rt <- stream_tweets(lookup_coords("london, uk"), timeout = 60)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## stream london tweets for a week (60 secs x 60 mins * 24 hours *  7 days)
 #  stream_tweets(
 #    "realdonaldtrump,trump",
@@ -71,21 +71,21 @@ knitr::opts_chunk$set(
 #  ## read in the data as a tidy tbl data frame
 #  djt <- parse_stream("tweetsabouttrump.json")
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## get user IDs of accounts followed by CNN
 #  cnn_fds <- get_friends("cnn")
 #  
 #  ## lookup data on those accounts
 #  cnn_fds_data <- lookup_users(cnn_fds$user_id)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## get user IDs of accounts following CNN
 #  cnn_flw <- get_followers("cnn", n = 75000)
 #  
 #  ## lookup data on those accounts
 #  cnn_flw_data <- lookup_users(cnn_flw$user_id)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## how many total follows does cnn have?
 #  cnn <- lookup_users("cnn")
 #  
@@ -94,7 +94,7 @@ knitr::opts_chunk$set(
 #    "cnn", n = cnn$followers_count, retryonratelimit = TRUE
 #  )
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## get user IDs of accounts followed by CNN
 #  tmls <- get_timelines(c("cnn", "BBCWorld", "foxnews"), n = 3200)
 #  
@@ -116,17 +116,17 @@ knitr::opts_chunk$set(
 #      caption = "\nSource: Data collected from Twitter's REST API via rtweet"
 #    )
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  jkr <- get_favorites("jk_rowling", n = 3000)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## search for users with #rstats in their profiles
 #  usrs <- search_users("#rstats", n = 1000)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  sf <- get_trends("san francisco")
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## lookup users by screen_name or user_id
 #  users <- c("KimKardashian", "justinbieber", "taylorswift13",
 #             "espn", "JoelEmbiid", "cstonehoops", "KUHoops",
@@ -142,10 +142,10 @@ knitr::opts_chunk$set(
 #  # extract most recent tweets data from the famous tweeters
 #  tweets_data(famous_tweeters)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  post_tweet("my first rtweet #rstats")
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ## ty for the follow ;)
 #  post_follow("kearneymw")
 

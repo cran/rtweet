@@ -35,7 +35,6 @@ tweets_with_users <- function(x) {
 }
 
 
-#' @inheritParams tweets_with_users
 #' @family parsing
 #' @family users
 #' @rdname tweets_with_users
@@ -132,7 +131,7 @@ status_object_ <- function(x) {
       x <- x[[1]]
     }
     if (is.list(x) && "statuses" %in% names(x)) {
-      x <- x$statuses
+      x <- x[["statuses"]]
     } else if (is.list(x) && "results" %in% names(x)) {
       x <- x$results
     }
@@ -142,12 +141,15 @@ status_object_ <- function(x) {
     if (is.list(x) && has_name_(x, "status")) {
       return(x$status)
     }
+    if (is.list(x) && is_usr_obj(x) && !"status" %in% names(x) && "id_str" %in% names(x)) {
+      return(data.frame(id_str = x$id_str, stringsAsFactors = FALSE))
+    }
     if (has_name_(x, "id_str") && is.data.frame(x$id_str)) {
       return(x)
     }
     if (has_name_(x, "id_str") && length(x$id_str)) {
       for (i in seq_along(x)) {
-        if (length(x[[i]])) {
+        if (length(x[[i]]) > 0 && !is.data.frame(x[[i]])) {
           x[[i]] <- rep(x[[i]], length(x$id_str))
         }
         if (length(x$id_str) == 1 && length(x[[i]]) > 1) {
@@ -279,6 +281,10 @@ tweets_to_tbl_ <- function(dat) {
   if (has_name_(dat, "user") && has_name_(dat[["user"]], "id_str")) {
     dat$user_id <- `[[[`(dat$user, "id_str")
     dat$screen_name <- `[[[`(dat$user, "screen_name")
+  } else if (has_name_(dat, "screen_name") && has_name_(dat, "id_str")) {
+    dat$user_id <- dat[["id_str"]]
+    dat$id_str <- NULL
+    
   } else {
     dat$user_id <- NA_character_
     dat$screen_name <- NA_character_
@@ -291,7 +297,6 @@ tweets_to_tbl_ <- function(dat) {
     is_et <- !is.na(dat$extended_tweet$full_text)
     dat$text[is_et] <- dat$extended_tweet$full_text[is_et]
   }
-
   dat <- wrangle_quote_status(dat)
   dat <- wrangle_retweet_status(dat)
   statuscols <- statuscols_()
