@@ -8,29 +8,47 @@
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 
 
 <title>Live streaming tweets</title>
 
+<script src="stream_files/header-attrs-2.14/header-attrs.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
-code.sourceCode > span { display: inline-block; line-height: 1.25; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-code.sourceCode > span:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -50,7 +68,7 @@ pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-le
 div.sourceCode
   {   }
 @media screen {
-code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -107,7 +125,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 
-<link rel="stylesheet" href="/home/kmw/R/x86_64-pc-linux-gnu-library/3.6/rmarkdown/rmarkdown/templates/html_vignette/resources/vignette.css" type="text/css" />
+
+<link rel="stylesheet" href="/usr/lib/R/site-library/rmarkdown/rmarkdown/templates/html_vignette/resources/vignette.css" type="text/css" />
 
 
 
@@ -126,95 +145,170 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <div id="installing-and-loading-package" class="section level2">
 <h2>Installing and loading package</h2>
-<p>Prior to streaming, make sure to install and load rtweet. This vignette assumes users have already setup user access tokens (see: the “auth” vignette).</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">## Install rtweet</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">install.packages</span>(<span class="st">&quot;rtweet&quot;</span>)</span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="co">## Load rtweet</span></span>
-<span id="cb1-4"><a href="#cb1-4"></a><span class="kw">library</span>(rtweet)</span></code></pre></div>
+<p>Prior to streaming, make sure to install and load rtweet. This
+vignette assumes users have already setup user access tokens (see: the
+“auth” vignette, <code>vignette("auth", package = "rtweet")</code>).</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Load rtweet</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rtweet)</span></code></pre></div>
 </div>
 <div id="specifying-parameters" class="section level2">
 <h2>Specifying parameters</h2>
-<p>In addition to accessing Twitter’s REST API (e.g., <code>search_tweets</code>, <code>get_timeline</code>), rtweet makes it possible to capture live streams of Twitter data using the <code>stream_tweets()</code> function. By default, <code>stream_tweets</code> will stream for 30 seconds and return a random sample of tweets. To modify the default settings, <code>stream_tweets</code> accepts several parameters, including <code>q</code> (query used to filter tweets), <code>timeout</code> (duration or time of stream), and <code>file_name</code> (path name for saving raw json data).</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co">## Stream keywords used to filter tweets</span></span>
-<span id="cb2-2"><a href="#cb2-2"></a>q &lt;-<span class="st"> &quot;hillaryclinton,imwithher,realdonaldtrump,maga,electionday&quot;</span></span>
-<span id="cb2-3"><a href="#cb2-3"></a></span>
-<span id="cb2-4"><a href="#cb2-4"></a><span class="co">## Stream time in seconds so for one minute set timeout = 60</span></span>
-<span id="cb2-5"><a href="#cb2-5"></a><span class="co">## For larger chunks of time, I recommend multiplying 60 by the number</span></span>
-<span id="cb2-6"><a href="#cb2-6"></a><span class="co">## of desired minutes. This method scales up to hours as well</span></span>
-<span id="cb2-7"><a href="#cb2-7"></a><span class="co">## (x * 60 = x mins, x * 60 * 60 = x hours)</span></span>
-<span id="cb2-8"><a href="#cb2-8"></a><span class="co">## Stream for 30 minutes</span></span>
-<span id="cb2-9"><a href="#cb2-9"></a>streamtime &lt;-<span class="st"> </span><span class="dv">30</span> <span class="op">*</span><span class="st"> </span><span class="dv">60</span></span>
-<span id="cb2-10"><a href="#cb2-10"></a></span>
-<span id="cb2-11"><a href="#cb2-11"></a><span class="co">## Filename to save json data (backup)</span></span>
-<span id="cb2-12"><a href="#cb2-12"></a>filename &lt;-<span class="st"> &quot;rtelect.json&quot;</span></span></code></pre></div>
+<p>In addition to accessing Twitter’s REST API (e.g.,
+<code>search_tweets</code>, <code>get_timeline</code>), rtweet makes it
+possible to capture live streams of Twitter data using the
+<code>stream_tweets()</code> function. By default,
+<code>stream_tweets</code> will stream for 30 seconds and return a
+random sample of tweets. To modify the default settings,
+<code>stream_tweets</code> accepts several parameters, including
+<code>q</code> (query used to filter tweets), <code>timeout</code>
+(duration or time of stream), and <code>file_name</code> (path name for
+saving raw json data).</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream keywords used to filter tweets</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q <span class="ot">&lt;-</span> <span class="st">&quot;#rstats&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream time in seconds so for one minute set timeout = 60</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="do">## For larger chunks of time, I recommend multiplying 60 by the number</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="do">## of desired minutes. This method scales up to hours as well</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="do">## (x * 60 = x mins, x * 60 * 60 = x hours)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream for 30 seconds</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>streamtime <span class="ot">&lt;-</span> <span class="dv">30</span> </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="do">## Filename to save json data (backup)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>filename <span class="ot">&lt;-</span> <span class="st">&quot;rstats.json&quot;</span></span></code></pre></div>
 </div>
 <div id="stream_tweets" class="section level2">
 <h2>stream_tweets()</h2>
-<p>Once these parameters are specified, initiate the stream. Note: Barring any disconnection or disruption of the API, streaming will occupy your current instance of R until the specified time has elapsed. It is possible to start a new instance or R—streaming itself usually isn’t very memory intensive—but operations may drag a bit during the parsing process which takes place immediately after streaming ends.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co">## Stream election tweets</span></span>
-<span id="cb3-2"><a href="#cb3-2"></a>rt &lt;-<span class="st"> </span><span class="kw">stream_tweets</span>(<span class="dt">q =</span> q, <span class="dt">timeout =</span> streamtime, <span class="dt">file_name =</span> filename)</span></code></pre></div>
-<p>Parsing larger streams can take quite a bit of time (in addition to time spent streaming) due to a somewhat time-consuming simplifying process used to convert a json file into an R object. For example, the stream above yielded a little over 140,000 tweets and took my Macbook Air, which has 4gb of RAM, about 10 minutes to process.</p>
+<p>Once these parameters are specified, initiate the stream. Note:
+Barring any disconnection or disruption of the API, streaming will
+occupy your current instance of R until the specified time has elapsed.
+It is possible to start a new instance or R —streaming itself usually
+isn’t very memory intensive— but operations may drag a bit during the
+parsing process which takes place immediately after streaming ends.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream election tweets</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>stream_rstats <span class="ot">&lt;-</span> <span class="fu">stream_tweets</span>(<span class="at">q =</span> q, <span class="at">timeout =</span> streamtime, <span class="at">file_name =</span> filename)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Streaming tweets: 7 tweets written / 65.54 kB / 888.99 kB/s / 00:00:00</span></span></code></pre></div>
+<p>Parsing larger streams can take quite a bit of time (in addition to
+time spent streaming) due to a somewhat time-consuming simplifying
+process used to convert a json file into an R object. It is recommended
+to save the streaming in a file.</p>
 </div>
 <div id="saving-files" class="section level2">
 <h2>Saving files</h2>
-<p>Given a lengthy parsing process, users may want to stream tweets into json files upfront and parse those files later on. To do this, simply add <code>parse = FALSE</code> and make sure you provide a path (file name) to a location you can find later. To ensure the stream automatically reconnects following any interruption prior to the specified stream time, use <code>stream_tweets2()</code>.</p>
-<p>Regardless of whether you decide to setup an organizational system for streaming data, the process of streaming a file to disk and parsing it at a later point in space-time is the same, as illustrated in the example below.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">## No upfront-parse save as json file instead method</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">stream_tweets</span>(</span>
-<span id="cb4-3"><a href="#cb4-3"></a>  <span class="dt">q =</span> q,</span>
-<span id="cb4-4"><a href="#cb4-4"></a>  <span class="dt">parse =</span> <span class="ot">FALSE</span>,</span>
-<span id="cb4-5"><a href="#cb4-5"></a>  <span class="dt">timeout =</span> streamtime,</span>
-<span id="cb4-6"><a href="#cb4-6"></a>  <span class="dt">file_name =</span> filename</span>
-<span id="cb4-7"><a href="#cb4-7"></a>)</span>
-<span id="cb4-8"><a href="#cb4-8"></a><span class="co">## Parse from json file</span></span>
-<span id="cb4-9"><a href="#cb4-9"></a>rt &lt;-<span class="st"> </span><span class="kw">parse_stream</span>(filename)</span>
-<span id="cb4-10"><a href="#cb4-10"></a></span>
-<span id="cb4-11"><a href="#cb4-11"></a><span class="co">## stream_tweets2 method</span></span>
-<span id="cb4-12"><a href="#cb4-12"></a>twoweeks &lt;-<span class="st"> </span>60L <span class="op">*</span><span class="st"> </span>60L <span class="op">*</span><span class="st"> </span>24L <span class="op">*</span><span class="st"> </span>7L <span class="op">*</span><span class="st"> </span>2L</span>
-<span id="cb4-13"><a href="#cb4-13"></a>congress &lt;-<span class="st"> &quot;congress,senate,house of representatives,representatives,senators,legislative&quot;</span></span>
-<span id="cb4-14"><a href="#cb4-14"></a><span class="kw">stream_tweets2</span>(</span>
-<span id="cb4-15"><a href="#cb4-15"></a>  <span class="dt">q =</span> congress,</span>
-<span id="cb4-16"><a href="#cb4-16"></a>  <span class="dt">parse =</span> <span class="ot">FALSE</span>,</span>
-<span id="cb4-17"><a href="#cb4-17"></a>  <span class="dt">timeout =</span> twoweeks,</span>
-<span id="cb4-18"><a href="#cb4-18"></a>  <span class="dt">dir =</span> <span class="st">&quot;congress-stream&quot;</span></span>
-<span id="cb4-19"><a href="#cb4-19"></a>)</span>
-<span id="cb4-20"><a href="#cb4-20"></a></span>
-<span id="cb4-21"><a href="#cb4-21"></a><span class="co">## Parse from json file</span></span>
-<span id="cb4-22"><a href="#cb4-22"></a>rt &lt;-<span class="st"> </span><span class="kw">parse_stream</span>(<span class="st">&quot;congress-stream.json&quot;</span>)</span></code></pre></div>
+<p>Given a lengthy parsing process, users may want to stream tweets into
+json files upfront and parse those files later on. To do this, simply
+add <code>parse = FALSE</code> and make sure you provide a path (file
+name) to a location you can find later.</p>
+<p>Regardless of whether you decide to setup a system for streaming
+data, the process of streaming a file to disk and parsing it at a later
+point in time is the same, as illustrated in the example below.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">## No upfront-parse save as json file instead method</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># By default results are appended to the file.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">stream_tweets</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">q =</span> q,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">parse =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">timeout =</span> streamtime,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">file_name =</span> filename</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Streaming tweets: 8 tweets written / 65.54 kB / 2.19 MB/s / 00:00:00 Streaming tweets: 14 tweets written / 131.07 kB / 16.21 kB/s /</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 00:00:08</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="do">## Parse from json file</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>stream_rstats <span class="ot">&lt;-</span> <span class="fu">parse_stream</span>(filename)</span></code></pre></div>
 </div>
 <div id="returned-data-object" class="section level2">
 <h2>Returned data object</h2>
-<p>The parsed object should be the same whether a user parses up-front or from a json file in a later session. The returned object should be a data frame consisting of tweets data.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co">## Preview tweets data</span></span>
-<span id="cb5-2"><a href="#cb5-2"></a>rt</span></code></pre></div>
-<p>The returned object should also include a data frame of users data, which Twitter’s stream API automatically returns along with tweets data. To access users data, use the <code>users_data</code> function.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">## Preview users data</span></span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="kw">users_data</span>(rt)</span></code></pre></div>
+<p>The parsed object should be the same whether a user parses up-front
+or from a json file in a later session. The returned object should be a
+data frame consisting of tweets data.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Preview tweets data</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(stream_rstats)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            created_at           id              id_str</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2022-05-21 11:46:55 1.527949e+18 1527949049319530496</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 2022-05-21 11:47:01 1.527949e+18 1527949070827933704</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                             text</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1       #Infographic: Types of \nhttps://t.co/Gdq7B6vFwY\n\n#MachineLearning\n#DataScience #programming #DataScientists… https://t.co/KTlhlz9euO</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 RT @KirkDBorne: #DataScience Theories, Models, #Algorithms, and Analytics: https://t.co/w704rhiLS8 (FREE PDF Download, 462 pages)\n—————\n#Bi…</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                 source truncated in_reply_to_status_id</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 &lt;a href=&quot;http://twitter.com/download/android&quot; rel=&quot;nofollow&quot;&gt;Twitter for Android&lt;/a&gt;      TRUE                    NA</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 &lt;a href=&quot;http://twitter.com/download/android&quot; rel=&quot;nofollow&quot;&gt;Twitter for Android&lt;/a&gt;     FALSE                    NA</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   in_reply_to_status_id_str in_reply_to_user_id in_reply_to_user_id_str in_reply_to_screen_name geo coordinates</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1                        NA                  NA                      NA                      NA  NA  NA, NA, NA</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2                        NA                  NA                      NA                      NA  NA  NA, NA, NA</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                        place contributors is_quote_status quote_count reply_count retweet_count favorite_count</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 NA, NA, NA, NA, NA, NA, NA           NA           FALSE           0           0             0              0</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 NA, NA, NA, NA, NA, NA, NA           NA           FALSE           0           0             0              0</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                                                                                                                                                                                                            entities</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 Infographic, MachineLearning, DataScience, programming, DataScientists, 0, 12, 49, 65, 66, 78, 79, 91, 92, 107, https://t.co/Gdq7B6vFwY, https://t.co/KTlhlz9euO, https://bit.ly/3oZvkPU, https://twitter.com/i/web/status/1527949049319530496, bit.ly/3oZvkPU, twitter.com/i/web/status/1…, 24, 109, 47, 132, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2                                                                                                                                                                  DataScience, Algorithms, 16, 28, 47, 58, https://t.co/w704rhiLS8, http://bit.ly/3vZqiYr, bit.ly/3vZqiYr, 75, 98, NA, KirkDBorne, Kirk Borne, 534563976, 534563976, 3, 14, NA, NA</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   favorited retweeted possibly_sensitive filter_level lang  timestamp_ms</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     FALSE     FALSE              FALSE          low   en 1653126415935</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2     FALSE     FALSE              FALSE          low   en 1653126421063</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              retweeted_status</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 Sat May 21 03:15:01 +0000 2022, 1527850420793663488, 1527850420793663488, #DataScience Theories, Models, #Algorithms, and Analytics: https://t.co/w704rhiLS8 (FREE PDF Download, 462 pages)\n—… https://t.co/VR6LqqMuQu, 0, 140, &lt;a href=&quot;http://twitter.com/download/iphone&quot; rel=&quot;nofollow&quot;&gt;Twitter for iPhone&lt;/a&gt;, TRUE, NA, NA, NA, NA, NA, 534563976, 534563976, Kirk Borne, KirkDBorne, Maryland, USA, http://www.linkedin.com/in/kirkdborne, Data Scientist, Chief ScienceOfficer @DataPrime_ai. Global Speaker. Founder @LeadershipData. Top #BigData #DataScience #AI #IoT #ML Influencer. PhD Astrophysics, none, FALSE, TRUE, 314491, 8615, 8768, 215023, 153655, Fri Mar 23 16:35:17 +0000 2012, NA, NA, FALSE, NA, FALSE, FALSE, C0DEED, http://abs.twimg.com/images/themes/theme1/bg.png, https://abs.twimg.com/images/themes/theme1/bg.png, TRUE, 0084B4, FFFFFF, DDEEF6, 333333, TRUE, http://pbs.twimg.com/profile_images/1112733580948635648/s-8d1avb_normal.jpg, https://pbs.twimg.com/profile_images/1112733580948635648/s-8d1avb_normal.jpg, https://pbs.twimg.com/profile_banners/534563976/1651617018, FALSE, FALSE, NA, NA, NA, NA, NA, NA, NA, FALSE, #DataScience Theories, Models, #Algorithms, and Analytics: https://t.co/w704rhiLS8 (FREE PDF Download, 462 pages)\n—————\n#BigData #AI #MachineLearning #DataScientists #Mathematics #Statistics #Rstats #Coding #NetworkScience #NeuralNetworks #100DaysOfCode https://t.co/mncH2ANBoc, 0, 253, DataScience, Algorithms, BigData, AI, MachineLearning, DataScientists, Mathematics, Statistics, Rstats, Coding, NetworkScience, NeuralNetworks, 100DaysOfCode, 0, 12, 31, 42, 120, 128, 129, 132, 133, 149, 150, 165, 166, 178, 179, 190, 191, 198, 199, 206, 207, 222, 223, 238, 239, 253, https://t.co/w704rhiLS8, http://bit.ly/3vZqiYr, bit.ly/3vZqiYr, 59, 82, 1527850418260348928, 1527850418260348932, 254, 277, http://pbs.twimg.com/media/FTQD3EpXEAQSWRu.jpg, https://pbs.twimg.com/media/FTQD3EpXEAQSWRu.jpg, https://t.co/mncH2ANBoc, pic.twitter.com/mncH2ANBoc, https://twitter.com/KirkDBorne/status/1527850420793663488/photo/1, photo, 1074, 1390, fit, 927, 1200, fit, 150, 150, crop, 525, 680, fit, 1527850418260348928, 1527850418260348932, 254, 277, http://pbs.twimg.com/media/FTQD3EpXEAQSWRu.jpg, https://pbs.twimg.com/media/FTQD3EpXEAQSWRu.jpg, https://t.co/mncH2ANBoc, pic.twitter.com/mncH2ANBoc, https://twitter.com/KirkDBorne/status/1527850420793663488/photo/1, photo, 1074, 1390, fit, 927, 1200, fit, 150, 150, crop, 525, 680, fit, 0, 1, 25, 43, DataScience, Algorithms, 0, 12, 31, 42, https://t.co/w704rhiLS8, https://t.co/VR6LqqMuQu, http://bit.ly/3vZqiYr, https://twitter.com/i/web/status/1527850420793663488, bit.ly/3vZqiYr, twitter.com/i/web/status/1…, 59, 82, 117, 140, FALSE, FALSE, FALSE, low, en, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   quoted_status_id quoted_status_id_str</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1               NA                 &lt;NA&gt;</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2               NA                 &lt;NA&gt;</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                                                                                                                                quoted_status</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   quoted_status_permalink display_text_width full_text favorited_by scopes display_text_range metadata query withheld_scope</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1              NA, NA, NA                132        NA           NA     NA                 NA       NA    NA             NA</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2              NA, NA, NA                140        NA           NA     NA                 NA       NA    NA             NA</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   withheld_copyright withheld_in_countries possibly_sensitive_appealable</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1                 NA                    NA                            NA</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2                 NA                    NA                            NA</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 4 rows ]</span></span></code></pre></div>
+<p>The returned object should also include a data frame of users data,
+which Twitter’s stream API automatically returns along with tweets data.
+To access users data, use the <code>users_data</code> function.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Preview users data</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">users_data</span>(stream_rstats))</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             id              id_str             name   screen_name                 location                    url</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2.553201e+09          2553201139      Hameed Kahn   hameeduom41                Islamabad https://bit.ly/3oZvkPU</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 3.622639e+07            36226389  rosangela maria      MMAPULLA Campo Grande, MS, Brazil                   &lt;NA&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 9.716201e+17  971620109197312000   Serverless Fan ServerlessFan                Sri Lanka                   &lt;NA&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 1.437729e+18 1437728609909706753 Developer Bot 🤖       GoaiDev                    India   https://thebotman.co</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                    description</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 Using suitable technologies, we create secure, scalable software solutions that integrate with new and legacy systems to drive business growth &amp; innovation.</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2        meu perfil @MMAPULLA, para quem não  sabe, se deve a um apelido carinhoso que recebi em minha última viagem a Botswana. trad. aquela que traz a chuva</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3                                                                                                                                       #Serverless #Computing</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4                                                                                    I do retweet #javascript.\nCreated by @rahul05ranjan.\nDM for any query!!</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   protected verified followers_count friends_count listed_count favourites_count statuses_count                     created_at</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     FALSE    FALSE             526          1817            0             3296           5141 Sat Jun 07 19:40:16 +0000 2014</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2     FALSE    FALSE             138           530            0            37369           8574 Wed Apr 29 00:24:15 +0000 2009</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3     FALSE    FALSE            4012             6          145                7         533557 Thu Mar 08 05:34:20 +0000 2018</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4     FALSE    FALSE            1803            14           32           246879         508947 Tue Sep 14 10:43:25 +0000 2021</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                        profile_image_url_https</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 https://pbs.twimg.com/profile_images/1526660385306443776/VljjOVKm_normal.jpg</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 https://pbs.twimg.com/profile_images/1319402128968945667/BMkHmXJp_normal.jpg</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  https://pbs.twimg.com/profile_images/973611685822058497/yRRo9D52_normal.jpg</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 https://pbs.twimg.com/profile_images/1459402333201199104/skHuHVT9_normal.jpg</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                    profile_banner_url default_profile default_profile_image withheld_in_countries</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1         https://pbs.twimg.com/profile_banners/2553201139/1652988231            TRUE                 FALSE                  NULL</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2           https://pbs.twimg.com/profile_banners/36226389/1456327757           FALSE                 FALSE                  NULL</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 https://pbs.twimg.com/profile_banners/971620109197312000/1525426121           FALSE                 FALSE                  NULL</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4                                                                &lt;NA&gt;            TRUE                 FALSE                  NULL</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   derived withheld_scope entitites</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1    &lt;NA&gt;             NA      NULL</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2    &lt;NA&gt;             NA      NULL</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3    &lt;NA&gt;             NA      NULL</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4    &lt;NA&gt;             NA      NULL</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2 rows ]</span></span></code></pre></div>
 </div>
 <div id="plotting" class="section level2">
 <h2>Plotting</h2>
-<p>Once parsed, <code>ts_plot()</code> provides a quick visual of the frequency of tweets. By default, <code>ts_plot()</code> will try to aggregate time by the day. Because I know the stream only lasted 30 minutes, I’ve opted to aggregate tweets by the second. It’d also be possible to aggregate by the minute, i.e., <code>by = "mins"</code>, or by some value of seconds, e.g.,<code>by = "15 secs"</code>. I usually fiddle around with this a bit until the plot looks good.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co">## Plot time series of all tweets aggregated by second</span></span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="kw">ts_plot</span>(rt, <span class="dt">by =</span> <span class="st">&quot;secs&quot;</span>)</span></code></pre></div>
-<p align="center">
-<img src="files/stream-ts.png" alt="stream-ts">
-</p>
+<p>Once parsed, <code>ts_plot()</code> provides a quick visual of the
+frequency of tweets. By default, <code>ts_plot()</code> will try to
+aggregate time by the day. Because I know the stream only lasted 30
+minutes, I’ve opted to aggregate tweets by the second. It’d also be
+possible to aggregate by the minute, i.e., <code>by = "mins"</code>, or
+by some value of seconds, e.g.,<code>by = "15 secs"</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Plot time series of all tweets aggregated by second</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ts_plot</span>(stream_rstats, <span class="at">by =</span> <span class="st">&quot;secs&quot;</span>)</span></code></pre></div>
+<div class="figure">
+<img src="vignettes/files/ts_plot-1.png" alt="" />
+<p class="caption">plot of chunk ts_plot</p>
 </div>
-<div id="plotting-with-filters" class="section level2">
-<h2>Plotting with filters</h2>
-<p>The <code>ts_plot()</code> function can also generate multiple time series for grouped data frames.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co">## plot multiple time series by first grouping the data by screen name</span></span>
-<span id="cb8-2"><a href="#cb8-2"></a>rt <span class="op">%&gt;%</span></span>
-<span id="cb8-3"><a href="#cb8-3"></a><span class="st">  </span>dplyr<span class="op">::</span><span class="kw">group_by</span>(screen_name) <span class="op">%&gt;%</span></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="st">  </span><span class="kw">ts_plot</span>() <span class="op">+</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="st">  </span>ggplot2<span class="op">::</span><span class="kw">labs</span>(</span>
-<span id="cb8-6"><a href="#cb8-6"></a>    <span class="dt">title =</span> <span class="st">&quot;Tweets during election day for the 2016 U.S. election&quot;</span>,</span>
-<span id="cb8-7"><a href="#cb8-7"></a>    <span class="dt">subtitle =</span> <span class="st">&quot;Tweets collected, parsed, and plotted using `rtweet`&quot;</span></span>
-<span id="cb8-8"><a href="#cb8-8"></a>  )</span></code></pre></div>
-<p>Often times these plots kinda resemble a frowny face with the first and last points appearing significantly lower than the rest. This is because the first and last intervals of time are artificially shrunken by connection and disconnection processes. To remedy this, users can specify <code>trim = 1</code> to tell R to drop the first and last observation for each time series. This usually yields a much more attractive looking plot.</p>
-<p align="center">
-<img src="files/stream-filter.png" alt="stream-filter">
-</p>
 </div>
 
 

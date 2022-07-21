@@ -4,44 +4,42 @@
 \name{rtweet-package}
 \alias{rtweet}
 \alias{rtweet-package}
-\title{rtweet: Collecting Twitter data}
+\title{rtweet: Collect Twitter data from R}
 \description{
 rtweet provides users a range of functions designed to extract data
-from Twitter's REST and streaming APIs.
-}
-\details{
-It has three main goals:
-
+from Twitter's REST and streaming APIs. It has three main goals:
 \itemize{
 \item Formulate and send requests to Twitter's REST and stream APIs.
 \item Retrieve and iterate over returned data.
 \item Wrangling data into tidy structures.
 }
-}
-\examples{
-\dontrun{
-## for instructions on access tokens, see the tokens vignette
-vignette("auth")
 
-## for a quick demo check the rtweet vignette
-vignette("rtweet")
-}
+Get started by reading \code{vignette("rtweet")}.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://CRAN.R-project.org/package=rtweet}
+  \item \url{https://docs.ropensci.org/rtweet/}
+  \item \url{https://github.com/ropensci/rtweet/}
   \item Report bugs at \url{https://github.com/ropensci/rtweet/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Michael W. Kearney \email{kearneymw@missouri.edu} (\href{https://orcid.org/0000-0002-0730-4694}{ORCID})
+\strong{Maintainer}: Lluís Revilla Sancho \email{lluis.revilla@gmail.com} (\href{https://orcid.org/0000-0001-9747-2570}{ORCID})
+
+Authors:
+\itemize{
+  \item Michael W. Kearney \email{kearneymw@missouri.edu} (\href{https://orcid.org/0000-0002-0730-4694}{ORCID})
+  \item Hadley Wickham (\href{https://orcid.org/0000-0003-4757-117X}{ORCID})
+}
 
 Other contributors:
 \itemize{
   \item Andrew Heiss (\href{https://orcid.org/0000-0002-3948-3914}{ORCID}) [reviewer]
   \item Francois Briatte [reviewer]
+  \item Jonathan Sidi \email{yonicd@gmail.com} (\href{https://orcid.org/0000-0002-4222-1819}{ORCID}) [contributor]
 }
 
 }
+\keyword{internal}

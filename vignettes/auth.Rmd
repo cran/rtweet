@@ -1,10 +1,9 @@
 ---
-title: "Obtaining and using access tokens"
-subtitle: "rtweet: Collecting Twitter Data"
+title: "Authentication with rtweet"
 output:
   rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Obtaining and using access tokens}
+  %\VignetteIndexEntry{Authentication with rtweet}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,114 +12,183 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, comment = "#>", collapse = TRUE)
 ```
 
-## rtweet
+rtweet's default authentication is shared by all user.
+If it is just for a test, a workshop or a lecture it is fine.
+But if you plan to use it more than a day you will benefit of authenticating yourself.
 
-This vignette covers how to obtain and use Twitter API access tokens for use in the `rtweet` package.
+The **recommended authentication** mechanism is using `auth_setup_default()`.
+It allows you to act on behalf of your personal Twitter account, as if you were performing actions on twitter.com.
 
-## Creating a Twitter App
+If you want to collect a lot of data or implement a bot, you should instead use one of rtweet's two other authentication mechanisms:
 
-- To create a Twitter app, you will first need to apply for a developer account. This process along with a detailed explanation can be found at [developer.twitter.com](https://developer.twitter.com).
+-   **App authentication** allows you to act as if you were a Twitter app.
+    You can't perform operations that a user can (like posting a tweet or reading a DM), but you get higher rate limits on data collection operations.
 
-- Once you have acquired a developer account, navigate to [developer.twitter.com/en/apps](https://developer.twitter.com/en/apps/), click the blue button that says, `Create a New App`, and then complete the form with the following fields:
-   + `App Name`: What your app will be called
-   + `Application Description`: How your app will be described to its users
-   <p align="center"><img src="files/create-app-1.png" alt="create-app-1"></p>
-   + `Website URLs`: Website associated with app–I recommend using the URL to your Twitter profile
-   + `Callback URLs`: ***IMPORTANT*** enter exactly the following: `http://127.0.0.1:1410`
-   <p align="center"><img src="files/create-app-2.png" alt="create-app-2"></p>
-   + `Tell us how this app will be used`: Be clear and honest
-   <p align="center"><img src="files/create-app-3.png" alt="create-app-3"></p>
-- When you've completed the required form fields, click the blue `Create` button at the bottom
-- Read through and indicate whether you accept the developer terms
-   <p align="center"><img src="files/create-app-4.png" alt="create-app-4"></p>
-- And you're done!
-   <p align="center"><img src="files/create-app-5.png" alt="create-app-5"></p>
+-   **Bot authentication** allows you to create a fully automated Twitter bot that performs actions on its own behalf rather than on behalf of a human.
 
-## Authorization methods
-
-Users can create their personal Twitter token in two different ways. Each method is outlined below.
-
-### 1. Browser-based authentication
-
-- Authentication via web browser requires the `httpuv` package to be installed.
+In either case, you'll need to create your own Twitter app (yes, it can be confusing), so we'll start by discussing what an app is and how to create one on the Twitter website.
+Next, you'll learn how to use the `rtweet_app()` and `rtweet_bot()` functions to tell rtweet about your app config.
+You'll then learn how to set the default authentication mechanism for the current R session, and how to save it so you can use it in a future session.
 
 ```{r}
-## install httpuv if not already
-if (!requireNamespace("httpuv", quietly = TRUE)) {
-  install.packages("httpuv")
-}
-```
-
-- Navigate to [developer.twitter.com/en/apps](https://developer.twitter.com/en/apps) and select your Twitter app
-- Click the tab labeled `Keys and tokens` to retrieve your keys.
-- Locate the `Consumer API keys` (aka "API Secret").
-
-<p align="center"><img src="files/create-app-6.png" alt="create-app-6"></p>
-
-- Copy and paste the two keys (along with the name of your app) into an R script file and pass them along to `create_token()`.
-
-```{r}
-## load rtweet
 library(rtweet)
-
-## store api keys (these are fake example values; replace with your own keys)
-api_key <- "afYS4vbIlPAj096E60c4W1fiK"
-api_secret_key <- "bI91kqnqFoNCrZFbsjAWHD4gJ91LQAhdCJXCj3yscfuULtNkuu"
-
-## authenticate via web browser
-token <- create_token(
-  app = "rstatsjournalismresearch",
-  consumer_key = api_key,
-  consumer_secret = api_secret_key)
 ```
 
-- A browser pop-up window should appear. Click to approve (must be signed into twitter.com) and return to R.
-- Your token has been created. Print your token to make sure the app name and `api_key` match
+## Creating a Twitter app
 
-```{r}
-## view token (you should see the correct app name)
-token
+You're already familiar with using twitter, either through [the website](https://twitter.com) or an app that you installed on your phone or computer.
+To use twitter from R, you'll need to learn a little more about what's going on behind the scenes.
+The first important concept to grasp is that every request to the Twitter API has to go through an "app".
+Normally, someone else has created the app for you, but now that you're using twitter programmatically, you can create your own app.
+(It's still called an app even though you'll be using it through an R package).
+
+To create a Twitter app, you need to first apply for a developer account by following the instructions at <https://developer.twitter.com>.
+Once you have been approved (which may take several hours), navigate to the [developer portal](https://developer.twitter.com/en/portal/projects-and-apps) and click the "Create App" button at the bottom of the page.
+You'll need to name your app: the name is unimportant for our purposes, but needs to be unique across all twitter apps.
+
+After you've created your app, you'll see a screen that gives you some important information.
+You'll only see this once, so make sure to record it in a secure location.
+
+![](app-info.png){width="548"}
+
+Don't worry if you forget to save this data: you can always regenerate new values by clicking the "regenerate" button on the "keys and tokens" page.
+If you regenerate the previous values will cease to work, so do not use it to get different credentials for an authentication already in use. 
+
+## Setup
+
+Now that you have an app registered on twitter.com , you have to tell rtweet about it.
+You'll use either `rtweet_app()` or `rtweet_bot()` depending on whether you want app-style authentication or bot-style authentication as described above.
+
+### User
+
+By default `rtweet` uses a common user for all the users.
+Using the default authentication might cause problems while using rtweet. 
+You are sharing the same resource with many people!
+
+If you use rtweet for more than a day or a learning how to use the package it is recommended to set up your own authentication and you don't want to set up a bot or an app you can use `auth_setup_default()`:
+
+```{r, eval=FALSE}
+auth_setup_default()
 ```
 
-### 2. Access token/secret method
+It will call `rtweet_user()` to use your current logged account on your default browser as the authentication used by `rtweet` and save it as "default" (See [Saving and loading](#save)).
 
-- Navigate to [developer.twitter.com/en/apps](https://developer.twitter.com/en/apps) and select your Twitter app
-- Click the tab labeled `Keys and tokens` to retrieve your keys.
-- Locate the `Consumer API keys` (aka "API Secret").
+### Apps
 
-<p align="center"><img src="files/create-app-6.png" alt="create-app-6"></p>
+To use app based authentication, run this code:
 
-- Scroll down to `Access token & access token secret` and click `Create`
-
-<p align="center"><img src="files/create-app-7.png" alt="create-app-7"></p>
-
-- Copy and paste the four keys (along with the name of your app) into an R script file and pass them along to `create_token()`.
-
-```{r}
-## store api keys (these are fake example values; replace with your own keys)
-api_key <- "afYS4vbIlPAj096E60c4W1fiK"
-api_secret_key <- "bI91kqnqFoNCrZFbsjAWHD4gJ91LQAhdCJXCj3yscfuULtNkuu"
-access_token <- "9551451262-wK2EmA942kxZYIwa5LMKZoQA4Xc2uyIiEwu2YXL"
-access_token_secret <- "9vpiSGKg1fIPQtxc5d5ESiFlZQpfbknEN1f1m2xe5byw7"
-
-## authenticate via web browser
-token <- create_token(
-  app = "rstatsjournalismresearch",
-  consumer_key = api_key,
-  consumer_secret = api_secret_key,
-  access_token = access_token,
-  access_secret = access_token_secret)
+```{r, eval = FALSE}
+auth <- rtweet_app()
 ```
 
-## Authorization in future R sessions
+This will prompt you to enter the *bearer token* that you recorded earlier.
 
-- The `create_token()` function should automatically save your token as an environment variable for you. So next time you start an R session [on the same machine], rtweet should automatically find your token.
-- To make sure it works, restart your R session, run the following code, and again check to make sure the app name and `api_key` match.
+It's good practice to only provide secrets interactively, because that makes it harder to accidentally share them in either your `.Rhistory` or an `.R` file.
 
-```{r}
-## check to see if the token is loaded
-library(rtweet)
-get_token()
+### Bots
+
+Bot based authentication works similarly:
+
+```{r, eval = FALSE}
+auth <- rtweet_bot()
 ```
 
-That's it!
+But you'll need more data --- as well as the *API key* and *API secret* you recorded earlier, you'll also need to generate a "*Access token and secret*" which you can get by clicking the "Generate" button on the Keys and Tokens page:
+
+![](keys-tokens.png){width="362"}
+
+Again, you'll want to record this data in a secure place because you only get to see it once.
+
+## Default auth
+
+Now you have an auth object that you can provide to the `token` argument of any rtweet function:
+
+```{r, eval = FALSE}
+df <- search_tweets("#rstats", token = auth)
+```
+
+It's a good idea to do this once to check that you've entered all the app data correctly, but it'd be annoying if you had to pass this object around every single time.
+Instead, you can call `auth_as()` to set this as the default for the remainder of the session:
+
+```{r, eval = FALSE}
+auth_as(auth)
+```
+
+## Saving and loading {#save}
+
+`auth_as()` only lasts for a single session; if you close and re-open R, you'd need to repeat the whole process (generate the tokens and pass them to `rtweet_user()`, `rtweet_app()` or `rtweet_bot()`).
+This would be annoying (!) so rtweet also provides a way to save and reload authentications across sessions:
+
+```{r, eval = FALSE}
+auth_save(auth, "some-name")
+```
+
+The second argument to `auth_save()` can be any string.
+It just needs to be meaningful to you so that you remember exactly what you're loading when you use it a future session:
+
+```{r, eval = FALSE}
+auth_as("some-name")
+```
+
+You can see all the authentication options you have saved with `auth_list()`.
+`auth_list()` reports all the available authentications at the default location (See `auth_save()` details).
+If you use an authentication saved on a different path you can directly use it `auth_as("../authentications/rtweet.rds")`
+
+`auth_setup_default()` saves the authentication as default. 
+So, after your initial setup you can start all your scripts with `auth_as("default")` to load it.
+
+### On continuous integration workflows
+
+On continuous integration you need to provide the keys and tokens as secret variables.
+Otherwise anyone with access to the logs of those checks might use your keys and tokens.
+Check your CI documentation about how to do that, but it might be something similar to what [Github does](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository).
+Where secrets are created as environmental variables.
+
+You will need to provide a name of your variable, try to be informative (RTWEET_BEARER, RTWEET_API_KEY, RTWEET_API_SECRET, RTWEET_TOKEN, RTWEET_SECRET).
+
+Usually you later need to load them from the environmental variables and create the token on the CI:
+
+```r
+app <- rtweet_app(bearer_token = Sys.getenv("RTWEET_BEARER"))
+auth_as(app)
+```
+
+Don't leave the arguments without values as this won't authenticate.
+Also do not print RTWEET_BEARER or other secrets.
+
+## Authentications sitrep
+
+On the rtweet 1.0.0 version there were some changes on the default location of the tokens. 
+
+If you upgrade or want a complete check up of your authentications you can use `auth_sitrep()`.
+It can help when regenerating credentials and to follow best practices when upgrading rtweet.
+It will print something like these:
+
+
+```{r, eval = FALSE}
+auth_sitrep()
+## Tokens from rtweet version < 1.0.0 found on /home/user:
+## Empty tokens were found.
+## Choose which is the best path of action for the tokens:
+##                              user_id  key
+## .rtweet_token.rds      My app         <NA>
+## .rtweet_token1.rds My account            A
+## Tokens found on /home/user/.config/R/rtweet:
+##             token
+## my-app2.rds     A
+## Multiple authentications with the same app found!
+## Choose which is the best path of action for the tokens:
+##                       app    user_id key
+## default.rds        rtweet 9951053384   A
+## testing_rtweet.rds rtweet              B
+## All tokens should be moved to /home/user/.config/R/rtweet
+```
+
+First looks up old authentications rtweet saved at your home directory (`~`, or `$HOME`) as it did on rtweet < 1.0.0.
+Then it reports the authentications found on the new location (rtweet >= 1.0.0).
+For each folder it reports apps and then users and bots authentications.
+It is safe to use in public, as instead of the tokens or keys it reports a letter.
+For users authentications it reports the user_id, so that you can check who is that user (`search_users("1251053384")`).
+
+This makes it easier to see if there is a saved authentication with a name not matching the user_id.
+It also warns you if there is the same key or token for multiple files, as this indicates a misunderstanding or a duplication of the authentication.

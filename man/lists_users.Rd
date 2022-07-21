@@ -4,24 +4,23 @@
 \alias{lists_users}
 \title{Get all lists a specified user subscribes to, including their own.}
 \usage{
-lists_users(user, reverse = FALSE, token = NULL, parse = TRUE)
+lists_users(user = NULL, reverse = FALSE, token = NULL, parse = TRUE)
 }
 \arguments{
-\item{user}{The ID of the user or screen name for whom to return results.}
+\item{user}{Character vector of screen names or user ids.
+See \code{\link[=as_screenname]{as_screenname()}} for more details.}
 
 \item{reverse}{optional Set this to true if you would like owned lists
 to be returned first. See description above for information on
 how this parameter works.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
-\item{parse}{Logical indicating whether to convert the response object into
-an R list. Defaults to TRUE.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
 }
 \value{
 data
@@ -30,10 +29,10 @@ data
 Get all lists a specified user subscribes to, including their own.
 }
 \examples{
-\dontrun{
+if (auth_has_default()) {
 
-## get lists subsribed to by Nate Silver
-lists_users("NateSilver538")
+## get lists subscribed to by R_Foundation
+lists_users("ropensci")
 
 }
 

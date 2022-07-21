@@ -4,7 +4,11 @@
 \alias{lat_lng}
 \title{Adds single-point latitude and longitude variables to tweets data.}
 \usage{
-lat_lng(x, coords = c("coords_coords", "bbox_coords", "geo_coords"))
+lat_lng(
+  x,
+  coords = c("coords_coords", "bbox_coords", "geo_coords"),
+  prefs = "bbox_coords"
+)
 }
 \arguments{
 \item{x}{Parsed Twitter data as returned by various rtweet
@@ -18,10 +22,12 @@ obs consists of eight entries) followed by the supplied order of
 variable names. Defaults to "bbox_coords",
 "coords_coords", and "geo_coords") (which are the default column
 names of data returned by most status-oriented rtweet functions).}
+
+\item{prefs}{Preference of coordinates to use as default, must be in \code{coords}.}
 }
 \value{
 Returns updated data object with full information latitude
-  and longitude vars.
+and longitude vars.
 }
 \description{
 Appends parsed Twitter data with latitude and longitude variables
@@ -29,26 +35,23 @@ using all available geolocation information.
 }
 \details{
 On occasion values may appear to be outliers given a
-  previously used query filter (e.g., when searching for tweets
-  sent from the continental US).  This is typically because those
-  tweets returned a large bounding box that overlapped with the
-  area of interest. This function converts boxes into their
-  geographical midpoints, which works well in the vast majority of
-  cases, but sometimes includes an otherwise puzzling result.
+previously used query filter (e.g., when searching for tweets
+sent from the continental US).  This is typically because those
+tweets returned a large bounding box that overlapped with the
+area of interest. This function converts boxes into their
+geographical midpoints, which works well in the vast majority of
+cases, but sometimes includes an otherwise puzzling result.
 }
 \examples{
 
-\dontrun{
+if (auth_has_default()) {
 
 ## stream tweets sent from the US
 rt <- stream_tweets(lookup_coords("usa"), timeout = 10)
 
 ## use lat_lng to recover full information geolocation data
-rtll <- lat_lng(rt)
-
-## plot points
-with(rtll, plot(lng, lat))
-
+rtl_loc <- lat_lng(rt)
+rtl_loc
 }
 
 }

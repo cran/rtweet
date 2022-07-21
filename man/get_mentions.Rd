@@ -9,35 +9,55 @@ get_mentions(
   since_id = NULL,
   max_id = NULL,
   parse = TRUE,
+  retryonratelimit = NULL,
+  verbose = TRUE,
   token = NULL,
   ...
 )
 }
 \arguments{
-\item{n}{Specifies the number of Tweets to try and retrieve, up to
-a maximum of 200 (the default). The value of count is best
-thought of as a limit to the number of tweets to return because
-suspended or deleted content is removed after the count has been
-applied.}
+\item{n}{Desired number of results to return. Results are downloaded
+in pages when \code{n} is large; the default value will download a single
+page. Set \code{n = Inf} to download as many results as possible.
 
-\item{since_id}{Returns results with an ID greater than (that is,
-more recent than) the specified ID. There are limits to the
-number of Tweets which can be accessed through the API. If the
-limit of Tweets has occurred since the since_id, the since_id
-will be forced to the oldest ID available.}
+The Twitter API rate limits the number of requests you can perform
+in each 15 minute period. The easiest way to download more than that is
+to use \code{retryonratelimit = TRUE}.
 
-\item{max_id}{Character, returns results with an ID less than (that is,
-older than) or equal to `max_id`.}
+You are not guaranteed to get exactly \code{n} results back. You will get
+fewer results when tweets have been deleted or if you hit a rate limit.
+You will get more results if you ask for a number of tweets that's not
+a multiple of page size, e.g. if you request \code{n = 150} and the page
+size is 200, you'll get 200 results back.}
 
-\item{parse}{Logical indicating whether to convert the response
-object into an R list. Defaults to TRUE.}
+\item{since_id}{Supply a vector of ids or a data frame of previous results to
+find tweets \strong{newer} than \code{since_id}.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{max_id}{Supply a vector of ids or a data frame of previous results to
+find tweets \strong{older} than \code{max_id}.}
+
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
+
+\item{retryonratelimit}{If \code{TRUE}, and a rate limit is exhausted, will wait
+until it refreshes. Most Twitter rate limits refresh every 15 minutes.
+If \code{FALSE}, and the rate limit is exceeded, the function will terminate
+early with a warning; you'll still get back all results received up to
+that point. The default value, \code{NULL}, consults the option
+\code{rtweet.retryonratelimit} so that you can globally set it to \code{TRUE},
+if desired.
+
+If you expect a query to take hours or days to perform, you should not
+rely soley on \code{retryonratelimit} because it does not handle other common
+failure modes like temporarily losing your internet connection.}
+
+\item{verbose}{Show progress bars and other messages indicating current
+progress?}
+
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
 \item{...}{Other arguments passed as parameters in composed API
 query.}
@@ -47,37 +67,28 @@ Tibble of mentions data.
 }
 \description{
 Returns data on up to 200 of the most recent mentions (Tweets
-containing a users's screen_name) of the authenticating user.
-}
-\details{
-The timeline returned is the equivalent of the one seen
-  when you view your mentions on twitter.com. This method can only
-  return up to 800 tweets.
+containing a users' screen_name) of the authenticating user.
+The timeline returned is the equivalent of the one seen when you view
+your mentions on twitter.com.
 }
 \examples{
+if (auth_has_default()) {
+tw <- get_mentions()
+tw
 
-\dontrun{
-
-## get most recent 200 mentions of authenticating user
-mymentions <- get_mentions()
-
-## view data
-mymentions
-
+# newer mentions
+get_mentions(since_id = tw)
 }
-
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/tweets/timelines/overview}
 }
 \seealso{
-\url{https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-mentions_timeline}
-
 Other tweets: 
 \code{\link{get_favorites}()},
-\code{\link{get_my_timeline}()},
 \code{\link{get_timeline}()},
 \code{\link{lists_statuses}()},
-\code{\link{lookup_statuses}()},
-\code{\link{search_tweets}()},
-\code{\link{tweets_data}()},
-\code{\link{tweets_with_users}()}
+\code{\link{lookup_tweets}()},
+\code{\link{search_tweets}()}
 }
 \concept{tweets}

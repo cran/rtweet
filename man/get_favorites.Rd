@@ -2,7 +2,7 @@
 % Please edit documentation in R/favorites.R
 \name{get_favorites}
 \alias{get_favorites}
-\title{Get tweets data for statuses favorited by one or more target users.}
+\title{Get tweets liked/favorited by one or more users}
 \usage{
 get_favorites(
   user,
@@ -10,72 +10,86 @@ get_favorites(
   since_id = NULL,
   max_id = NULL,
   parse = TRUE,
+  retryonratelimit = NULL,
+  verbose = TRUE,
   token = NULL
 )
 }
 \arguments{
-\item{user}{Vector of user names, user IDs, or a mixture of both.}
+\item{user}{Character vector of screen names or user ids.
+See \code{\link[=as_screenname]{as_screenname()}} for more details.}
 
-\item{n}{Specifies the number of records to retrieve. Defaults to
-200. 3000 is the max number of favorites returned per token. Due
-to suspended or deleted content, this function may return fewer
-tweets than the desired (n) number. Must be of length 1 or of
-length equal to the provided number of users.}
+\item{n}{Desired number of results to return. Results are downloaded
+in pages when \code{n} is large; the default value will download a single
+page. Set \code{n = Inf} to download as many results as possible.
 
-\item{since_id}{Returns results with an status_id greater than
-(that is, more recent than) the specified status_id.  There are
-limits to the number of tweets returned by the REST API. If the
-limit is hit, since_id is adjusted (by Twitter) to the oldest ID
-available.}
+The Twitter API rate limits the number of requests you can perform
+in each 15 minute period. The easiest way to download more than that is
+to use \code{retryonratelimit = TRUE}.
 
-\item{max_id}{Character, returns results with an ID less than (that is,
-older than) or equal to `max_id`.}
+You are not guaranteed to get exactly \code{n} results back. You will get
+fewer results when tweets have been deleted or if you hit a rate limit.
+You will get more results if you ask for a number of tweets that's not
+a multiple of page size, e.g. if you request \code{n = 150} and the page
+size is 200, you'll get 200 results back.}
 
-\item{parse}{Logical, indicating whether to return parsed vector or
-nested list object. By default, \code{parse = TRUE}
-saves you the time [and frustrations] associated with
-disentangling the Twitter API return objects.}
+\item{since_id}{Supply a vector of ids or a data frame of previous results to
+find tweets \strong{newer} than \code{since_id}.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{max_id}{Supply a vector of ids or a data frame of previous results to
+find tweets \strong{older} than \code{max_id}.}
+
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
+
+\item{retryonratelimit}{If \code{TRUE}, and a rate limit is exhausted, will wait
+until it refreshes. Most Twitter rate limits refresh every 15 minutes.
+If \code{FALSE}, and the rate limit is exceeded, the function will terminate
+early with a warning; you'll still get back all results received up to
+that point. The default value, \code{NULL}, consults the option
+\code{rtweet.retryonratelimit} so that you can globally set it to \code{TRUE},
+if desired.
+
+If you expect a query to take hours or days to perform, you should not
+rely soley on \code{retryonratelimit} because it does not handle other common
+failure modes like temporarily losing your internet connection.}
+
+\item{verbose}{Show progress bars and other messages indicating current
+progress?}
+
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 }
 \value{
-A tbl data frame of tweets data with users data attribute.
+A tibble with one row for each tweet.
 }
 \description{
-Returns up to 3,000 statuses favorited by each of one or more
-specific Twitter users.
+Returns up to 3,000 tweets liked/favorited for each \code{user}.
 }
 \examples{
-
-\dontrun{
-
-## get max number of statuses favorited by KFC
-kfc <- get_favorites("KFC", n = 3000)
+if (auth_has_default()) {
+# get likes for a single user
+kfc <- get_favorites("KFC")
 kfc
+# get newer likes since last request 
+newer <- get_favorites("KFC", since_id = kfc)
 
-## get 400 statuses favorited by each of three users
+# get likes from multiple users
 favs <- get_favorites(c("Lesdoggg", "pattonoswalt", "meganamram"))
 favs
-
 }
-
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/api-reference/get-favorites-list}
 }
 \seealso{
-\url{https://developer.twitter.com/en/docs/tweets/post-and-engage/api-reference/get-favorites-list}
-
 Other tweets: 
 \code{\link{get_mentions}()},
-\code{\link{get_my_timeline}()},
 \code{\link{get_timeline}()},
 \code{\link{lists_statuses}()},
-\code{\link{lookup_statuses}()},
-\code{\link{search_tweets}()},
-\code{\link{tweets_data}()},
-\code{\link{tweets_with_users}()}
+\code{\link{lookup_tweets}()},
+\code{\link{search_tweets}()}
 }
 \concept{tweets}

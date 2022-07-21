@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Intro to rtweet</title>
+
+<script src="rtweet_files/header-attrs-2.14/header-attrs.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<link rel="stylesheet" href="/usr/lib/R/site-library/rmarkdown/rmarkdown/templates/html_vignette/resources/vignette.css" type="text/css" />
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Intro to rtweet</h1>
+
+
+
+<p>This vignette provides a quick tour of the R package.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;rtweet&quot;</span>)</span></code></pre></div>
+<div id="authenticate" class="section level2">
+<h2>Authenticate</h2>
+<p>First you should set up your own credentials, this should be done
+just once ever:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">auth_setup_default</span>()</span></code></pre></div>
+<p>Which will look up your account on your browser and create a token
+and save it as default. From now on, on this R session on others we can
+use this authentication with:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">auth_as</span>(<span class="st">&quot;default&quot;</span>)</span></code></pre></div>
+<p>Automatically rtweet will use that token in all the API queries it
+will do in the session.</p>
+<p>If you want to set up a bot or collect a lot of information, please
+read the <code>vignette("auth", "rtweet")</code>.</p>
+</div>
+<div id="search-tweets" class="section level2">
+<h2>Search tweets</h2>
+<p>You can search tweets:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">## search for 18000 tweets using the rstats hashtag</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>rstats <span class="ot">&lt;-</span> <span class="fu">search_tweets</span>(<span class="st">&quot;#rstats&quot;</span>, <span class="at">n =</span> <span class="dv">100</span>, <span class="at">include_rts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(rstats)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [1] &quot;created_at&quot;                    &quot;id&quot;                            &quot;id_str&quot;                        &quot;full_text&quot;                    </span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [5] &quot;truncated&quot;                     &quot;display_text_range&quot;            &quot;entities&quot;                      &quot;metadata&quot;                     </span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [9] &quot;source&quot;                        &quot;in_reply_to_status_id&quot;         &quot;in_reply_to_status_id_str&quot;     &quot;in_reply_to_user_id&quot;          </span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [13] &quot;in_reply_to_user_id_str&quot;       &quot;in_reply_to_screen_name&quot;       &quot;geo&quot;                           &quot;coordinates&quot;                  </span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [17] &quot;place&quot;                         &quot;contributors&quot;                  &quot;is_quote_status&quot;               &quot;retweet_count&quot;                </span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [21] &quot;favorite_count&quot;                &quot;favorited&quot;                     &quot;retweeted&quot;                     &quot;possibly_sensitive&quot;           </span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [25] &quot;lang&quot;                          &quot;quoted_status_id&quot;              &quot;quoted_status_id_str&quot;          &quot;quoted_status&quot;                </span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [29] &quot;text&quot;                          &quot;favorited_by&quot;                  &quot;scopes&quot;                        &quot;display_text_width&quot;           </span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [33] &quot;retweeted_status&quot;              &quot;quoted_status_permalink&quot;       &quot;quote_count&quot;                   &quot;timestamp_ms&quot;                 </span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [37] &quot;reply_count&quot;                   &quot;filter_level&quot;                  &quot;query&quot;                         &quot;withheld_scope&quot;               </span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [41] &quot;withheld_copyright&quot;            &quot;withheld_in_countries&quot;         &quot;possibly_sensitive_appealable&quot;</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>rstats[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="fu">c</span>(<span class="st">&quot;created_at&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;id_str&quot;</span>)]</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 3</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   created_at          text                                                                                                      id_str</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;dttm&gt;              &lt;chr&gt;                                                                                                     &lt;chr&gt; </span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2022-07-12 05:50:10 &quot;#DataScience Theories, Models, #Algorithms, and Analytics: https://t.co/w704rhiLS8 (FREE PDF Download, … 15467…</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 2022-07-12 22:36:28 &quot;FREE downloadable PDF eBooks, including this 475-page book &amp;gt;&amp;gt; R Programming Notes for Professiona… 15469…</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 2022-07-12 22:36:13 &quot;100+ Free #DataScience eBooks (downloadable PDF) for Beginners and for Experts — via @TheInsaneApp \n——… 15469…</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 2022-07-13 22:06:44 &quot;Wrote a small program that summarizes web articles, using the {lexRankr} package 📦\nThe sentences belo… 15473…</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 2022-07-13 22:06:17 &quot;R- Subtract values of all rows in a group from previous row in different group and filter out rows #tid… 15473…</span></span></code></pre></div>
+<p>The <code>include_rts = FALSE</code> excludes retweets from the
+search.</p>
+<p>Twitter rate limits the number of calls to the endpoints you can do.
+See <code>rate_limit()</code> and the <a href="#Rate-limit">rate limit
+section</a> below. If your query requires more calls like the example
+below, simply set <code>retryonratelimit = TRUE</code> and rtweet will
+wait for rate limit resets for you.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">## search for 250,000 tweets containing the word data</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>tweets_peace <span class="ot">&lt;-</span> <span class="fu">search_tweets</span>(<span class="st">&quot;peace&quot;</span>, <span class="at">n =</span> <span class="dv">250000</span>, <span class="at">retryonratelimit =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Search by geo-location, for example tweets in the English language
+sent from the United States.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># search for tweets sent from the US </span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># lookup_coords requires Google maps API key for maps outside usa, canada and world</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>geo_tweets <span class="ot">&lt;-</span> <span class="fu">search_tweets</span>(<span class="st">&quot;lang:en&quot;</span>, <span class="at">geocode =</span> <span class="fu">lookup_coords</span>(<span class="st">&quot;usa&quot;</span>), <span class="at">n =</span> <span class="dv">100</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>geo_tweets[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="fu">c</span>(<span class="st">&quot;created_at&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;id_str&quot;</span>, <span class="st">&quot;lang&quot;</span>, <span class="st">&quot;place&quot;</span>)]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 5</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   created_at          text                                                                                          id_str lang  place</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;dttm&gt;              &lt;chr&gt;                                                                                         &lt;chr&gt;  &lt;chr&gt; &lt;lis&gt;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2022-07-13 18:16:57 &quot;Together Forever.\n#BetterCallSaul https://t.co/YVxDnJL6qN&quot;                                  15472… en    &lt;df&gt; </span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 2022-07-13 22:09:10 &quot;I’ve been using the podcast to speak &amp;amp; teach myself shit on @anchor! \n\nhttps://t.co/B… 15473… en    &lt;df&gt; </span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 2022-07-13 22:09:10 &quot;@dgschell Need to renew my booklet 😵&quot;                                                       15473… en    &lt;df&gt; </span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 2022-07-13 22:09:09 &quot;This is what a true President does. https://t.co/Rb9Eip4Ubj&quot;                                 15473… en    &lt;df&gt; </span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 2022-07-13 22:09:09 &quot;@ErrinFrahm @KIIARA So, Kii, if I buy lil kiiwi on iTunes, do you get the proceeds or does … 15473… en    &lt;df&gt;</span></span></code></pre></div>
+<p>You can check the location of these tweets with
+<code>lat_lng()</code>. Or quickly visualize frequency of tweets over
+time using <code>ts_plot()</code> (if <code>ggplot2</code> is
+installed).</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">## plot time series of tweets</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ts_plot</span>(rstats) <span class="sc">+</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">&quot;bold&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="cn">NULL</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Frequency of #rstats Twitter statuses from past 9 days&quot;</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">&quot;Twitter status (tweet) counts aggregated using three-hour intervals&quot;</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">&quot;Source: Data collected from Twitter&#39;s REST API via rtweet&quot;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
+<div class="figure">
+<img src="vignettes/files/plot1-1.png" alt="" />
+<p class="caption">plot of chunk plot1</p>
+</div>
+</div>
+<div id="posting-statuses" class="section level2">
+<h2>Posting statuses</h2>
+<p>You can post tweets with:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">post_tweet</span>(<span class="fu">paste0</span>(<span class="st">&quot;My first tweet with #rtweet #rstats at &quot;</span>, <span class="fu">Sys.time</span>()))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Your tweet has been posted!</span></span></code></pre></div>
+<p>It can include media and alt text:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>path_file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.png&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">png</span>(<span class="at">filename =</span> path_file)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mpg <span class="sc">~</span> cyl, mtcars, <span class="at">col =</span> gear, <span class="at">pch =</span> gear)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dev.off</span>()</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; png </span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   2</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">post_tweet</span>(<span class="st">&quot;my first tweet with #rtweet with media #rstats&quot;</span>, <span class="at">media =</span> path_file, <span class="at">media_alt_text =</span> <span class="st">&quot;Plot of mtcars dataset, showing cyl vs mpg colored by gear. The lower cyl the higher the mpg is.&quot;</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Your tweet has been posted!</span></span></code></pre></div>
+<p>You can also reply to a previous tweet, retweet and provide
+additional information.</p>
+</div>
+<div id="get-friends" class="section level2">
+<h2>Get friends</h2>
+<p>Retrieve a list of all the accounts a <strong>user
+follows</strong>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="do">## get user IDs of accounts followed by R Foundation</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>R_foundation_fds <span class="ot">&lt;-</span> <span class="fu">get_friends</span>(<span class="st">&quot;_R_Foundation&quot;</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>R_foundation_fds</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 31 × 2</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    from_id       to_id              </span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;         &lt;chr&gt;              </span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 _R_Foundation 1448728978370535426</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 _R_Foundation 889777924991307778 </span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 _R_Foundation 1300656590         </span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 _R_Foundation 1280779280579022848</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 _R_Foundation 1229418786085888001</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 _R_Foundation 1197874989367779328</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 _R_Foundation 1102763906714554368</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 _R_Foundation 1560929287         </span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 _R_Foundation 46782674           </span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 _R_Foundation 16284661           </span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 21 more rows</span></span></code></pre></div>
+<p>Using <code>get_friends()</code> we can retrieve which users are
+being followed by the R Foundation.</p>
+</div>
+<div id="get-followers" class="section level2">
+<h2>Get followers</h2>
+<p>If you really want all the users that follow the account we can use
+<code>get_followers()</code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>R_foundation_flw <span class="ot">&lt;-</span> <span class="fu">get_followers</span>(<span class="st">&quot;_R_Foundation&quot;</span>, <span class="at">n =</span> <span class="dv">30000</span>, </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">retryonratelimit =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Downloading multiple pages ==================================&gt;----------------------------------------------------------------------</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Downloading multiple pages ===================================================&gt;-----------------------------------------------------</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Downloading multiple pages =====================================================================&gt;-----------------------------------</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Downloading multiple pages =======================================================================================&gt;-----------------</span></span></code></pre></div>
+<p>Note that the <code>retryonratelimit</code> option is intended for
+when you need more queries than provided by Twitter on a given period.
+You might want to check with <code>rate_limit()</code> how many does it
+provide for the endpoints you are using. If exceeded
+<code>retryonratelimit</code> waits till the there are more calls
+available and then resumes the query.</p>
+</div>
+<div id="lookup-users" class="section level2">
+<h2>Lookup users</h2>
+<p>As seen above we can use <code>lookup_users()</code> to check
+their</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Look who is following R Foundation</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>R_foundation_fds_data <span class="ot">&lt;-</span> <span class="fu">lookup_users</span>(R_foundation_fds<span class="sc">$</span>to_id, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>R_foundation_fds_data[, <span class="fu">c</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;screen_name&quot;</span>, <span class="st">&quot;created_at&quot;</span>)]</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 31 × 3</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    name                screen_name     created_at         </span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;               &lt;chr&gt;           &lt;dttm&gt;             </span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 R Contributors      R_Contributors  2021-10-14 21:15:12</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 Sebastian Meyer     bastistician    2017-07-25 11:22:43</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 Naras               b_naras         2013-03-25 19:48:12</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 useR! 2022          _useRconf       2020-07-08 10:22:55</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 useR2021zrh         useR2021zrh     2020-02-17 15:54:39</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 useR2020muc         useR2020muc     2019-11-22 14:50:55</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 useR! 2020          useR2020stl     2019-03-05 03:52:58</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 Roger Bivand        RogerBivand     2013-07-01 18:19:42</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 Henrik Bengtsson    henrikbengtsson 2009-06-13 02:11:14</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 Gabriela de Queiroz gdequeiroz      2008-09-14 18:55:29</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 21 more rows</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Look 100 R Foundation followers</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>R_foundation_flw_data <span class="ot">&lt;-</span> <span class="fu">lookup_users</span>(<span class="fu">head</span>(R_foundation_flw<span class="sc">$</span>from_id, <span class="dv">100</span>), <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>R_foundation_flw_data[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="fu">c</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;screen_name&quot;</span>, <span class="st">&quot;created_at&quot;</span>)]</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 3</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   name                 screen_name     created_at         </span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;                &lt;chr&gt;           &lt;dttm&gt;             </span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 Rafael C.            CabestreRafael  2018-10-19 00:08:45</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 Robot Dad            RobotBearDad    2020-07-28 05:16:59</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 Augustino Mmbaga     MmbagaAugustino 2020-04-12 10:29:02</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 Prof. Dr. A. E. Kotp am2000de        2013-09-26 22:18:35</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 ahbragasaka          ahbragasaka     2015-07-15 21:23:20</span></span></code></pre></div>
+<p>We have now the information from those followed by the R Foundation
+and its followers. We can retrieve their latest tweets from these
+users:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tweets_data</span>(R_foundation_fds_data)[, <span class="fu">c</span>(<span class="st">&quot;created_at&quot;</span>, <span class="st">&quot;text&quot;</span>)]</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 31 × 2</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    created_at                     text                                                                                                </span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                          &lt;chr&gt;                                                                                               </span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 Thu Jul 07 08:11:58 +0000 2022 &quot;RT @dvaughan32: @hrbrmstr @MMaechler @groundwalkergmb And @Emil_Hvitfeldt, @isabelizimm, Tino Nten…</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 Thu Jun 23 20:16:13 +0000 2022 &quot;@d_olivaw Thanks, I&#39;ll see what I can do. 😉\nIIRC, @revodavid had blogged summaries of earlier R …</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 Wed Nov 10 19:50:31 +0000 2021 &quot;RT @StanfordDBDS: Apply by 11/26 to join the Stanford DBDS Inclusive #mentoring in #DataScience pr…</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 Mon Jul 11 15:23:14 +0000 2022 &quot;Interested in hosting a future useR conference (format </span><span class="al">TBD</span><span class="co">)? Send your proposal to conferences[at]…</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 Mon May 24 08:21:14 +0000 2021 &quot;@NasrinAttar @useR2020stl Important Info for everyone: If you don&#39;t have funds to attend the confe…</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 Fri Apr 16 11:03:21 +0000 2021 &quot;RT @_useRconf: It is a good time to remember some of our keydates!\n\n📆  2021-04-20. Registration…</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 Mon Jan 18 17:36:22 +0000 2021 &quot;Give us a follow at @_useRconf to stay updated on *all* future useR! conferences! #rstats https://…</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 Wed Jul 13 16:53:33 +0000 2022 &quot;RT @precariobecario: Book \&quot;Bayesian inferencia with INLA\&quot; has been awarded the SEIO - BBVA Found…</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 Tue Jul 12 08:57:30 +0000 2022 &quot;.@bolkerb , thank you for taking over the maintenance of gtools (\&quot;Various R Programming Tools\&quot;)… </span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 Wed Jun 29 17:51:05 +0000 2022 &quot;@PipingHotData Happy Birthday! The cake looks delicious.&quot;                                          </span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 21 more rows</span></span></code></pre></div>
+</div>
+<div id="search-users" class="section level2">
+<h2>Search users</h2>
+<p>Search for 1,000 users with the rstats hashtag in their profile
+bios.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="do">## search for users with #rstats in their profiles</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>useRs <span class="ot">&lt;-</span> <span class="fu">search_users</span>(<span class="st">&quot;#rstats&quot;</span>, <span class="at">n =</span> <span class="dv">100</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>useRs[, <span class="fu">c</span>(<span class="st">&quot;name&quot;</span>, <span class="st">&quot;screen_name&quot;</span>, <span class="st">&quot;created_at&quot;</span>)]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 100 × 3</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    name                         screen_name    created_at         </span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                        &lt;chr&gt;          &lt;dttm&gt;             </span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 Rstats                       rstatstweet    2018-06-27 05:45:02</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 R for Data Science           rstats4ds      2018-12-18 13:55:25</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 FC rSTATS                    FC_rstats      2018-02-08 21:03:08</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 R Tweets                     rstats_tweets  2020-09-17 18:12:09</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 #RStats Question A Day       data_question  2019-10-21 19:15:24</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 NBA in #rstats               NbaInRstats    2019-11-05 03:44:32</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 Data Science with R          Rstats4Econ    2012-04-21 04:37:12</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 Baseball with R              BaseballRstats 2013-11-02 16:07:05</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 Will                         steelRstats    2019-07-23 16:48:00</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 LIRR Statistics (Unofficial) LIRRstats      2017-01-25 00:31:55</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 90 more rows</span></span></code></pre></div>
+<p>If we want to know what have they tweeted about we can use
+<code>tweets_data()</code>:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>useRs_twt <span class="ot">&lt;-</span> <span class="fu">tweets_data</span>(useRs)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>useRs_twt[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="fu">c</span>(<span class="st">&quot;id_str&quot;</span>, <span class="st">&quot;created_at&quot;</span>, <span class="st">&quot;text&quot;</span>)]</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 3</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   id_str              created_at                     text                                                                             </span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;               &lt;chr&gt;                          &lt;chr&gt;                                                                            </span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 1547309043189948418 Wed Jul 13 19:56:38 +0000 2022 &quot;RT @rtweet_test: my first tweet with #rtweet with media #rstats https://t.co/kh…</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 1547309959788085249 Wed Jul 13 20:00:16 +0000 2022 &quot;RT @yabellini: I&#39;m thrilled to announce that Juyoung Kim is now a @rstudio #Tid…</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 1546901699205406722 Tue Jul 12 16:57:59 +0000 2022 &quot;interesting article!\n\nhttps://t.co/guZACQz7pA https://t.co/dPwts5vb54&quot;        </span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 1547304785199902720 Wed Jul 13 19:39:42 +0000 2022 &quot;RT @coldvoltt: An efficient way of converting data type in R using the mutate_i…</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 1547296274621542400 Wed Jul 13 19:05:53 +0000 2022 &quot;References: \n1. https://t.co/pwREapNSCo\n2. https://t.co/UBXyTA16sv\n3. https:…</span></span></code></pre></div>
+</div>
+<div id="get-timelines" class="section level2">
+<h2>Get timelines</h2>
+<p>Get the most recent tweets from R Foundation.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="do">## get user IDs of accounts followed by R Foundation</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>R_foundation_tline <span class="ot">&lt;-</span> <span class="fu">get_timeline</span>(<span class="st">&quot;_R_Foundation&quot;</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="do">## plot the frequency of tweets for each user over time</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>plot <span class="ot">&lt;-</span> R_foundation_tline <span class="sc">|&gt;</span> </span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(created_at <span class="sc">&gt;</span> <span class="st">&quot;2017-10-29&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ts_plot</span>(<span class="at">by =</span> <span class="st">&quot;month&quot;</span>, <span class="at">trim =</span> 1L) <span class="sc">+</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">&quot;bold&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="cn">NULL</span>,</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Frequency of Twitter statuses posted by the R Foundation&quot;</span>,</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">&quot;Twitter status (tweet) counts aggregated by month from October/November 2017&quot;</span>,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">&quot;Source: Data collected from Twitter&#39;s REST API via rtweet&quot;</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
+</div>
+<div id="get-favorites" class="section level2">
+<h2>Get favorites</h2>
+<p>Get the 10 recently favorited statuses by R Foundation.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>R_foundation_favs <span class="ot">&lt;-</span> <span class="fu">get_favorites</span>(<span class="st">&quot;_R_Foundation&quot;</span>, <span class="at">n =</span> <span class="dv">10</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>R_foundation_favs[, <span class="fu">c</span>(<span class="st">&quot;text&quot;</span>, <span class="st">&quot;created_at&quot;</span>, <span class="st">&quot;id_str&quot;</span>)]</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 10 × 3</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    text                                                                                                     created_at          id_str</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                                                                                                    &lt;dttm&gt;              &lt;chr&gt; </span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 &quot;We&#39;re into August, which hopefully means you&#39;ve had time to enjoy content from #useR2020!\n\nPlease he… 2020-08-03 09:51:33 12901…</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 &quot;Gret meeting of #useR2020 passing the torch to #useR2021! 🔥 \nThank you so much, everyone!🙏🏽\nParticu… 2020-07-16 17:14:25 12837…</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 &quot;Also thanks to the @_R_Foundation, @R_Forwards, @RLadiesGlobal, MiR and many others in supporting us i… 2020-05-28 08:57:24 12658…</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 &quot;Such an honour to be acknowledged this way at #useR2019. I&#39;m happy that folks like @JulieJosseStat, @v… 2019-07-12 18:36:27 11497…</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 &quot;R-3.4.4 Windows installer is on CRAN now: https://t.co/h35EcsIEuF https://t.co/7xko0aUS2w&quot;              2018-03-15 18:16:13 97433…</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 &quot;Gala dinner with a table with people in cosmology, finance, psychology, demography, medical doctor #us… 2017-07-07 09:10:41 88322…</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 &quot;AMAZING #RLadies at #useR2017 💜🌍 inspiring #rstats work around the world https://t.co/pIPEorlkyl&quot;     2017-07-05 13:25:27 88256…</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 &quot;Fame at last: https://t.co/x4wIePKR6b -- it&#39;s always nice to get a bit of recognition!  Coded in #rsta… 2017-06-07 23:25:37 87256…</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 &quot;We are excited to let you know that the full Conference Program is online now. \nHave a look at https:… 2017-05-31 14:37:23 86989…</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 &quot;. @statsYSS and @RSSGlasgow1  to hold joint event celebrating 20 years of Comprehensive R Archive (CRA… 2017-04-10 10:50:11 85135…</span></span></code></pre></div>
+</div>
+<div id="get-trends" class="section level2">
+<h2>Get trends</h2>
+<p>Discover what’s currently trending in San Francisco.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>world <span class="ot">&lt;-</span> <span class="fu">get_trends</span>(<span class="st">&quot;world&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>world</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 50 × 9</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    trend              url                      promoted_content query tweet_volume place woeid as_of               created_at         </span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;              &lt;chr&gt;                    &lt;lgl&gt;            &lt;chr&gt;        &lt;int&gt; &lt;chr&gt; &lt;int&gt; &lt;dttm&gt;              &lt;dttm&gt;             </span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 #CashApp20Qs       http://twitter.com/sear… NA               %23C…        11095 Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 #LateNightTalking  http://twitter.com/sear… NA               %23L…       104210 Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 #NEDPOR            http://twitter.com/sear… NA               %23N…           NA Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 Colwill            http://twitter.com/sear… NA               Colw…        16451 Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 Kimpembe           http://twitter.com/sear… NA               Kimp…        31408 Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 #MsMarvel          http://twitter.com/sear… NA               %23M…       120461 Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 #İstihdamRekoru    http://twitter.com/sear… NA               %23%…           NA Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 harry styles       http://twitter.com/sear… NA               %22h…       101108 Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 Pablo Torre        http://twitter.com/sear… NA               %22P…        14501 Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 Buğra Tolga Gülcan http://twitter.com/sear… NA               %22B…           NA Worl…     1 2022-07-13 20:09:24 2022-07-11 18:19:34</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 40 more rows</span></span></code></pre></div>
+</div>
+<div id="following-users" class="section level2">
+<h2>Following users</h2>
+<p>You can follow users and unfollow them:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">post_follow</span>(<span class="st">&quot;_R_Foundation&quot;</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Response [https://api.twitter.com/1.1/friendships/create.json?notify=FALSE&amp;screen_name=_R_Foundation]</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Date: 2022-07-13 20:09</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Status: 200</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Content-Type: application/json;charset=utf-8</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Size: 4.97 kB</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="fu">post_unfollow_user</span>(<span class="st">&quot;rtweet_test&quot;</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Response [https://api.twitter.com/1.1/friendships/destroy.json?notify=FALSE&amp;screen_name=rtweet_test]</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Date: 2022-07-13 20:09</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Status: 200</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Content-Type: application/json;charset=utf-8</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Size: 3.3 kB</span></span></code></pre></div>
+</div>
+<div id="muting-users" class="section level2">
+<h2>Muting users</h2>
+<p>You can mute and unmute users:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">post_follow</span>(<span class="st">&quot;rtweet_test&quot;</span>, <span class="at">mute =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">post_follow</span>(<span class="st">&quot;rtweet_test&quot;</span>, <span class="at">mute =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+</div>
+<div id="blocking-users" class="section level2">
+<h2>Blocking users</h2>
+<p>You can block users and unblock them:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">user_block</span>(<span class="st">&quot;RTweetTest1&quot;</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Response [https://api.twitter.com/1.1/blocks/create.json?screen_name=RTweetTest1]</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Date: 2022-07-13 20:09</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Status: 200</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Content-Type: application/json;charset=utf-8</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Size: 1.35 kB</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="fu">user_unblock</span>(<span class="st">&quot;RTweetTest1&quot;</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Response [https://api.twitter.com/1.1/blocks/destroy.json?screen_name=RTweetTest1]</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Date: 2022-07-13 20:09</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Status: 200</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Content-Type: application/json;charset=utf-8</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Size: 1.35 kB</span></span></code></pre></div>
+</div>
+<div id="rate-limits" class="section level2">
+<h2>Rate limits</h2>
+<p>Twitter sets a limited number of calls to their endpoints for
+different authentications (check <code>vignette("auth", "rtweet")</code>
+to find which one is better for your use case). To consult those limits
+you can use <code>rate_limt()</code></p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rate_limit</span>()</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 262 × 5</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    resource                 limit remaining reset_at            reset  </span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;                    &lt;int&gt;     &lt;int&gt; &lt;dttm&gt;              &lt;drtn&gt; </span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 /lists/list                 15        15 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 /lists/:id/tweets&amp;GET      900       900 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 /lists/:id/followers&amp;GET   180       180 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 /lists/memberships          75        75 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 /lists/:id&amp;DELETE          300       300 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 /lists/subscriptions        15        15 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 /lists/members             900       900 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 /lists/:id&amp;GET              75        75 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 /lists/subscribers/show     15        15 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 /lists/:id&amp;PUT             300       300 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 252 more rows</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Search only those related to followers</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="fu">rate_limit</span>(<span class="st">&quot;followers&quot;</span>)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 5 × 5</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   resource                               limit remaining reset_at            reset  </span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;                                  &lt;int&gt;     &lt;int&gt; &lt;dttm&gt;              &lt;drtn&gt; </span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 /lists/:id/followers&amp;GET                 180       180 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 /users/:id/followers                      15        15 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 /users/by/username/:username/followers    15        15 2022-07-13 22:24:26 15 mins</span></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 /followers/ids                            15         9 2022-07-13 22:24:14 15 mins</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 /followers/list                           15        15 2022-07-13 22:24:26 15 mins</span></span></code></pre></div>
+<p>The remaining column shows the number of times that you can call and
+endpoint (not the numbers of followers you can search). After a query
+the number should decrease until it is reset again.</p>
+<p>If your queries return an error, check if you already exhausted your
+quota and try after the time on “reset_at”.</p>
+</div>
+<div id="stream-tweets" class="section level2">
+<h2>Stream tweets</h2>
+<p>Randomly sample (approximately 1%) from the live stream of all
+tweets.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="do">## random sample for 30 seconds (default)</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>stream <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.json&quot;</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>rt <span class="ot">&lt;-</span> <span class="fu">stream_tweets</span>(<span class="st">&quot;rstats&quot;</span>, <span class="at">file_name =</span> stream)</span></code></pre></div>
+<p>Stream all geo enabled tweets from London for 15 seconds.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="do">## stream tweets from london for 60 seconds</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>stream2 <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.json&quot;</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>stream_london <span class="ot">&lt;-</span> <span class="fu">stream_tweets</span>(<span class="fu">lookup_coords</span>(<span class="st">&quot;london, uk&quot;</span>), <span class="at">timeout =</span> <span class="dv">15</span>, <span class="at">file_name =</span> stream2)</span></code></pre></div>
+<p>Stream all tweets mentioning #rstats for a week.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="do">## stream london tweets for a week (60 secs x 60 mins * 24 hours *  7 days)</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>stream3 <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.json&quot;</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="fu">stream_tweets</span>(</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;#rstats&quot;</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">timeout =</span> <span class="dv">60</span> <span class="sc">*</span> <span class="dv">60</span> <span class="sc">*</span> <span class="dv">24</span> <span class="sc">*</span> <span class="dv">7</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">file_name =</span> stream3,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">parse =</span> <span class="cn">FALSE</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="do">## read in the data as a tidy tbl data frame</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>rstats <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">stream_in</span>(stream3)</span></code></pre></div>
+<p>See the vignette on <code>vignette("stream", "rtweet")</code>.</p>
+</div>
+<div id="sessioninfo" class="section level2">
+<h2>SessionInfo</h2>
+<p>To provide real examples the vignette is precomputed before
+submission. Also note that results returned by the API will change.</p>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode r fold-hide"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; R version 4.2.1 (2022-06-23)</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Platform: x86_64-pc-linux-gnu (64-bit)</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Running under: Ubuntu 20.04.4 LTS</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=es_ES.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [5] LC_MONETARY=es_ES.UTF-8    LC_MESSAGES=en_US.UTF-8    LC_PAPER=es_ES.UTF-8       LC_NAME=C                 </span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=es_ES.UTF-8 LC_IDENTIFICATION=C       </span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] rtweet_0.7.0.9036   dplyr_1.0.9         ggplot2_3.3.6.9000  knitr_1.39          BiocManager_1.30.18 cyclocomp_1.1.0    </span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [7] testthat_3.1.4      devtools_2.4.3      usethis_2.1.6      </span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [1] prettyunits_1.1.1 ps_1.7.1          assertthat_0.2.1  rprojroot_2.0.3   digest_0.6.29     utf8_1.2.2        mime_0.12        </span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [8] R6_2.5.1          evaluate_0.15     highr_0.9         httr_1.4.3        pillar_1.7.0      rlang_1.0.3       progress_1.2.2   </span></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [15] curl_4.3.2        rstudioapi_0.13   callr_3.7.0       rmarkdown_2.14    labeling_0.4.2    desc_1.4.1        stringr_1.4.0    </span></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [22] htmlwidgets_1.5.4 bit_4.0.4         munsell_0.5.0     compiler_4.2.1    xfun_0.31         pkgconfig_2.0.3   askpass_1.1      </span></span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [29] pkgbuild_1.3.1    htmltools_0.5.2   openssl_2.0.2     tidyselect_1.1.2  tibble_3.1.7      fansi_1.0.3       crayon_1.5.1     </span></span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [36] withr_2.5.0       brio_1.1.3        grid_4.2.1        jsonlite_1.8.0    gtable_0.3.0      lifecycle_1.0.1   DBI_1.1.3        </span></span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [43] magrittr_2.0.3    scales_1.2.0      cli_3.3.0         stringi_1.7.6     cachem_1.0.6      farver_2.1.1      fs_1.5.2         </span></span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [50] remotes_2.4.2     ellipsis_0.3.2    generics_0.1.3    vctrs_0.4.1       tools_4.2.1       bit64_4.0.5       glue_1.6.2       </span></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [57] purrr_0.3.4       hms_1.1.1         processx_3.7.0    pkgload_1.3.0     fastmap_1.1.0     yaml_2.3.5        colorspace_2.0-3 </span></span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [64] sessioninfo_1.2.2 memoise_2.0.1     profvis_0.3.7</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

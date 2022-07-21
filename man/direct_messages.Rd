@@ -2,69 +2,72 @@
 % Please edit documentation in R/direct_messages.R
 \name{direct_messages}
 \alias{direct_messages}
-\alias{direct_messages_sent}
 \title{Get direct messages sent to and received by the authenticating user from the
 past 30 days}
 \usage{
-direct_messages(n = 50, next_cursor = NULL, parse = TRUE, token = NULL)
-
-direct_messages_sent(
-  since_id = NULL,
-  max_id = NULL,
-  n = 200,
+direct_messages(
+  n = 50,
+  cursor = NULL,
+  next_cursor = NULL,
   parse = TRUE,
-  token = NULL
+  token = NULL,
+  retryonratelimit = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{n}{optional Specifies the number of direct messages to try
-and retrieve, up to a maximum of 50.}
+\item{n}{Desired number of results to return. Results are downloaded
+in pages when \code{n} is large; the default value will download a single
+page. Set \code{n = Inf} to download as many results as possible.
 
-\item{next_cursor}{If there are more than 200 DMs in the last 30 days,
-responses will include a next_cursor value, which can be supplied in
-additional requests to scroll through pages of results.}
+The Twitter API rate limits the number of requests you can perform
+in each 15 minute period. The easiest way to download more than that is
+to use \code{retryonratelimit = TRUE}.
 
-\item{parse}{Logical indicating whether to convert response object
-into nested list. Defaults to true.}
+You are not guaranteed to get exactly \code{n} results back. You will get
+fewer results when tweets have been deleted or if you hit a rate limit.
+You will get more results if you ask for a number of tweets that's not
+a multiple of page size, e.g. if you request \code{n = 150} and the page
+size is 200, you'll get 200 results back.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{cursor}{Which page of results to return. The default will return
+the first page; you can supply the result from a previous call to
+continue pagination from where it left off.}
 
-\item{since_id}{optional Returns results with an ID greater than
-(that is, more recent than) the specified ID. There are limits to
-the number of Tweets which can be accessed through the API. If
-the limit of Tweets has occurred since the since_id, the since_id
-will be forced to the oldest ID available.}
+\item{next_cursor}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{cursor} instead.}
 
-\item{max_id}{Character, returns results with an ID less than (that is,
-older than) or equal to `max_id`.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
+
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
+
+\item{retryonratelimit}{If \code{TRUE}, and a rate limit is exhausted, will wait
+until it refreshes. Most Twitter rate limits refresh every 15 minutes.
+If \code{FALSE}, and the rate limit is exceeded, the function will terminate
+early with a warning; you'll still get back all results received up to
+that point. The default value, \code{NULL}, consults the option
+\code{rtweet.retryonratelimit} so that you can globally set it to \code{TRUE},
+if desired.
+
+If you expect a query to take hours or days to perform, you should not
+rely soley on \code{retryonratelimit} because it does not handle other common
+failure modes like temporarily losing your internet connection.}
+
+\item{verbose}{Show progress bars and other messages indicating current
+progress?}
 }
 \value{
-Return parsed or non-parsed response object.
+A list with one element for each page of results.
 }
 \description{
 Returns all Direct Message events (both sent and received) within the last 30
-days. Sorted in reverse-chronological order.
-}
-\details{
-Includes detailed information about the sender and
-  recipient user. You can request up to 50 direct messages per
-  call, and only direct messages from the last 30 days will be
-  available using this endpoint.
-
-  Important: This method requires an access token with read,
-  write, and direct message permissions. If you own the Twitter application,
-  you can change permissions through Twitter's developer portal. Once you
-  have made changes to the application permission settings, you will need to
-  regenerate your token before those effect of those changes can
-  take effect.
+days. Sorted in reverse-chronological order. Includes detailed information
+about the sender and recipient.
 }
 \examples{
-
 \dontrun{
 
 ## get my direct messages
@@ -74,5 +77,7 @@ dms <- direct_messages()
 str(dms)
 
 }
-
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/direct-messages/sending-and-receiving/api-reference/list-events}
 }

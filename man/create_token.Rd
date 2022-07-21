@@ -2,12 +2,12 @@
 % Please edit documentation in R/tokens.R
 \name{create_token}
 \alias{create_token}
-\title{Creating Twitter authorization token(s).}
+\title{Create custom Twitter OAuth token}
 \usage{
 create_token(
   app = "mytwitterapp",
-  consumer_key,
-  consumer_secret,
+  consumer_key = NULL,
+  consumer_secret = NULL,
   access_token = NULL,
   access_secret = NULL,
   set_renv = TRUE
@@ -16,44 +16,30 @@ create_token(
 \arguments{
 \item{app}{Name of user created Twitter application}
 
-\item{consumer_key}{Application API key}
+\item{consumer_key, consumer_secret}{App API key and secret.}
 
-\item{consumer_secret}{Application API secret User-owned
-application must have \code{Read and write} access level and
-\code{Callback URL} of \code{http://127.0.0.1:1410}.}
+\item{access_token, access_secret}{Access token and secret.}
 
-\item{access_token}{Access token as supplied by Twitter (apps.twitter.com)}
-
-\item{access_secret}{Access secret as supplied by Twitter (apps.twitter.com)}
-
-\item{set_renv}{Logical indicating whether to save the created token
-as the default environment twitter token variable. Defaults to TRUE,
-meaning the token is saved to user's home directory as
-".rtweet_token.rds" (or, if that already exists, then
-.rtweet_token1.rds or .rtweet_token2.rds, etc.) and the path to the
-token to said token is then set in the user's .Renviron file and re-
-read to start being used in current active session.}
+\item{set_renv}{Should the token be cached?}
 }
 \value{
 Twitter OAuth token(s) (Token1.0).
 }
 \description{
-Sends request to generate OAuth 1.0 tokens. Twitter
-  also allows users to create user-only (OAuth 2.0) access token.
-  Unlike the 1.0 tokens, OAuth 2.0 tokens are not at all centered
-  on a host user. Which means these tokens cannot be used to send
-  information (follow requests, Twitter statuses, etc.).  If you
-  have no interest in those capabilities, then 2.0 OAuth tokens do
-  offer some higher rate limits. At the current time, the
-  difference given the functions in this package is trivial, so I
-  have yet to verified OAuth 2.0 token method.  Consequently, I
-  encourage you to use 1.0 tokens.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+By default, \code{create_token()} does three things: it creates an authentication
+"token", sets it as the default token for the current session, and save it
+to disk to make it the default for future sessions.
+
+These three components have now been split up into three separate pieces:
+use \code{\link[=rtweet_user]{rtweet_user()}}/\code{\link[=rtweet_app]{rtweet_app()}}/\code{\link[=rtweet_bot]{rtweet_bot()}} to create the token,
+\code{\link[=auth_as]{auth_as()}} to make it the default for this session, and \code{\link[=auth_save]{auth_save()}} to
+use it in future sessions. See \code{vignette("auth")} for full details.
 }
 \seealso{
-\url{https://developer.twitter.com/en/docs/basics/authentication/overview/oauth}
-
 Other tokens: 
-\code{\link{get_tokens}()},
+\code{\link{get_token}()},
 \code{\link{rate_limit}()}
 }
 \concept{tokens}
+\keyword{internal}

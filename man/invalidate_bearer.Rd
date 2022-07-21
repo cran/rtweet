@@ -6,10 +6,9 @@
 \usage{
 invalidate_bearer(token = NULL)
 }
-\arguments{
-\item{token}{Oauth token created via \code{\link{create_token}}.}
-}
 \description{
-Invalidate bearer token
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+Invalidation of the bearer token is no longer the responsibility of rtweet.
+This is something you should instead perform in the \href{https://developer.twitter.com/en/portal/projects-and-apps}{Twitter developer portal}.
 }
 \keyword{internal}

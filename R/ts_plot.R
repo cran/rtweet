@@ -12,42 +12,21 @@
 #'   and end of the time series.
 #' @param tz Time zone to be used, defaults to "UTC" (Twitter default)
 #' @param ... Other arguments passed to
-#'   \code{\link[ggplot2]{geom_line}}.
+#'   [ggplot2::geom_line()].
 #' @return If
-#'   \href{https://cran.r-project.org/package=ggplot2}{ggplot2} is
-#'   installed then a \code{\link[ggplot2]{ggplot}} plot object.
+#'   [ggplot2](https://cran.r-project.org/package=ggplot2) is
+#'   installed then a [ggplot2::ggplot()] plot object.
 #' @examples
 #'
-#' \dontrun{
-#'
+#' if (auth_has_default()) {
 #' ## search for tweets containing "rstats"
-#' rt <- search_tweets("rstats", n = 10000)
+#' rt <- search_tweets("rstats", n = 100)
 #'
 #' ## plot frequency in 1 min intervals
 #' ts_plot(rt, "mins")
 #'
-#' ## plot multiple time series--retweets vs non-retweets
-#' rt %>%
-#'   dplyr::group_by(is_retweet) %>%
-#'   ts_plot("hours")
-#'
-#' ## compare account activity for some important US political figures
-#' tmls <- get_timeline(
-#'   c("SenSchumer", "SenGillibrand", "realDonaldTrump"),
-#'   n = 3000
-#' )
-#'
-#' ## examine all twitter activity using weekly intervals
-#' ts_plot(tmls, "weeks")
-#'
-#' ## group by screen name and plot each time series
-#' ts_plot(dplyr::group_by(tmls, screen_name), "weeks")
-#'
-#' ## group by screen name and is_retweet
-#' tmls %>%
-#'   dplyr::group_by(tmls, screen_name, is_retweet) %>%
-#'   ts_plot("months")
-#'
+#' ## examine all Twitter activity using weekly intervals
+#' ts_plot(rt, "hours")
 #' }
 #' @family ts_data
 #' @export
@@ -56,25 +35,24 @@ ts_plot <- function(data, by = "days", trim = 0L, tz ="UTC", ...) {
 }
 
 
-#' @importFrom graphics legend
 ts_plot_ <- function(data, by = "days", trim = 0L, tz ="UTC", ...) {
   data <- ts_data(data, by, trim, tz)
-  try_require("ggplot2")
+  check_installed("ggplot2")
   if (ncol(data) == 3L) {
     ggplot2::ggplot(
-      data, ggplot2::aes_string(
-        x = "time", y = "n", colour = names(data)[3])
+      data, ggplot2::aes(
+        x = .data[["time"]], y = .data[["n"]], colour = names(.data)[3])
     ) +
     ggplot2::geom_line(...)
   } else if (ncol(data) == 4L) {
     ggplot2::ggplot(
-      data, ggplot2::aes_string(
-        x = "time", y = "n", colour = names(data)[3], linetype = names(data)[4])
+      data, ggplot2::aes(
+        x = .data[["time"]], y = .data[["n"]], colour = names(.data)[3], linetype = names(.data)[4])
     ) +
     ggplot2::geom_line(...)
   } else {
     ggplot2::ggplot(
-      data, ggplot2::aes_string(x = "time", y = "n")) +
+      data, ggplot2::aes(x = .data[["time"]], y = .data[["n"]])) +
       ggplot2::geom_line(...)
   }
 }
@@ -95,26 +73,19 @@ ts_plot_ <- function(data, by = "days", trim = 0L, tz ="UTC", ...) {
 #' @param tz Time zone to be used, defaults to "UTC" (Twitter default)
 #' @return Data frame with time, n, and grouping column if applicable.
 #' @examples
-#'
-#' \dontrun{
+#' if (auth_has_default()) {
 #'
 #' ## handles of women senators
-#' sens <- c("SenatorBaldwin", "SenGillibrand", "PattyMurray", "SenatorHeitkamp")
+#' orgs <- c("_R_Foundation", "ropensci")
 #'
 #' ## get timelines for each
-#' sens <- get_timeline(sens, n = 3200)
+#' orgs_tml <- get_timeline(orgs, n = 100)
 #'
 #' ## get single time series for tweets
-#' ts_data(sens)
+#' ts_data(orgs_tml)
 #'
 #' ## using weekly intervals
-#' ts_data(sens, "weeks")
-#'
-#' ## group by screen name and then use weekly intervals
-#' sens %>%
-#'   dplyr::group_by(screen_name) %>%
-#'   ts_plot("weeks")
-#'
+#' ts_data(orgs_tml, "weeks")
 #' }
 #'
 #' @export
@@ -138,7 +109,7 @@ ts_data_ <- function(data, by = "days", trim = 0L, tz = "UTC") {
   ## reformat time var
   .unit <- parse_unit(by)
   ## adjust to desired tz
-  data[[dtvar]] <- as.POSIXct(format(data[[dtvar]], tz = "UTC"), tz = tz)
+  data[[dtvar]] <- convert_tz(data[[dtvar]], tz = tz)
   data[[dtvar]] <- round_time(data[[dtvar]], by, tz)
   ## get unique values of time in series
   dtm <- unique(

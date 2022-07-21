@@ -8,61 +8,72 @@ lists_subscribers(
   list_id = NULL,
   slug = NULL,
   owner_user = NULL,
-  n = 20,
+  n = 5000,
   cursor = "-1",
   parse = TRUE,
+  retryonratelimit = NULL,
+  verbose = TRUE,
   token = NULL
 )
 }
 \arguments{
 \item{list_id}{required The numerical id of the list.}
 
-\item{slug}{required You can identify a list by its slug instead of
-its numerical id. If you decide to do so, note that you'll also
-have to specify the list owner using the owner_id or
-owner_user parameters.}
+\item{slug, owner_user}{The list name (slug) and owner.}
 
-\item{owner_user}{optional The screen name or user ID of the user
-who owns the list being requested by a slug.}
+\item{n}{Desired number of results to return. Results are downloaded
+in pages when \code{n} is large; the default value will download a single
+page. Set \code{n = Inf} to download as many results as possible.
 
-\item{n}{optional Specifies the number of results to return
-per page (see cursor below). The default is 20, with a maximum
-of 5,000.}
+The Twitter API rate limits the number of requests you can perform
+in each 15 minute period. The easiest way to download more than that is
+to use \code{retryonratelimit = TRUE}.
 
-\item{cursor}{semi-optional Causes the collection of list members
-to be broken into "pages" of consistent sizes (specified by
-the count parameter). If no cursor is provided, a
-value of -1 will be assumed, which is the first "page."
-The response from the API will include a previous_cursor
-and next_cursor to allow paging back and forth. See Using
-cursors to navigate collections for more information.}
+You are not guaranteed to get exactly \code{n} results back. You will get
+fewer results when tweets have been deleted or if you hit a rate limit.
+You will get more results if you ask for a number of tweets that's not
+a multiple of page size, e.g. if you request \code{n = 150} and the page
+size is 200, you'll get 200 results back.}
 
-\item{parse}{Logical indicating whether to convert the response object into
-an R list. Defaults to TRUE.}
+\item{cursor}{Which page of results to return. The default will return
+the first page; you can supply the result from a previous call to
+continue pagination from where it left off.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
+
+\item{retryonratelimit}{If \code{TRUE}, and a rate limit is exhausted, will wait
+until it refreshes. Most Twitter rate limits refresh every 15 minutes.
+If \code{FALSE}, and the rate limit is exceeded, the function will terminate
+early with a warning; you'll still get back all results received up to
+that point. The default value, \code{NULL}, consults the option
+\code{rtweet.retryonratelimit} so that you can globally set it to \code{TRUE},
+if desired.
+
+If you expect a query to take hours or days to perform, you should not
+rely soley on \code{retryonratelimit} because it does not handle other common
+failure modes like temporarily losing your internet connection.}
+
+\item{verbose}{Show progress bars and other messages indicating current
+progress?}
+
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 }
 \description{
 Get subscribers of a specified list.
 }
 \examples{
-
-\dontrun{
-
-## get subscribers of new york times politics list
-rstats <- lists_subscribers(
-  slug = "new-york-times-politics",
-  owner_user = "nytpolitics",
-  n = 1000
-)
-
+if (auth_has_default()) {
+    ## get subscribers of rladies list
+    rstats <- lists_subscribers(slug = "rladies1", owner_user = "rladiesglobal")
 }
 
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/create-manage-lists/api-reference/get-lists-subscribers}
 }
 \seealso{
 Other lists: 
@@ -74,9 +85,7 @@ Other lists:
 Other users: 
 \code{\link{as_screenname}()},
 \code{\link{lookup_users}()},
-\code{\link{search_users}()},
-\code{\link{tweets_with_users}()},
-\code{\link{users_data}()}
+\code{\link{search_users}()}
 }
 \concept{lists}
 \concept{users}

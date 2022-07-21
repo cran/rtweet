@@ -13,6 +13,8 @@ lists_statuses(
   n = 200,
   include_rts = TRUE,
   parse = TRUE,
+  retryonratelimit = NULL,
+  verbose = TRUE,
   token = NULL
 )
 }
@@ -27,16 +29,25 @@ parameters.}
 \item{owner_user}{optional The screen name or user ID of the user
 who owns the list being requested by a slug.}
 
-\item{since_id}{optional Returns results with an ID greater than
-(that is, more recent than) the specified ID. There are limits to the
-number of Tweets which can be accessed through the API. If the limit
-of Tweets has occurred since the since_id, the since_id will be forced
-to the oldest ID available.}
+\item{since_id}{Supply a vector of ids or a data frame of previous results to
+find tweets \strong{newer} than \code{since_id}.}
 
-\item{max_id}{optional Returns results with an ID less than (that is,
-older than) or equal to the specified ID.}
+\item{max_id}{Supply a vector of ids or a data frame of previous results to
+find tweets \strong{older} than \code{max_id}.}
 
-\item{n}{optional Specifies the number of results to retrieve per "page."}
+\item{n}{Desired number of results to return. Results are downloaded
+in pages when \code{n} is large; the default value will download a single
+page. Set \code{n = Inf} to download as many results as possible.
+
+The Twitter API rate limits the number of requests you can perform
+in each 15 minute period. The easiest way to download more than that is
+to use \code{retryonratelimit = TRUE}.
+
+You are not guaranteed to get exactly \code{n} results back. You will get
+fewer results when tweets have been deleted or if you hit a rate limit.
+You will get more results if you ask for a number of tweets that's not
+a multiple of page size, e.g. if you request \code{n = 150} and the page
+size is 200, you'll get 200 results back.}
 
 \item{include_rts}{optional When set to either true, t or 1,
 the list timeline will contain native retweets (if they exist) in
@@ -44,21 +55,40 @@ addition to the standard stream of tweets. The output format of
 retweeted tweets is identical to the representation you see in
 home_timeline.}
 
-\item{parse}{Logical indicating whether to convert the response object into
-an R list. Defaults to TRUE.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{retryonratelimit}{If \code{TRUE}, and a rate limit is exhausted, will wait
+until it refreshes. Most Twitter rate limits refresh every 15 minutes.
+If \code{FALSE}, and the rate limit is exceeded, the function will terminate
+early with a warning; you'll still get back all results received up to
+that point. The default value, \code{NULL}, consults the option
+\code{rtweet.retryonratelimit} so that you can globally set it to \code{TRUE},
+if desired.
+
+If you expect a query to take hours or days to perform, you should not
+rely soley on \code{retryonratelimit} because it does not handle other common
+failure modes like temporarily losing your internet connection.}
+
+\item{verbose}{Show progress bars and other messages indicating current
+progress?}
+
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 }
 \value{
 data
 }
 \description{
 Get a timeline of tweets authored by members of a specified list.
+}
+\examples{
+if (auth_has_default()) {
+  (rladies <- lists_statuses(list_id = "839186302968848384"))
+  (rladies <- lists_statuses(slug = "rladies1", owner_user = "RLadiesGlobal"))
+}
 }
 \seealso{
 Other lists: 
@@ -70,12 +100,9 @@ Other lists:
 Other tweets: 
 \code{\link{get_favorites}()},
 \code{\link{get_mentions}()},
-\code{\link{get_my_timeline}()},
 \code{\link{get_timeline}()},
-\code{\link{lookup_statuses}()},
-\code{\link{search_tweets}()},
-\code{\link{tweets_data}()},
-\code{\link{tweets_with_users}()}
+\code{\link{lookup_tweets}()},
+\code{\link{search_tweets}()}
 }
 \concept{lists}
 \concept{tweets}

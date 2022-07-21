@@ -2,46 +2,44 @@
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, comment = "#>", collapse = TRUE)
 
 ## -----------------------------------------------------------------------------
-#  ## install httpuv if not already
-#  if (!requireNamespace("httpuv", quietly = TRUE)) {
-#    install.packages("httpuv")
-#  }
-
-## -----------------------------------------------------------------------------
-#  ## load rtweet
 #  library(rtweet)
-#  
-#  ## store api keys (these are fake example values; replace with your own keys)
-#  api_key <- "afYS4vbIlPAj096E60c4W1fiK"
-#  api_secret_key <- "bI91kqnqFoNCrZFbsjAWHD4gJ91LQAhdCJXCj3yscfuULtNkuu"
-#  
-#  ## authenticate via web browser
-#  token <- create_token(
-#    app = "rstatsjournalismresearch",
-#    consumer_key = api_key,
-#    consumer_secret = api_secret_key)
 
-## -----------------------------------------------------------------------------
-#  ## view token (you should see the correct app name)
-#  token
+## ---- eval=FALSE--------------------------------------------------------------
+#  auth_setup_default()
 
-## -----------------------------------------------------------------------------
-#  ## store api keys (these are fake example values; replace with your own keys)
-#  api_key <- "afYS4vbIlPAj096E60c4W1fiK"
-#  api_secret_key <- "bI91kqnqFoNCrZFbsjAWHD4gJ91LQAhdCJXCj3yscfuULtNkuu"
-#  access_token <- "9551451262-wK2EmA942kxZYIwa5LMKZoQA4Xc2uyIiEwu2YXL"
-#  access_token_secret <- "9vpiSGKg1fIPQtxc5d5ESiFlZQpfbknEN1f1m2xe5byw7"
-#  
-#  ## authenticate via web browser
-#  token <- create_token(
-#    app = "rstatsjournalismresearch",
-#    consumer_key = api_key,
-#    consumer_secret = api_secret_key,
-#    access_token = access_token,
-#    access_secret = access_token_secret)
+## ---- eval = FALSE------------------------------------------------------------
+#  auth <- rtweet_app()
 
-## -----------------------------------------------------------------------------
-#  ## check to see if the token is loaded
-#  library(rtweet)
-#  get_token()
+## ---- eval = FALSE------------------------------------------------------------
+#  auth <- rtweet_bot()
+
+## ---- eval = FALSE------------------------------------------------------------
+#  df <- search_tweets("#rstats", token = auth)
+
+## ---- eval = FALSE------------------------------------------------------------
+#  auth_as(auth)
+
+## ---- eval = FALSE------------------------------------------------------------
+#  auth_save(auth, "some-name")
+
+## ---- eval = FALSE------------------------------------------------------------
+#  auth_as("some-name")
+
+## ---- eval = FALSE------------------------------------------------------------
+#  auth_sitrep()
+#  ## Tokens from rtweet version < 1.0.0 found on /home/user:
+#  ## Empty tokens were found.
+#  ## Choose which is the best path of action for the tokens:
+#  ##                              user_id  key
+#  ## .rtweet_token.rds      My app         <NA>
+#  ## .rtweet_token1.rds My account            A
+#  ## Tokens found on /home/user/.config/R/rtweet:
+#  ##             token
+#  ## my-app2.rds     A
+#  ## Multiple authentications with the same app found!
+#  ## Choose which is the best path of action for the tokens:
+#  ##                       app    user_id key
+#  ## default.rds        rtweet 9951053384   A
+#  ## testing_rtweet.rds rtweet              B
+#  ## All tokens should be moved to /home/user/.config/R/rtweet
 

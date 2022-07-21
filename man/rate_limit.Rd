@@ -2,72 +2,49 @@
 % Please edit documentation in R/rate_limit.R
 \name{rate_limit}
 \alias{rate_limit}
-\alias{rate_limits}
-\title{Get rate limit data for given Twitter access tokens.}
+\alias{rate_limit_reset}
+\alias{rate_limit_wait}
+\title{Rate limit helpers}
 \usage{
-rate_limit(token = NULL, query = NULL, parse = TRUE)
+rate_limit(resource_match = NULL, token = NULL)
 
-rate_limits(token = NULL, query = NULL, parse = TRUE)
+rate_limit_reset(endpoint, token = NULL)
+
+rate_limit_wait(endpoint, token = NULL)
 }
 \arguments{
-\item{token}{One or more OAuth tokens. By default token = NULL
-fetches a non-exhausted token from an environment variable. Find
-instructions on how to create tokens and setup an environment
-variable in the tokens vignette (in r, send \code{?tokens} to
-console).}
+\item{resource_match}{An optional regular expression used to filter the
+resources listed in returned rate limit data.}
 
-\item{query}{Specific API (path) or a character function name,
-e.g., query = "get_timeline", used to subset the returned data.
-If null, this function returns entire rate limit request object
-as a tibble data frame. Otherwise, query returns specific values
-matching the query of interest; e.g., query = "lookup/users"
-returns remaining limit for user lookup requests; type =
-"followers/ids" returns remaining limit for follower id requests;
-type = "friends/ids" returns remaining limit for friend id
-requests.}
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
-\item{parse}{Logical indicating whether to parse response object
-into a data frame.}
-}
-\value{
-Tibble data frame with rate limit information pertaining to
-  the limit (max allowed), remaining (specific to token), reset
-  (minutes until reset), and reset_at (time of rate limit
-  reset). If query is specified, only relevant rows are returned.
+\item{endpoint}{Name of Twitter endpoint like \code{"lookup/users"},
+\code{"/media/upload"}, or \code{"/feedback/show/:id"}.}
 }
 \description{
-Returns rate limit information for one or more Twitter tokens,
-optionally filtered by rtweet function or specific Twitter API
-path(s)
+\itemize{
+\item \code{rate_limit()} returns a tibble of info about all rate limits
+\item \code{rate_limit_reset()} returns the next reset for a endpoint
+\item \code{rate_limit_wait()} waits for the next reset for an endpoint
 }
-\details{
-If multiple tokens are provided, this function will return
-  the names of the associated [token] applications as new variable
-  (column) or as a named element (if parse = FALSE).
+
+You should not need to use these function in the usual operation of rtweet
+because all paginated functions will wait on your behalf if you set
+\code{retryonratelimit = TRUE}.
 }
 \examples{
-
-\dontrun{
-
-## get all rate_limit information for default token
+if (auth_has_default()) {
 rate_limit()
-
-## get rate limit info for API used in lookup_statuses
-rate_limit("lookup_statuses")
-
-## get rate limit info for specific token
-token <- get_tokens()
-rate_limit(token)
-rate_limit(token, "search_tweets")
-
 }
-
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/developer-utilities/rate-limit-status}
 }
 \seealso{
-\url{https://developer.twitter.com/en/docs/developer-utilities/rate-limit-status/api-reference/get-application-rate_limit_status}
-
 Other tokens: 
 \code{\link{create_token}()},
-\code{\link{get_tokens}()}
+\code{\link{get_token}()}
 }
 \concept{tokens}

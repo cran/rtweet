@@ -1,5 +1,6 @@
 #' Get Twitter trends data.
 #'
+#' @inheritParams lookup_users
 #' @param woeid Numeric, WOEID (Yahoo! Where On Earth ID) or character
 #'   string of desired town or country. Users may also supply latitude
 #'   and longitude coordinates to fetch the closest available trends
@@ -7,7 +8,7 @@
 #'   should be provided as WOEID value consisting of 2 numeric values
 #'   or via one latitude value and one longitude value (to the
 #'   appropriately named parameters).  To browse all available trend
-#'   places, see \code{\link{trends_available}}
+#'   places, see [trends_available()]
 #' @param lat Optional alternative to WOEID. Numeric, latitude in
 #'   degrees.  If two coordinates are provided for WOEID, this
 #'   function will coerce the first value to latitude.
@@ -17,17 +18,8 @@
 #' @param exclude_hashtags Logical, indicating whether or not to
 #'   exclude hashtags. Defaults to FALSE--meaning, hashtags are
 #'   included in returned trends.
-#' @param token Every user should have their own Oauth (Twitter API) token. By
-#'   default \code{token = NULL} this function looks for the path to a saved
-#'   Twitter token via environment variables (which is what `create_token()`
-#'   sets up by default during initial token creation). For instruction on how
-#'   to create a Twitter token see the tokens vignette, i.e.,
-#'   `vignettes("auth", "rtweet")` or see \code{?tokens}.
-#' @param parse Logical, indicating whether or not to parse return
-#'   trends data. Defaults to true.
 #' @examples
-#'
-#' \dontrun{
+#' if (auth_has_default()) {
 #'
 #' ## Retrieve available trends
 #' trends <- trends_available()
@@ -43,10 +35,10 @@
 #' ww_trends
 #'
 #' ## Retrieve trends data using latitude, longitude near New York City
-#' nyc_trends <- get_trends_closest(lat = 40.7, lng = -74.0)
+#' nyc_trends <- get_trends(lat = 40.7, lng = -74.0)
 #'
 #' ## should be same result if lat/long supplied as first argument
-#' nyc_trends <- get_trends_closest(c(40.7, -74.0))
+#' nyc_trends <- get_trends(c(40.7, -74.0))
 #'
 #' ## Preview trends data
 #' nyc_trends
@@ -66,27 +58,7 @@ get_trends <- function(woeid = 1,
                        exclude_hashtags = FALSE,
                        token = NULL,
                        parse = TRUE) {
-  args <- list(
-    woeid = woeid,
-    lat = lat,
-    lng = lng,
-    exclude = exclude_hashtags,
-    token = token,
-    parse = parse)
-  do.call("get_trends_", args)
-}
-
-is_latlng <- function(x) {
-  if (!is.numeric(x) || length(x) != 2L) return(FALSE)
-  x[1] <= 90 && x[1] >= -90 && x[2] <= 180 && x[2] >= -180
-}
-
-get_trends_ <- function(woeid = 1,
-                        lat = NULL,
-                        lng = NULL,
-                        exclude = FALSE,
-                        token = NULL,
-                        parse = TRUE) {
+  
   if (inherits(woeid, "coords")) {
     lat <- woeid$point[1]
     lng <- woeid$point[2]
@@ -94,6 +66,7 @@ get_trends_ <- function(woeid = 1,
     lat <- woeid[1]
     lng <- woeid[2]
   }
+  
   if (!is.null(lat) && !is.null(lng)) {
     stopifnot(maybe_n(lat), maybe_n(lng))
     woeid <- trends_closest(lat, lng, token = token)
@@ -112,21 +85,13 @@ get_trends_ <- function(woeid = 1,
     }
     woeid <- check_woeid(woeid)
   }
-  query <- "trends/place"
-  token <- check_token(token)
-  if (exclude) {
-    exclude <- "hashtags"
-  } else {
-    exclude <- NULL
-  }
+  
   params <- list(
     id = woeid,
-    exclude = exclude)
-  url <- make_url(
-    query = query,
-    param = params)
-  gt <- TWIT(get = TRUE, url, token)
-  gt <- from_js(gt)
+    exclude = if (exclude_hashtags) "hashtags"
+  )
+  
+  gt <- TWIT_get(token, "/1.1/trends/place", params)
   if (parse) {
     gt <- parse_trends(gt)
   }
@@ -134,13 +99,14 @@ get_trends_ <- function(woeid = 1,
 }
 
 
+is_latlng <- function(x) {
+  if (!is.numeric(x) || length(x) != 2L) return(FALSE)
+  x[1] <= 90 && x[1] >= -90 && x[2] <= 180 && x[2] >= -180
+}
+
 trends_closest <- function(lat, long, token = NULL) {
-  query <- "trends/closest"
-  token <- check_token(token)
-  url <- make_url(query = query,
-                  param = list(lat = lat, long = long))
-  trd <- TWIT(get = TRUE, url, token)
-  from_js(trd)
+  params <- list(lat = lat, long = long)
+  TWIT_get(token, "/1.1/trends/closest", params)
 }
 
 parse_trends <- function(x) {
@@ -177,18 +143,10 @@ format_trend_date <- function(x) {
 
 #' Available Twitter trends along with associated WOEID.
 #'
-#' @param token OAuth token. By default \code{token = NULL} fetches a
-#'   non-exhausted token from an environment variable. Find instructions
-#'   on how to create tokens and setup an environment variable in the
-#'   tokens vignette (in r, send \code{?tokens} to console).
-#' @param parse Logical, indicating whether to return parsed
-#'   (data.frames) or nested list object. By default,
-#'   \code{parse = TRUE} saves users from the time
-#'   [and frustrations] associated with disentangling the Twitter
-#'   API return objects.
+#' @inheritParams lookup_users
 #'
 #' @examples
-#' \dontrun{
+#' if (auth_has_default()) {
 #' ## Retrieve available trends
 #' trends <- trends_available()
 #' trends
@@ -199,14 +157,12 @@ format_trend_date <- function(x) {
 #'   Earth ID.
 #' @family trends
 #' @export
+#' @references <https://developer.twitter.com/en/docs/twitter-api/v1/trends/locations-with-trending-topics/api-reference/get-trends-available>
 trends_available <- function(token = NULL, parse = TRUE) {
-  query <- "trends/available"
-  token <- check_token(token)
-  url <- make_url(query = query,
-                  param = NULL)
-  trd <- TWIT(get = TRUE, url, token)
-  trd <- from_js(trd)
-  if (parse) trd <- parse_trends_available(trd)
+  trd <- TWIT_get(token, "/1.1/trends/available")
+  if (parse) {
+    trd <- parse_trends_available(trd)
+  }
   trd
 }
 

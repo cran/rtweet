@@ -7,116 +7,79 @@
 get_followers(
   user,
   n = 5000,
-  page = "-1",
-  retryonratelimit = FALSE,
+  cursor = "-1",
+  retryonratelimit = NULL,
   parse = TRUE,
   verbose = TRUE,
-  token = NULL
+  token = NULL,
+  page = lifecycle::deprecated()
 )
 }
 \arguments{
-\item{user}{Screen name or user ID of target user from which the
-user IDs of followers will be retrieved.}
+\item{user}{Character vector of screen names or user ids.
+See \code{\link[=as_screenname]{as_screenname()}} for more details.}
 
-\item{n}{Number of followers to return. Defaults to 5000, which is
-the max number of followers returned by a single API
-request. Twitter allows up to 15 of these requests every 15
-minutes, which means 75,000 is the max number of followers to
-return without waiting for the rate limit to reset.  If this
-number exceeds either 75,000 or the remaining number of possible
-requests for a given token, then the returned object will only
-return what it can (less than n) unless retryonratelimit is set
-to true.}
+\item{n}{Desired number of results to return. Results are downloaded
+in pages when \code{n} is large; the default value will download a single
+page. Set \code{n = Inf} to download as many results as possible.
 
-\item{page}{Default \code{page = -1} specifies first page of JSON
-results. Other pages specified via cursor values supplied by
-Twitter API response object. If \code{parse = TRUE} then the
-cursor value can be extracted from the return object by using the
-\code{next_cursor} function.}
+The Twitter API rate limits the number of requests you can perform
+in each 15 minute period. The easiest way to download more than that is
+to use \code{retryonratelimit = TRUE}.
 
-\item{retryonratelimit}{If you'd like to retrieve more than 75,000
-followers in a single call, then set \code{retryonratelimit =
-TRUE} and this function will use base \code{Sys.sleep} until rate
-limits reset and the desired n is achieved or the number of total
-followers is exhausted. This defaults to FALSE. See details for
-more info regarding possible issues with timing misfires.}
+You are not guaranteed to get exactly \code{n} results back. You will get
+fewer results when tweets have been deleted or if you hit a rate limit.
+You will get more results if you ask for a number of tweets that's not
+a multiple of page size, e.g. if you request \code{n = 150} and the page
+size is 200, you'll get 200 results back.}
 
-\item{parse}{Logical, indicating whether to return parsed vector or
-nested list object. By default, \code{parse = TRUE}
-saves you the time [and frustrations] associated with
-disentangling the Twitter API return objects.}
+\item{cursor}{Which page of results to return. The default will return
+the first page; you can supply the result from a previous call to
+continue pagination from where it left off.}
 
-\item{verbose}{Logical indicating whether or not to print messages.
-Only relevant if retryonratelimit = TRUE. Defaults to TRUE,
-prints sleep times and followers gathered counts.}
+\item{retryonratelimit}{If \code{TRUE}, and a rate limit is exhausted, will wait
+until it refreshes. Most Twitter rate limits refresh every 15 minutes.
+If \code{FALSE}, and the rate limit is exceeded, the function will terminate
+early with a warning; you'll still get back all results received up to
+that point. The default value, \code{NULL}, consults the option
+\code{rtweet.retryonratelimit} so that you can globally set it to \code{TRUE},
+if desired.
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+If you expect a query to take hours or days to perform, you should not
+rely soley on \code{retryonratelimit} because it does not handle other common
+failure modes like temporarily losing your internet connection.}
+
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
+
+\item{verbose}{Show progress bars and other messages indicating current
+progress?}
+
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
+
+\item{page}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Please use \code{cursor} instead.}
 }
 \value{
-A tibble data frame of follower IDs (one column named "user_id").
+A tibble data frame with one column named "from_id" with the
+followers and another one "to_id" with the user used as input.
 }
 \description{
 Returns a list of user IDs for the accounts following specified
-user. To return more than 75,000 user IDs in a single call (the
-rate limit maximum), set "retryonratelimit" to TRUE.
-}
-\details{
-When \code{retryonratelimit = TRUE} this function
-  internally makes a rate limit API call to get information on (a)
-  the number of requests remaining and (b) the amount of time until
-  the rate limit resets. So, in theory, the sleep call should only
-  be called once between waves of data collection. However, as a
-  fail safe, if a system's time is calibrated such that it expires
-  before the rate limit reset, or if, in another session, the user
-  dips into the rate limit, then this function will wait (use
-  Sys.sleep for a second time) until the next rate limit
-  reset. Users should monitor and test this before making
-  especially large calls as any systematic issues could create
-  sizable inefficiencies.
-
-  At this time, results are ordered with the most recent following first —
-  however, this ordering is subject to unannounced change and eventual
-  consistency issues. While this remains true it is possible to iteratively build
-  follower lists for a user over time.
+user.
 }
 \examples{
+if (auth_has_default()) {
+users <- get_followers("_R_Foundation")
+users
 
-\dontrun{
-
-## get 5000 ids of users following the KFC account
-(kfc <- get_followers("KFC"))
-
-## get max number [per fresh token] of POTUS follower IDs
-(pres <- get_followers("potus", n = 75000))
-
-## resume data collection (warning: rate limits reset every 15 minutes)
-pres2 <- get_followers("potus", n = 75000, page = next_cursor(pres))
-
-## store next cursor in object before merging data
-nextpage <- next_cursor(pres2)
-
-## merge data frames
-pres <- rbind(pres, pres2)
-
-## store next cursor as an attribute in the merged data frame
-attr(pres, "next_cursor") <- next_page
-
-## view merged ddata
-pres
+# use `cursor` to find the next "page" of results
+more_users <- get_followers("_R_Foundation", cursor = users)
 
 }
-
 }
-\seealso{
-\url{https://developer.twitter.com/en/docs/accounts-and-users/follow-search-get-users/api-reference/get-followers-ids}
-
-Other ids: 
-\code{\link{get_friends}()},
-\code{\link{next_cursor}()}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-followers-ids}
 }
-\concept{ids}

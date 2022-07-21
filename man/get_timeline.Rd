@@ -2,63 +2,88 @@
 % Please edit documentation in R/timeline.R
 \name{get_timeline}
 \alias{get_timeline}
+\alias{get_my_timeline}
 \alias{get_timelines}
-\title{Get one or more user timelines (tweets posted by target user(s)).}
+\title{Get one or more user timelines}
 \usage{
 get_timeline(
-  user,
+  user = NULL,
   n = 100,
+  since_id = NULL,
   max_id = NULL,
   home = FALSE,
   parse = TRUE,
   check = TRUE,
+  retryonratelimit = NULL,
+  verbose = TRUE,
   token = NULL,
   ...
 )
 
-get_timelines(
-  user,
+get_my_timeline(
   n = 100,
+  since_id = NULL,
   max_id = NULL,
-  home = FALSE,
   parse = TRUE,
   check = TRUE,
+  retryonratelimit = NULL,
+  verbose = TRUE,
   token = NULL,
   ...
 )
 }
 \arguments{
-\item{user}{Vector of user names, user IDs, or a mixture of both.}
+\item{user}{Character vector of screen names or user ids.
+See \code{\link[=as_screenname]{as_screenname()}} for more details.}
 
-\item{n}{Number of tweets to return per timeline. Defaults to 100.
-Must be of length 1 or equal to length of user. This number should
-not exceed 3200 as Twitter limits returns to the most recent 3,200
-statuses posted or retweeted by each user.}
+\item{n}{Desired number of results to return. Results are downloaded
+in pages when \code{n} is large; the default value will download a single
+page. Set \code{n = Inf} to download as many results as possible.
 
-\item{max_id}{Character, returns results with an ID less than (that is,
-older than) or equal to `max_id`.}
+The Twitter API rate limits the number of requests you can perform
+in each 15 minute period. The easiest way to download more than that is
+to use \code{retryonratelimit = TRUE}.
 
-\item{home}{Logical, indicating whether to return a user-timeline
-or home-timeline. By default, home is set to FALSE, which means
-\code{get_timeline} returns tweets posted by the given user. To
-return a user's home timeline feed, that is, the tweets posted by
-accounts followed by a user, set home to TRUE.}
+You are not guaranteed to get exactly \code{n} results back. You will get
+fewer results when tweets have been deleted or if you hit a rate limit.
+You will get more results if you ask for a number of tweets that's not
+a multiple of page size, e.g. if you request \code{n = 150} and the page
+size is 200, you'll get 200 results back.}
 
-\item{parse}{Logical, indicating whether to return parsed
-(data.frames) or nested list object. By default, \code{parse =
-TRUE} saves users from the time [and frustrations] associated
-with disentangling the Twitter API return objects.}
+\item{since_id}{Supply a vector of ids or a data frame of previous results to
+find tweets \strong{newer} than \code{since_id}.}
 
-\item{check}{Logical indicating whether to remove check available
-rate limit. Ensures the request does not exceed the maximum
-remaining number of calls.  Defaults to TRUE.}
+\item{max_id}{Supply a vector of ids or a data frame of previous results to
+find tweets \strong{older} than \code{max_id}.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instructions on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{home}{Logical, indicating whether to return a "user" timeline
+(the default, what a user has tweeted/retweeted) or a "home" timeline
+(what the user would see if they logged into twitter).}
+
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
+
+\item{check}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
+
+\item{retryonratelimit}{If \code{TRUE}, and a rate limit is exhausted, will wait
+until it refreshes. Most Twitter rate limits refresh every 15 minutes.
+If \code{FALSE}, and the rate limit is exceeded, the function will terminate
+early with a warning; you'll still get back all results received up to
+that point. The default value, \code{NULL}, consults the option
+\code{rtweet.retryonratelimit} so that you can globally set it to \code{TRUE},
+if desired.
+
+If you expect a query to take hours or days to perform, you should not
+rely soley on \code{retryonratelimit} because it does not handle other common
+failure modes like temporarily losing your internet connection.}
+
+\item{verbose}{Show progress bars and other messages indicating current
+progress?}
+
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
 \item{...}{Further arguments passed on as parameters in API query.}
 }
@@ -66,45 +91,38 @@ to create a Twitter token see the tokens vignette, i.e.,
 A tbl data frame of tweets data with users data attribute.
 }
 \description{
-Returns up to 3,200 statuses posted to the timelines of each of one
-or more specified Twitter users.
+\code{get_timeline()} returns the timeline of any Twitter user (i.e. what they
+have tweeted). \code{get_my_timeline()} returns the home timeline for the
+authenticated user (i.e. the tweets you see when you log into Twitter).
+}
+\details{
+At most up to 3,200 of a user's most recent Tweets can be retrieved.
 }
 \examples{
+if (auth_has_default()) {
+tw <- get_timeline("_R_Foundation")
+tw
 
-\dontrun{
+# get tweets that arrived since the last request
+get_timeline("_R_Foundation", since_id = tw)
+# get earlier tweets
+get_timeline("_R_Foundation", max_id = tw)
 
-## get most recent 3200 tweets posted by Donald Trump's account
-djt <- get_timeline("realDonaldTrump", n = 3200)
-
-## data frame where each observation (row) is a different tweet
-djt
-
-## users data for realDonaldTrump is also retrieved
-users_data(djt)
-
-## retrieve timelines of mulitple users
-tmls <- get_timeline(c("KFC", "ConanOBrien", "NateSilver538"), n = 1000)
-
-## it's returned as one data frame
-tmls
-
-## count observations for each timeline
-table(tmls$screen_name)
-
+# get timelines for multiple users
+tw <- get_timeline(c("_R_Foundation", "rOpenSci", "Bioconductor"))
+tw
 }
 
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/tweets/timelines/overview}
 }
 \seealso{
-\url{https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline}
-
 Other tweets: 
 \code{\link{get_favorites}()},
 \code{\link{get_mentions}()},
-\code{\link{get_my_timeline}()},
 \code{\link{lists_statuses}()},
-\code{\link{lookup_statuses}()},
-\code{\link{search_tweets}()},
-\code{\link{tweets_data}()},
-\code{\link{tweets_with_users}()}
+\code{\link{lookup_tweets}()},
+\code{\link{search_tweets}()}
 }
 \concept{tweets}

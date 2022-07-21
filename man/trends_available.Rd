@@ -7,32 +7,32 @@
 trends_available(token = NULL, parse = TRUE)
 }
 \arguments{
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find instructions
-on how to create tokens and setup an environment variable in the
-tokens vignette (in r, send \code{?tokens} to console).}
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
-\item{parse}{Logical, indicating whether to return parsed
-(data.frames) or nested list object. By default,
-\code{parse = TRUE} saves users from the time
-[and frustrations] associated with disentangling the Twitter
-API return objects.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
 }
 \value{
 Data frame with WOEID column. WOEID is a Yahoo! Where On
-  Earth ID.
+Earth ID.
 }
 \description{
 Available Twitter trends along with associated WOEID.
 }
 \examples{
-\dontrun{
+if (auth_has_default()) {
 ## Retrieve available trends
 trends <- trends_available()
 trends
 
 }
 
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/trends/locations-with-trending-topics/api-reference/get-trends-available}
 }
 \seealso{
 Other trends: 

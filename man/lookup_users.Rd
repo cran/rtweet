@@ -4,59 +4,65 @@
 \alias{lookup_users}
 \title{Get Twitter users data for given users (user IDs or screen names).}
 \usage{
-lookup_users(users, parse = TRUE, token = NULL)
+lookup_users(
+  users,
+  parse = TRUE,
+  token = NULL,
+  retryonratelimit = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{users}{User id or screen name of target user.}
 
-\item{parse}{Logical, indicating whether or not to parse
-return object into data frame(s).}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
+
+\item{retryonratelimit}{If \code{TRUE}, and a rate limit is exhausted, will wait
+until it refreshes. Most Twitter rate limits refresh every 15 minutes.
+If \code{FALSE}, and the rate limit is exceeded, the function will terminate
+early with a warning; you'll still get back all results received up to
+that point. The default value, \code{NULL}, consults the option
+\code{rtweet.retryonratelimit} so that you can globally set it to \code{TRUE},
+if desired.
+
+If you expect a query to take hours or days to perform, you should not
+rely soley on \code{retryonratelimit} because it does not handle other common
+failure modes like temporarily losing your internet connection.}
+
+\item{verbose}{Show progress bars and other messages indicating current
+progress?}
 }
 \value{
 A tibble of users data.
 }
 \description{
-Returns data on up to 90,000 Twitter users. To return data on more
-than 90,000 users, code must be written to iterate through user IDs
-whilst avoiding rate limits, which reset every 15 minutes.
+Get Twitter users data for given users (user IDs or screen names).
 }
 \examples{
 
-\dontrun{
-
-## select one or more twitter users to lookup
-users <- c(
-  "potus", "hillaryclinton", "realdonaldtrump",
-  "fivethirtyeight", "cnn", "espn", "twitter"
-)
-
-## get users data
-usr_df <- lookup_users(users)
-
-## view users data
-usr_df
-
-## view tweet data for these users via tweets_data()
-tweets_data(usr_df)
-
+if (auth_has_default()) {
+    users <- c("twitter", "rladiesglobal", "_R_Foundation")
+    users <- lookup_users(users)
+    users
+   
+    # latest tweet from each user
+    tweets_data(users)
 }
 
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-users-lookup}
 }
 \seealso{
-\url{https://developer.twitter.com/en/docs/accounts-and-users/follow-search-get-users/api-reference/get-users-lookup}
-
 Other users: 
 \code{\link{as_screenname}()},
 \code{\link{lists_subscribers}()},
-\code{\link{search_users}()},
-\code{\link{tweets_with_users}()},
-\code{\link{users_data}()}
+\code{\link{search_users}()}
 }
 \concept{users}

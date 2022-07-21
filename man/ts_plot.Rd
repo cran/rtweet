@@ -20,12 +20,12 @@ and end of the time series.}
 \item{tz}{Time zone to be used, defaults to "UTC" (Twitter default)}
 
 \item{...}{Other arguments passed to
-\code{\link[ggplot2]{geom_line}}.}
+\code{\link[ggplot2:geom_path]{ggplot2::geom_line()}}.}
 }
 \value{
 If
-  \href{https://cran.r-project.org/package=ggplot2}{ggplot2} is
-  installed then a \code{\link[ggplot2]{ggplot}} plot object.
+\href{https://cran.r-project.org/package=ggplot2}{ggplot2} is
+installed then a \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} plot object.
 }
 \description{
 Creates a ggplot2 plot of the frequency of tweets over a specified
@@ -33,36 +33,15 @@ interval of time.
 }
 \examples{
 
-\dontrun{
-
+if (auth_has_default()) {
 ## search for tweets containing "rstats"
-rt <- search_tweets("rstats", n = 10000)
+rt <- search_tweets("rstats", n = 100)
 
 ## plot frequency in 1 min intervals
 ts_plot(rt, "mins")
 
-## plot multiple time series--retweets vs non-retweets
-rt \%>\%
-  dplyr::group_by(is_retweet) \%>\%
-  ts_plot("hours")
-
-## compare account activity for some important US political figures
-tmls <- get_timeline(
-  c("SenSchumer", "SenGillibrand", "realDonaldTrump"),
-  n = 3000
-)
-
-## examine all twitter activity using weekly intervals
-ts_plot(tmls, "weeks")
-
-## group by screen name and plot each time series
-ts_plot(dplyr::group_by(tmls, screen_name), "weeks")
-
-## group by screen name and is_retweet
-tmls \%>\%
-  dplyr::group_by(tmls, screen_name, is_retweet) \%>\%
-  ts_plot("months")
-
+## examine all Twitter activity using weekly intervals
+ts_plot(rt, "hours")
 }
 }
 \concept{ts_data}

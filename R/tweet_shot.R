@@ -10,7 +10,6 @@
 #' Use the `zoom` factor to get more pixels which may improve the text rendering
 #' of the tweet/thread.
 #'
-#' @md
 #' @param statusid_or_url a valid Twitter status id (e.g. "`947082036019388416`") or
 #'     a valid Twitter status URL (e.g. "`https://twitter.com/jhollist/status/947082036019388416`").
 #' @param zoom a positive number >= 1. See the help for `[webshot::webshot()]` for more information.
@@ -19,14 +18,19 @@
 #'     own image manipulation.
 #' @return `magick` object
 #' @export
-#' @examples \dontrun{
-#' tweet_shot("947082036019388416")
-#' tweet_shot("https://twitter.com/jhollist/status/947082036019388416")
+#' @examples 
+#' \dontrun{
+#' if (auth_has_default()) {
+#'     shot1 <- tweet_shot("947061504892919808")
+#'     plot(shot1)
+#'     shot2 <- tweet_shot("https://twitter.com/ma_salmon/status/947061504892919808")
+#'     plot(shot2)
+#' }
 #' }
 tweet_shot <- function(statusid_or_url, zoom = 3, scale = TRUE) {
-  ## check for required packages
-  try_require("magick", "tweet_shot")
-  try_require("webshot", "tweet_shot")
+  lifecycle::deprecate_warn("1.0.0", "tweet_shot()", 
+                            details = "The resulting image might not have a screenshot of the tweet")
+  check_installed(c("magick", "webshot"))
 
   statusid_or_url <- statusid_or_url[1]
   zoom <- zoom[1]
@@ -46,7 +50,7 @@ tweet_shot <- function(statusid_or_url, zoom = 3, scale = TRUE) {
 
   if (is_url) {
 
-    ## shld have "twitter" in it
+    ## should have "twitter" in it
     is_twitter <- grepl("twitter", x)
     if (!is_twitter) {
       stop("statusid_or_url must be a valid Twitter status id or URL",
@@ -76,8 +80,8 @@ tweet_shot <- function(statusid_or_url, zoom = 3, scale = TRUE) {
 
     ## make a mobile URL
     x <- sprintf("https://mobile.twitter.com/%s/status/%s",
-      x$screen_name, x$status_id)
-
+                 users_data(x)$screen_name, x$id_str)
+    
   }
 
   ## keep the filesystem clean

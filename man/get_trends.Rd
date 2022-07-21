@@ -21,7 +21,7 @@ data given the provided location. Latitude/longitude coordinates
 should be provided as WOEID value consisting of 2 numeric values
 or via one latitude value and one longitude value (to the
 appropriately named parameters).  To browse all available trend
-places, see \code{\link{trends_available}}}
+places, see \code{\link[=trends_available]{trends_available()}}}
 
 \item{lat}{Optional alternative to WOEID. Numeric, latitude in
 degrees.  If two coordinates are provided for WOEID, this
@@ -35,15 +35,13 @@ function will coerce the second value to longitude.}
 exclude hashtags. Defaults to FALSE--meaning, hashtags are
 included in returned trends.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
-\item{parse}{Logical, indicating whether or not to parse return
-trends data. Defaults to true.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
 }
 \value{
 Tibble data frame of trends data for a given geographical area.
@@ -52,8 +50,7 @@ Tibble data frame of trends data for a given geographical area.
 Get Twitter trends data.
 }
 \examples{
-
-\dontrun{
+if (auth_has_default()) {
 
 ## Retrieve available trends
 trends <- trends_available()
@@ -69,10 +66,10 @@ ww_trends <- get_trends(worldwide)
 ww_trends
 
 ## Retrieve trends data using latitude, longitude near New York City
-nyc_trends <- get_trends_closest(lat = 40.7, lng = -74.0)
+nyc_trends <- get_trends(lat = 40.7, lng = -74.0)
 
 ## should be same result if lat/long supplied as first argument
-nyc_trends <- get_trends_closest(c(40.7, -74.0))
+nyc_trends <- get_trends(c(40.7, -74.0))
 
 ## Preview trends data
 nyc_trends

@@ -4,26 +4,26 @@
 \alias{my_friendships}
 \title{Lookup friendship information between users.}
 \usage{
-my_friendships(user, parse = TRUE, token = NULL)
+my_friendships(user, parse = FALSE, token = NULL)
 }
 \arguments{
-\item{user}{Screen name or user id of target user.}
+\item{user}{Character vector of screen names or user ids.
+See \code{\link[=as_screenname]{as_screenname()}} for more details.}
 
-\item{parse}{Logical indicating whether to return parsed data frame.
-Defaults to true.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
 
-\item{token}{OAuth token. By default \code{token = NULL} fetches a
-non-exhausted token from an environment variable. Find instructions
-on how to create tokens and setup an environment variable in the
-tokens vignette (in r, send \code{?tokens} to console).}
-}
-\value{
-Data frame converted form returned JSON object. If parse is
-  not true, the HTTP response object is returned instead.
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 }
 \description{
 Gets information on friendship between authenticated user and up
 to 100 other users.
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-friendships-lookup}
 }
 \seealso{
 Other friends: 

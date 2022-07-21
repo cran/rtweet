@@ -1,3 +1,168 @@
+# rtweet 1.0.2
+
+- Exported again `tweets_with_users` and `users_with_tweets` because Twitmo depends on them.
+
+# rtweet 1.0.1
+
+- Fixed issue with .Rbuilignore and vignettes
+
+- Reduced fixtures sizes by limiting the page size to the number of requests if 
+  it is smaller than the default page size. 
+
+# rtweet 1.0.0
+
+## Breaking changes
+
+- Data returned by rtweet is nested and uses the same names provided by 
+  the Twitter API. It doesn't compute or add new columns as it did previously. 
+
+- emojis, langs and stopwordslangs data are no longer provided by rtweet.
+
+- `get_friends()` and `get_followers()` return similar formatted output with 
+  two columns "from_id" and "to_id" (#308, @alexpghayes).
+  
+- All paginated functions that don't return tweets now use a consistent 
+  pagination interface. They all store the "next cursor" in an `rtweet_cursor`
+  attribute, which will be automatically retrieved when you use the `cursor`
+  argument.
+  
+- Functions that return tweets (e.g. `get_favorites()`, `get_my_timeline()`, 
+  `get_timeline()`, `get_mentions()`, `lists_statuses()` and `search_tweets()`)
+  now expose a consistent pagination interface. They all support `max_id` and 
+  `since_id` to find earlier and later tweets respectively, as well as
+  `retryonratelimit` to wait as long as needed when rate limited (#510).
+  
+- `suggested_slugs()`, `suggested_users()`, `suggested_users_all()` have been
+  removed as they stopped working when Twitter remove the suggested users
+  endpoint in June 2019 (https://twittercommunity.com/t/124732).
+  
+- `parse = FALSE` always means return the raw "JSON". Previously some functions
+  (e.g. `my_friendships()`) would return the raw HTTP response instead (#504).
+  
+- rtweet no longer re-exports the magrittr pipe `%>%`; if you want to continue 
+  using it, you'll need to `library(magrittr)` or `library(dplyr)` (#522).
+  
+## Deprecations
+
+- The authentication system has been rewritten, check the following section.
+
+- `lookup_collections()` and `get_collections()` has been hard deprecated 
+  because the underlying Twitter API has been deprecated.
+
+- `previous_cursor()` has been hard deprecated. It could only be used with 
+  `lists_memberships()` and it has been dropped in favour of making regular
+  pagination better.
+  
+- `tweet_shot()` has been hard deprecated as the screenshots do not have the 
+  tweet. It might come back with webshot2 (#458).
+
+- The `home` argument to `get_timeline()` has been deprecated. You can only
+  retrieve the home timeline for the logged in user, and that's the job of
+  `get_my_timeline()` (#550).
+  
+- Due to the changes on rtweet data format, all the functions related to 
+  flattening the data (`write_as_csv()`, `save_as_csv()` `flatten()`, 
+  `unflatten()`, `read_twitter_csv()`) are deprecated. 
+  Users should decide how to flatten the nested structure of the data. 
+  
+- `lookup_statuses()` has been deprecated in favour of `lookup_tweets()`.
+
+- `as_userid()` has been deprecated since in case of ambiguity the default is
+  to assume a numeric string is a user id (#520). All functions now use a 
+  single `user_type()` function so behaviour is identical for all rtweet 
+  functions.
+
+- `get_timelines()` has been deprecated since it does that same thing as
+  `get_timeline()` (#509).
+  
+- `stream_tweets2()` has been deprecated in favour of `stream_tweets()`.
+
+## Authentication
+
+rtweet's authentication system has been completely written. It is now based 
+around three authentication options: `rtweet_user()`, `rtweet_app()`, and
+`rtweet_bot()`. Authentication no longer touches `~/.Renviron` file; instead
+`auth_save()` and `auth_as()` allow you to explicitly save and load 
+authentication mechanisms from a system config directory. See `vignette("auth")`
+for more details.
+
+- The httpuv package is now only suggested, since it's only needed for 
+  interactive auth, and you'll be prompted to install it when needed.
+
+- `bearer_token()` has been deprecated in favour of `rtweet_app()`, which takes 
+  the bearer token found in your Twitter developer portal. `invalidate_bearer()`
+  has been deprecated since this is something you should do yourself in the
+  Twitter developer portal.
+
+- `create_token()` has been deprecated in favour of the combination of
+  `rtweet_user()`/`rtweet_bot()`/`rtweet_app()` + `auth_as()` + `auth_save()`.
+
+- `get_token()` and `get_tokens()` have been deprecated in favour of 
+  `auth_get()` and `auth_list()`.
+  
+- `auth_as()` accepts path to an authentication to make it easier to use
+  authentications outside a user account (#602, @maelle)
+  
+- `auth_setup_default()` will not only authenticate and save but use the 
+  default token.
+
+- The new `auth_sitrep()` helps reports the different authentications of the user
+
+## Other changes
+
+- Update to new rOpenSci Code of Conduct: https://ropensci.org/code-of-conduct/
+
+- `lookup_users()` and `search_users()` now returns a data frame containing
+  all information about each user (not their latest tweet). If you want to get 
+  that data you can use `tweets_data()`.
+  
+- rtweet 1.0.0 implements a consistent strategy for handling rate limits. 
+  By default, if a paginated function (i.e. a rtweet function that performs 
+  multiple calls to the twitter API) is rate-limited it will return all results 
+  received up to that point, along with a warning telling you how to get more
+  results. Alternatively, if you want to automatically wait until the 
+  rate-limit is reset, you can set `retryratelimit = TRUE`.
+
+- The default value of `retryonratelimit` comes from the option
+  `rtweet.retryonratelimit` so you can globally set it to `TRUE` if desired
+  (#173).
+  
+- All functions that perform multiple requests on your behalf now display
+  a progress bar so you know what's happening. If you don't want it, you can 
+  turn it off with `verbose = FALSE` (#518). 
+  
+- Banned or protected accounts now trigger a warning instead of an error, 
+  but if data from other users is requested it is not served by the API and 
+  returned as NA (#590, @simonheb).
+  
+- Added support for posting alt-text metadata with images tweeted with status 
+  updated via `post_tweet()`. (#425, @hrbrmstr)
+  
+- `stream_tweets()` has been overhauled to only write valid data. This obsoletes
+  all previous strategy to clean up bad data after the fact (#350, #356).
+
+- The maintainer changed. 
+
+- New `user_block()` and `user_unblock()` to block and unblock users (#593,
+  @simonheb). 
+
+- The new `tweet_threading` function is now faster and more reliable (#305, 
+  #693, @charliejhadley). 
+
+- Message are now properly capitalized (#565, @jsta)  
+
+- Fields `withheld_scope`, `withheld_copyright`, `withheld_in_countries` are 
+  now correctly parsed (#647, @alexpghayes).
+
+- Functions like `search_tweets()`, `lookup_statuses()` and others return the 
+   appropriate date time format for the right columns (`created_at` mostly) 
+   (#653, #657, #660, @alexpghayes, @RickPat). 
+   
+- Premium/sandbox environments are supported in `search_fullarchive()` and 
+   `search_30day()` (#578, #713).
+
+- The vignette must be pre-computed before submission (#609, @maelle).
+  
 # rtweet 0.7.0
 
 - Added paper.md as part of ROpenSci submission.

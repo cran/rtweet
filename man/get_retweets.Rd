@@ -2,43 +2,38 @@
 % Please edit documentation in R/retweets.R
 \name{get_retweets}
 \alias{get_retweets}
-\title{Get the most recent retweets of a specific Twitter status}
+\alias{get_retweeters}
+\title{Get the most recent retweets/retweeters}
 \usage{
 get_retweets(status_id, n = 100, parse = TRUE, token = NULL, ...)
+
+get_retweeters(status_id, n = 100, parse = TRUE, token = NULL)
 }
 \arguments{
-\item{status_id}{required The numerical ID of the desired status.}
+\item{status_id}{Tweet/status id.}
 
-\item{n}{optional Specifies the number of records to retrieve.
-Must be less than or equal to 100.}
+\item{n}{Number of results to retrieve. Must be <= 100.}
 
-\item{parse}{Logical indicating whether to convert the response
-object into an R list. Defaults to TRUE.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
 \item{...}{Other arguments used as parameters in the query sent to
 Twitter's rest API, for example, \code{trim_user = TRUE}.}
 }
 \value{
-Tweets data of the most recent retweets of a given status
+Tweets data of the most recent retweets/retweeters of a given status
 }
 \description{
-Returns a collection of the 100 most recent retweets of a given
-status.  NOTE: Twitter's API is currently limited to 100 or fewer
-retweeters.
+\code{get_retweets()} returns the 100 most recent retweets of a tweet;
+\code{get_retweeters()} retursn the 100 most recent users who retweeted them.
 }
-\details{
-NOTE: Twitter's API is currently limited to 100 or fewer
-  retweeters.
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/api-reference/get-statuses-retweets-id}
+
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/api-reference/get-statuses-retweeters-ids}
 }
-\seealso{
-Other retweets: 
-\code{\link{get_retweeters}()}
-}
-\concept{retweets}

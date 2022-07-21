@@ -11,22 +11,19 @@ lookup_friendships(source, target, parse = TRUE, token = NULL)
 
 \item{target}{Screen name or user id of target user.}
 
-\item{parse}{Logical indicating whether to return parsed data frame.
-Defaults to true.}
+\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
+to return the "raw" list corresponding to the JSON returned from the
+Twitter API.}
 
-\item{token}{Every user should have their own Oauth (Twitter API) token. By
-default \code{token = NULL} this function looks for the path to a saved
-Twitter token via environment variables (which is what `create_token()`
-sets up by default during initial token creation). For instruction on how
-to create a Twitter token see the tokens vignette, i.e.,
-`vignettes("auth", "rtweet")` or see \code{?tokens}.}
-}
-\value{
-Data frame converted form returned JSON object. If parse is
-  not true, the HTTP response object is returned instead.
+\item{token}{Expert use only. Use this to override authentication for
+a single API call. In most cases you are better off changing the
+default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 }
 \description{
 Gets information on friendship between two Twitter users.
+}
+\references{
+\url{https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-friendships-show}
 }
 \seealso{
 Other friends: 

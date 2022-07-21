@@ -27,26 +27,19 @@ Returns data containing the frequency of tweets over a specified
 interval of time.
 }
 \examples{
-
-\dontrun{
+if (auth_has_default()) {
 
 ## handles of women senators
-sens <- c("SenatorBaldwin", "SenGillibrand", "PattyMurray", "SenatorHeitkamp")
+orgs <- c("_R_Foundation", "ropensci")
 
 ## get timelines for each
-sens <- get_timeline(sens, n = 3200)
+orgs_tml <- get_timeline(orgs, n = 100)
 
 ## get single time series for tweets
-ts_data(sens)
+ts_data(orgs_tml)
 
 ## using weekly intervals
-ts_data(sens, "weeks")
-
-## group by screen name and then use weekly intervals
-sens \%>\%
-  dplyr::group_by(screen_name) \%>\%
-  ts_plot("weeks")
-
+ts_data(orgs_tml, "weeks")
 }
 
 }
