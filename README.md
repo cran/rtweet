@@ -44,6 +44,11 @@ Twitter “app”. See `vignette("auth", package = "rtweet")` for details.
 
 ``` r
 library(rtweet)
+#> 
+#> Attaching package: 'rtweet'
+#> The following object is masked from 'package:graphics':
+#> 
+#>     symbols
 ```
 
 rtweet should be used in strict accordance with Twitter’s [developer
@@ -109,10 +114,10 @@ and `retryonratelimit = TRUE` but be warned that this might take a
 
 ### Get timelines
 
-Get the most recent 200 tweets from R Foundation:
+Get the most recent 100 tweets from R Foundation:
 
 ``` r
-## get user IDs of accounts followed by R Foundation
+## get most recent 100 tweets from R Foundation
 tmls <- get_timeline("_R_Foundation", n = 100)
 ```
 

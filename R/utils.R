@@ -5,7 +5,7 @@
 format_date <- function(x, format = "%a %b %d %T %z %Y") {
   locale <- Sys.getlocale("LC_TIME")
   on.exit(Sys.setlocale("LC_TIME", locale), add = TRUE)
-  Sys.setlocale("LC_TIME", "C") 
+  Sys.setlocale("LC_TIME", "C")
   as.POSIXct(x, format = format)
 }
 
@@ -42,8 +42,6 @@ is.na.quiet <- function(x) {
   suppressWarnings(is.na(x))
 }
 
-as_tbl <- tibble::as_tibble
-
 is_n <- function(n) {
   if (is.character(n)) {
     n <- suppressWarnings(as.numeric(n))
@@ -66,7 +64,7 @@ is_dev_mode <- function() {
 }
 
 is_rcmd_check <- function() {
-  identical(Sys.getenv("RTESTS"), "true")  
+  identical(Sys.getenv("RTESTS"), "true")
 }
 
 is_developing <- function() {

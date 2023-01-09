@@ -14,7 +14,7 @@
 
 <title>Live streaming tweets</title>
 
-<script src="stream_files/header-attrs-2.14/header-attrs.js"></script>
+<script src="stream_files/header-attrs-2.18/header-attrs.js"></script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -74,7 +74,7 @@ code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code span.at { color: #7d9029; } /* Attribute */
 code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
+code span.bu { color: #008000; } /* BuiltIn */
 code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
 code span.ch { color: #4070a0; } /* Char */
 code span.cn { color: #880000; } /* Constant */
@@ -87,7 +87,7 @@ code span.er { color: #ff0000; font-weight: bold; } /* Error */
 code span.ex { } /* Extension */
 code span.fl { color: #40a070; } /* Float */
 code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
+code span.im { color: #008000; font-weight: bold; } /* Import */
 code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
 code span.kw { color: #007020; font-weight: bold; } /* Keyword */
 code span.op { color: #666666; } /* Operator */
@@ -108,13 +108,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -126,7 +133,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 
-<link rel="stylesheet" href="/usr/lib/R/site-library/rmarkdown/rmarkdown/templates/html_vignette/resources/vignette.css" type="text/css" />
+<link rel="stylesheet" href="/home/lluis/bin/R/4.2.2/rmarkdown/rmarkdown/templates/html_vignette/resources/vignette.css" type="text/css" />
 
 
 
@@ -146,50 +153,113 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div id="installing-and-loading-package" class="section level2">
 <h2>Installing and loading package</h2>
 <p>Prior to streaming, make sure to install and load rtweet. This
-vignette assumes users have already setup user access tokens (see: the
+vignette assumes users have already setup app access tokens (see: the
 “auth” vignette, <code>vignette("auth", package = "rtweet")</code>).</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Load rtweet</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rtweet)</span></code></pre></div>
 </div>
-<div id="specifying-parameters" class="section level2">
-<h2>Specifying parameters</h2>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
 <p>In addition to accessing Twitter’s REST API (e.g.,
 <code>search_tweets</code>, <code>get_timeline</code>), rtweet makes it
-possible to capture live streams of Twitter data using the
-<code>stream_tweets()</code> function. By default,
-<code>stream_tweets</code> will stream for 30 seconds and return a
-random sample of tweets. To modify the default settings,
-<code>stream_tweets</code> accepts several parameters, including
-<code>q</code> (query used to filter tweets), <code>timeout</code>
-(duration or time of stream), and <code>file_name</code> (path name for
-saving raw json data).</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream keywords used to filter tweets</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q <span class="ot">&lt;-</span> <span class="st">&quot;#rstats&quot;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream time in seconds so for one minute set timeout = 60</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="do">## For larger chunks of time, I recommend multiplying 60 by the number</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="do">## of desired minutes. This method scales up to hours as well</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="do">## (x * 60 = x mins, x * 60 * 60 = x hours)</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream for 30 seconds</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>streamtime <span class="ot">&lt;-</span> <span class="dv">30</span> </span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="do">## Filename to save json data (backup)</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>filename <span class="ot">&lt;-</span> <span class="st">&quot;rstats.json&quot;</span></span></code></pre></div>
+possible to capture live streams of Twitter data<a href="#fn1"
+class="footnote-ref" id="fnref1"><sup>1</sup></a>. This requires an app
+authentication see
+<code>vignette("auth", package = "rtweet")</code>.</p>
+<p>There are two ways of having a stream:</p>
+<ul>
+<li><p><a
+href="https://developer.twitter.com/en/docs/twitter-api/tweets/filtered-stream/api-reference/get-tweets-search-stream">A
+stream collecting data from a set of rules</a>, which can be collected
+via <code>filtered_stream()</code>.</p></li>
+<li><p><a
+href="https://developer.twitter.com/en/docs/twitter-api/tweets/volume-streams/api-reference/get-tweets-sample-stream">A
+stream of a 1% of tweets published</a>, which can be collected via
+<code>sample_stream()</code>.</p></li>
+</ul>
+<p>In either case we need to choose how long should the streaming
+connection hold, and in which file it should be saved to.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream time in seconds so for one minute set timeout = 60</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="do">## For larger chunks of time, I recommend multiplying 60 by the number</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="do">## of desired minutes. This method scales up to hours as well</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="do">## (x * 60 = x mins, x * 60 * 60 = x hours)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream for 5 seconds</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>streamtime <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="do">## Filename to save json data (backup)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>filename <span class="ot">&lt;-</span> <span class="st">&quot;rstats.json&quot;</span></span></code></pre></div>
 </div>
-<div id="stream_tweets" class="section level2">
-<h2>stream_tweets()</h2>
+<div id="filtered-stream" class="section level2">
+<h2>Filtered stream</h2>
+<p>The filtered stream collects tweets for all rules that are currently
+active, not just one rule or query.</p>
+<div id="ceating-rules" class="section level3">
+<h3>Ceating rules</h3>
+<p>Streaming rules in rtweet need a value and a tag. The value is the
+query to be performed, and the tag is the name to identify tweets that
+match a query. You can use multiple words and hashtags as value, please
+<a
+href="https://developer.twitter.com/en/docs/twitter-api/tweets/filtered-stream/integrate/build-a-rule">read
+the official documentation</a>. Multiple rules can match to a single
+tweet.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream rules used to filter tweets</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>new_rule <span class="ot">&lt;-</span> <span class="fu">stream_add_rule</span>(<span class="fu">list</span>(<span class="at">value =</span> <span class="st">&quot;#rstats&quot;</span>, <span class="at">tag =</span> <span class="st">&quot;rstats&quot;</span>))</span></code></pre></div>
+</div>
+<div id="listing-rules" class="section level3">
+<h3>Listing rules</h3>
+<p>To know current rules you can use <code>stream_add_rule()</code> to
+know if any rule is currently active:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>rules <span class="ot">&lt;-</span> <span class="fu">stream_add_rule</span>(<span class="cn">NULL</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>rules</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  sent result_count</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2022-12-19 23:24:51            1</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rules</span>(rules)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                    id   value    tag</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 1604981106868211713 #rstats rstats</span></span></code></pre></div>
+<p>With the help of <code>rules()</code> the id, value and tag of each
+rule is provided.</p>
+</div>
+<div id="removing-rules" class="section level3">
+<h3>Removing rules</h3>
+<p>To remove rules use <code>stream_rm_rule()</code></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Not evaluated now</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">stream_rm_rule</span>(<span class="fu">ids</span>(new_rule))</span></code></pre></div>
+<p>Note, if the rules are not used for some time, Twitter warns you that
+they will be removed. But given that <code>filtered_stream()</code>
+collects tweets for all rules, it is advisable to keep the rules list
+short and clean.</p>
+</div>
+<div id="filtered_stream" class="section level3">
+<h3>filtered_stream()</h3>
 <p>Once these parameters are specified, initiate the stream. Note:
 Barring any disconnection or disruption of the API, streaming will
 occupy your current instance of R until the specified time has elapsed.
 It is possible to start a new instance or R —streaming itself usually
 isn’t very memory intensive— but operations may drag a bit during the
 parsing process which takes place immediately after streaming ends.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream election tweets</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>stream_rstats <span class="ot">&lt;-</span> <span class="fu">stream_tweets</span>(<span class="at">q =</span> q, <span class="at">timeout =</span> streamtime, <span class="at">file_name =</span> filename)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Streaming tweets: 7 tweets written / 65.54 kB / 888.99 kB/s / 00:00:00</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Stream election tweets</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>stream_rstats <span class="ot">&lt;-</span> <span class="fu">filtered_stream</span>(<span class="at">timeout =</span> streamtime, <span class="at">file =</span> filename, <span class="at">parse =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning: No matching tweets with streaming rules were found in the time provided.</span></span></code></pre></div>
+<p>If no tweet matching the rules is detected a warning will be
+issued.</p>
 <p>Parsing larger streams can take quite a bit of time (in addition to
 time spent streaming) due to a somewhat time-consuming simplifying
-process used to convert a json file into an R object. It is recommended
-to save the streaming in a file.</p>
+process used to convert a json file into an R object.</p>
+<p>Don’t forget to clean the streaming rules:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stream_rm_rule</span>(<span class="fu">ids</span>(new_rule))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  sent deleted not_deleted</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2022-12-19 23:25:07       1           0</span></span></code></pre></div>
+</div>
+</div>
+<div id="sample-stream" class="section level2">
+<h2>Sample stream</h2>
+<p>The <code>sample_stream()</code> function doesn’t need rules or
+anything.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>stream_random <span class="ot">&lt;-</span> <span class="fu">sample_stream</span>(<span class="at">timeout =</span> streamtime, <span class="at">file =</span> filename, <span class="at">parse =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a> Found <span class="dv">289</span> records...</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a> Imported <span class="dv">289</span> records. Simplifying...</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(stream_random)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 289</span></span></code></pre></div>
 </div>
 <div id="saving-files" class="section level2">
 <h2>Saving files</h2>
@@ -197,118 +267,25 @@ to save the streaming in a file.</p>
 json files upfront and parse those files later on. To do this, simply
 add <code>parse = FALSE</code> and make sure you provide a path (file
 name) to a location you can find later.</p>
-<p>Regardless of whether you decide to setup a system for streaming
-data, the process of streaming a file to disk and parsing it at a later
-point in time is the same, as illustrated in the example below.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">## No upfront-parse save as json file instead method</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># By default results are appended to the file.</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">stream_tweets</span>(</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">q =</span> q,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">parse =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">timeout =</span> streamtime,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">file_name =</span> filename</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Streaming tweets: 8 tweets written / 65.54 kB / 2.19 MB/s / 00:00:00 Streaming tweets: 14 tweets written / 131.07 kB / 16.21 kB/s /</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 00:00:08</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="do">## Parse from json file</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>stream_rstats <span class="ot">&lt;-</span> <span class="fu">parse_stream</span>(filename)</span></code></pre></div>
+<p>You can also use <code>append = TRUE</code> to continue recording a
+stream into an already existing file.</p>
+<p>Currently parsing the streaming data is not functional. However, you
+can read it back in with <code>jsonlite::stream_in(file)</code> .</p>
 </div>
 <div id="returned-data-object" class="section level2">
 <h2>Returned data object</h2>
 <p>The parsed object should be the same whether a user parses up-front
-or from a json file in a later session. The returned object should be a
-data frame consisting of tweets data.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Preview tweets data</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(stream_rstats)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            created_at           id              id_str</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2022-05-21 11:46:55 1.527949e+18 1527949049319530496</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 2022-05-21 11:47:01 1.527949e+18 1527949070827933704</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                             text</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1       #Infographic: Types of \nhttps://t.co/Gdq7B6vFwY\n\n#MachineLearning\n#DataScience #programming #DataScientists… https://t.co/KTlhlz9euO</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 RT @KirkDBorne: #DataScience Theories, Models, #Algorithms, and Analytics: https://t.co/w704rhiLS8 (FREE PDF Download, 462 pages)\n—————\n#Bi…</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                 source truncated in_reply_to_status_id</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 &lt;a href=&quot;http://twitter.com/download/android&quot; rel=&quot;nofollow&quot;&gt;Twitter for Android&lt;/a&gt;      TRUE                    NA</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 &lt;a href=&quot;http://twitter.com/download/android&quot; rel=&quot;nofollow&quot;&gt;Twitter for Android&lt;/a&gt;     FALSE                    NA</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   in_reply_to_status_id_str in_reply_to_user_id in_reply_to_user_id_str in_reply_to_screen_name geo coordinates</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1                        NA                  NA                      NA                      NA  NA  NA, NA, NA</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2                        NA                  NA                      NA                      NA  NA  NA, NA, NA</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                        place contributors is_quote_status quote_count reply_count retweet_count favorite_count</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 NA, NA, NA, NA, NA, NA, NA           NA           FALSE           0           0             0              0</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 NA, NA, NA, NA, NA, NA, NA           NA           FALSE           0           0             0              0</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                                                                                                                                                                                                            entities</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 Infographic, MachineLearning, DataScience, programming, DataScientists, 0, 12, 49, 65, 66, 78, 79, 91, 92, 107, https://t.co/Gdq7B6vFwY, https://t.co/KTlhlz9euO, https://bit.ly/3oZvkPU, https://twitter.com/i/web/status/1527949049319530496, bit.ly/3oZvkPU, twitter.com/i/web/status/1…, 24, 109, 47, 132, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2                                                                                                                                                                  DataScience, Algorithms, 16, 28, 47, 58, https://t.co/w704rhiLS8, http://bit.ly/3vZqiYr, bit.ly/3vZqiYr, 75, 98, NA, KirkDBorne, Kirk Borne, 534563976, 534563976, 3, 14, NA, NA</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   favorited retweeted possibly_sensitive filter_level lang  timestamp_ms</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     FALSE     FALSE              FALSE          low   en 1653126415935</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2     FALSE     FALSE              FALSE          low   en 1653126421063</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              retweeted_status</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 Sat May 21 03:15:01 +0000 2022, 1527850420793663488, 1527850420793663488, #DataScience Theories, Models, #Algorithms, and Analytics: https://t.co/w704rhiLS8 (FREE PDF Download, 462 pages)\n—… https://t.co/VR6LqqMuQu, 0, 140, &lt;a href=&quot;http://twitter.com/download/iphone&quot; rel=&quot;nofollow&quot;&gt;Twitter for iPhone&lt;/a&gt;, TRUE, NA, NA, NA, NA, NA, 534563976, 534563976, Kirk Borne, KirkDBorne, Maryland, USA, http://www.linkedin.com/in/kirkdborne, Data Scientist, Chief ScienceOfficer @DataPrime_ai. Global Speaker. Founder @LeadershipData. Top #BigData #DataScience #AI #IoT #ML Influencer. PhD Astrophysics, none, FALSE, TRUE, 314491, 8615, 8768, 215023, 153655, Fri Mar 23 16:35:17 +0000 2012, NA, NA, FALSE, NA, FALSE, FALSE, C0DEED, http://abs.twimg.com/images/themes/theme1/bg.png, https://abs.twimg.com/images/themes/theme1/bg.png, TRUE, 0084B4, FFFFFF, DDEEF6, 333333, TRUE, http://pbs.twimg.com/profile_images/1112733580948635648/s-8d1avb_normal.jpg, https://pbs.twimg.com/profile_images/1112733580948635648/s-8d1avb_normal.jpg, https://pbs.twimg.com/profile_banners/534563976/1651617018, FALSE, FALSE, NA, NA, NA, NA, NA, NA, NA, FALSE, #DataScience Theories, Models, #Algorithms, and Analytics: https://t.co/w704rhiLS8 (FREE PDF Download, 462 pages)\n—————\n#BigData #AI #MachineLearning #DataScientists #Mathematics #Statistics #Rstats #Coding #NetworkScience #NeuralNetworks #100DaysOfCode https://t.co/mncH2ANBoc, 0, 253, DataScience, Algorithms, BigData, AI, MachineLearning, DataScientists, Mathematics, Statistics, Rstats, Coding, NetworkScience, NeuralNetworks, 100DaysOfCode, 0, 12, 31, 42, 120, 128, 129, 132, 133, 149, 150, 165, 166, 178, 179, 190, 191, 198, 199, 206, 207, 222, 223, 238, 239, 253, https://t.co/w704rhiLS8, http://bit.ly/3vZqiYr, bit.ly/3vZqiYr, 59, 82, 1527850418260348928, 1527850418260348932, 254, 277, http://pbs.twimg.com/media/FTQD3EpXEAQSWRu.jpg, https://pbs.twimg.com/media/FTQD3EpXEAQSWRu.jpg, https://t.co/mncH2ANBoc, pic.twitter.com/mncH2ANBoc, https://twitter.com/KirkDBorne/status/1527850420793663488/photo/1, photo, 1074, 1390, fit, 927, 1200, fit, 150, 150, crop, 525, 680, fit, 1527850418260348928, 1527850418260348932, 254, 277, http://pbs.twimg.com/media/FTQD3EpXEAQSWRu.jpg, https://pbs.twimg.com/media/FTQD3EpXEAQSWRu.jpg, https://t.co/mncH2ANBoc, pic.twitter.com/mncH2ANBoc, https://twitter.com/KirkDBorne/status/1527850420793663488/photo/1, photo, 1074, 1390, fit, 927, 1200, fit, 150, 150, crop, 525, 680, fit, 0, 1, 25, 43, DataScience, Algorithms, 0, 12, 31, 42, https://t.co/w704rhiLS8, https://t.co/VR6LqqMuQu, http://bit.ly/3vZqiYr, https://twitter.com/i/web/status/1527850420793663488, bit.ly/3vZqiYr, twitter.com/i/web/status/1…, 59, 82, 117, 140, FALSE, FALSE, FALSE, low, en, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   quoted_status_id quoted_status_id_str</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1               NA                 &lt;NA&gt;</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2               NA                 &lt;NA&gt;</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                                                                                                                                quoted_status</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   quoted_status_permalink display_text_width full_text favorited_by scopes display_text_range metadata query withheld_scope</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1              NA, NA, NA                132        NA           NA     NA                 NA       NA    NA             NA</span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2              NA, NA, NA                140        NA           NA     NA                 NA       NA    NA             NA</span></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   withheld_copyright withheld_in_countries possibly_sensitive_appealable</span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1                 NA                    NA                            NA</span></span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2                 NA                    NA                            NA</span></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 4 rows ]</span></span></code></pre></div>
-<p>The returned object should also include a data frame of users data,
-which Twitter’s stream API automatically returns along with tweets data.
-To access users data, use the <code>users_data</code> function.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Preview users data</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">users_data</span>(stream_rstats))</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             id              id_str             name   screen_name                 location                    url</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 2.553201e+09          2553201139      Hameed Kahn   hameeduom41                Islamabad https://bit.ly/3oZvkPU</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 3.622639e+07            36226389  rosangela maria      MMAPULLA Campo Grande, MS, Brazil                   &lt;NA&gt;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 9.716201e+17  971620109197312000   Serverless Fan ServerlessFan                Sri Lanka                   &lt;NA&gt;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 1.437729e+18 1437728609909706753 Developer Bot 🤖       GoaiDev                    India   https://thebotman.co</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                    description</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 Using suitable technologies, we create secure, scalable software solutions that integrate with new and legacy systems to drive business growth &amp; innovation.</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2        meu perfil @MMAPULLA, para quem não  sabe, se deve a um apelido carinhoso que recebi em minha última viagem a Botswana. trad. aquela que traz a chuva</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3                                                                                                                                       #Serverless #Computing</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4                                                                                    I do retweet #javascript.\nCreated by @rahul05ranjan.\nDM for any query!!</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   protected verified followers_count friends_count listed_count favourites_count statuses_count                     created_at</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     FALSE    FALSE             526          1817            0             3296           5141 Sat Jun 07 19:40:16 +0000 2014</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2     FALSE    FALSE             138           530            0            37369           8574 Wed Apr 29 00:24:15 +0000 2009</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3     FALSE    FALSE            4012             6          145                7         533557 Thu Mar 08 05:34:20 +0000 2018</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4     FALSE    FALSE            1803            14           32           246879         508947 Tue Sep 14 10:43:25 +0000 2021</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                        profile_image_url_https</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 https://pbs.twimg.com/profile_images/1526660385306443776/VljjOVKm_normal.jpg</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 https://pbs.twimg.com/profile_images/1319402128968945667/BMkHmXJp_normal.jpg</span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  https://pbs.twimg.com/profile_images/973611685822058497/yRRo9D52_normal.jpg</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 https://pbs.twimg.com/profile_images/1459402333201199104/skHuHVT9_normal.jpg</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                                    profile_banner_url default_profile default_profile_image withheld_in_countries</span></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1         https://pbs.twimg.com/profile_banners/2553201139/1652988231            TRUE                 FALSE                  NULL</span></span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2           https://pbs.twimg.com/profile_banners/36226389/1456327757           FALSE                 FALSE                  NULL</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 https://pbs.twimg.com/profile_banners/971620109197312000/1525426121           FALSE                 FALSE                  NULL</span></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4                                                                &lt;NA&gt;            TRUE                 FALSE                  NULL</span></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   derived withheld_scope entitites</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1    &lt;NA&gt;             NA      NULL</span></span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2    &lt;NA&gt;             NA      NULL</span></span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3    &lt;NA&gt;             NA      NULL</span></span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4    &lt;NA&gt;             NA      NULL</span></span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2 rows ]</span></span></code></pre></div>
+or from a json file in a later session.</p>
+<p>Currently the returned object is a raw conversion of the feed into a
+nested list depending on the fields and extensions requested.</p>
 </div>
-<div id="plotting" class="section level2">
-<h2>Plotting</h2>
-<p>Once parsed, <code>ts_plot()</code> provides a quick visual of the
-frequency of tweets. By default, <code>ts_plot()</code> will try to
-aggregate time by the day. Because I know the stream only lasted 30
-minutes, I’ve opted to aggregate tweets by the second. It’d also be
-possible to aggregate by the minute, i.e., <code>by = "mins"</code>, or
-by some value of seconds, e.g.,<code>by = "15 secs"</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Plot time series of all tweets aggregated by second</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ts_plot</span>(stream_rstats, <span class="at">by =</span> <span class="st">&quot;secs&quot;</span>)</span></code></pre></div>
-<div class="figure">
-<img src="vignettes/files/ts_plot-1.png" alt="" />
-<p class="caption">plot of chunk ts_plot</p>
-</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Till November 2022 it was possible with API v1.1,
+currently this is no longer possible and uses API v2.<a href="#fnref1"
+class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
 
 

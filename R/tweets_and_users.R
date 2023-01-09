@@ -9,21 +9,22 @@ tweets_with_users <- function(x) {
   empty_response <- vapply(x, is.null, logical(1L))
   x <- x[!empty_response]
 
-  if (length(x) == 0) {
-    tweets <- tweet(NULL)[0, ]
-  } else {
-    tweets <- do.call("rbind", lapply(x, tweet))
+  tweets <- tweet(NULL)[0, ]
+  if (length(x) != 0) {
+    tweets <- do.call(rbind, lapply(x, tweet))[, colnames(tweets)]
   }
 
-  if (has_name_(tweets, "user")) {
-    users <- do.call("rbind", tweets[["user"]])
-    tweets <- tweets[!colnames(tweets) %in% "user"]
-  } else {
-    users <- user(NULL)[0, ]
+  users <- user(NULL)[0, ]
+  if (has_name_(tweets, "user") && length(tweets$user) != 0 && all(lengths(tweets$user) != 0)) {
+    users <- do.call(rbind, tweets[["user"]])[, colnames(users)]
   }
-  users <- as_tbl(users)
-  tweets <- as_tbl(tweets)
-  structure(tweets, users = users)
+  tweets <- tweets[!colnames(tweets) %in% "user"]
+  users <- tibble::as_tibble(users)
+  tweets <- tibble::as_tibble(tweets)
+
+  out <- structure(tweets, users = users)
+  class(out) <- c("tweets", class(out))
+  out
 }
 
 #' @rdname tweets_with_users
@@ -32,27 +33,22 @@ users_with_tweets <- function(x) {
   empty_response <- vapply(x, is.null, logical(1L))
   x <- x[!empty_response]
 
-  if (length(x) == 0) {
-    users <- user(NULL)[0, ]
-  } else {
-    users <- do.call("rbind", lapply(x, user))
+  users <- user(NULL)[0, ]
+  if (length(x) != 0) {
+    users <- do.call(rbind, lapply(x, user))[, colnames(users)]
   }
 
-  if (length(x) == 0) {
-    tweets <- tweet(NULL)[0, ]
-  } else {
+  tweets <- tweet(NULL)[0, ]
+  if (length(x) != 0) {
     status <- lapply(x, `[[`, i = "status")
-    tweets <- do.call("rbind", lapply(status, tweet))
+    tweets <- do.call(rbind, lapply(status, tweet))[, colnames(tweets)]
   }
-
-  users <- as_tbl(users)
-  tweets <- as_tbl(tweets)
-  structure(users, tweets = tweets)
-}
-
-
-as_tbl <- function(x, ...) {
-  tibble::as_tibble(x, ...)
+  tweets <- tweets[!colnames(tweets) %in% "user"]
+  users <- tibble::as_tibble(users)
+  tweets <- tibble::as_tibble(tweets)
+  out <- structure(users, tweets = tweets)
+  class(out) <- c("users", class(out))
+  out
 }
 
 clean_source <- function(s) {

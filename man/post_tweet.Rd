@@ -93,19 +93,15 @@ grid(8, lwd = .15, lty = 2, col = "#00000088")
 dev.off()
 
 ## post tweet with media attachment
-post_tweet("a tweet with media attachment", media = tmp, 
-           media_alt_text = "Random  points example of rtweet::post_tweet. 
+post_tweet("a tweet with media attachment", media = tmp,
+           media_alt_text = "Random  points example of rtweet::post_tweet.
            rtweet requires alt text with all media")
 
 # example of replying within a thread
 ## first post
-post_tweet(status="first in a thread")
+pt <- post_tweet(status="first in a thread")
 
-## lookup status_id
-my_timeline <- get_my_timeline()
-
-## ID for reply
-reply_id <- my_timeline$id_str[1]
+reply_id <- ids(pt)
 
 ## post reply
 post_tweet("second in the thread",
