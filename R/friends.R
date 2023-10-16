@@ -12,6 +12,7 @@
 #'
 #' @inheritParams TWIT_paginate_cursor
 #' @inheritParams get_followers
+#' @inheritParams stream
 #' @param users Screen name or user ID of target user from which the
 #'   user IDs of friends (accounts followed BY target user) will be
 #'   retrieved.
@@ -114,6 +115,7 @@ my_friendships <- function(user,
 #' Gets information on friendship between two Twitter users.
 #'
 #' @inheritParams lookup_users
+#' @inheritParams stream
 #' @param source Screen name or user id of source user.
 #' @param target Screen name or user id of target user.
 #' @family friends
@@ -139,7 +141,8 @@ lookup_friendships_ <- function(source,
                                 target,
                                 parse = TRUE,
                                 token = NULL) {
-  stopifnot(is.atomic(source), is.atomic(target))
+  stopifnot(is.atomic(source) && !is.null(source),
+            is.atomic(target) && !is.null(target))
 
   params <- list()
   params[[paste0("source_", user_type(source, "source"))]] <- source

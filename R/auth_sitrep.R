@@ -20,7 +20,7 @@ auth_sitrep <- function() {
   old_tokens <- find_old_tokens()
   tools_tokens <- find_tools_tokens()
   all_tokens_files <- c(old_tokens, tools_tokens)
-
+  # FIXME: Deal with Oauth2 tokens
   if (is.null(all_tokens_files)) {
     inform("No tokens were found! See ?auth_as for more details.")
     return(NULL)
@@ -69,7 +69,10 @@ find_tools_tokens <- function() {
 }
 
 bearer_auth <- function(bearer) {
-  tok <- vapply(bearer, function(x){x$token}, character(1L))
+  oauth2 <- vapply(bearer, has_name_, name = "access_token", logical(1L))
+
+  tok <- c(vapply(bearer[!oauth2], function(x){x$token}, character(1L)),
+           vapply(bearer[oauth2], function(x){x$access_token}, character(1L)))
   tok <- as.factor(tok)
   levels(tok) <- LETTERS[seq_along(unique(tok))]
   df <- data.frame(token = tok)
@@ -83,11 +86,9 @@ token_auth <- function(tokens) {
   df <- data.frame(app = character(n),
                    user_id = character(n),
                    key = character(n))
-  for (i in seq_along(tokens)) {
-    token <- tokens[[i]]
-    df[i, names(token)] <- token
-  }
+  df <- as.data.frame(t(list2DF(tokens)))
   rownames(df) <- names(tokens)
+  colnames(df) <- c("app", "user_id", "key")
   uk <- unique(df$key)
   length_levels <- length(uk) - sum(any(uk == ""))
   df$key <- factor(df$key, labels = LETTERS[seq_len(length_levels)], exclude = "")
@@ -221,21 +222,23 @@ auth_helper <- function() {
 
   if (any(type_auth == "bearer")) {
     bearer_summary <- bearer_auth(tokens[type_auth == "bearer"])
+    # Delete any duplicated bearer
+    unlink(rownames(bearer_summary)[duplicated(bearer_summary)])
   }
   if (any(type_auth == "token")) {
     token_summary <- token_auth(tokens[type_auth == "token"])
-  }
-  # Delete any "token" without key
-  unlink(rownames(token_summary)[is.na(token_summary$key)])
-  # Delete any "token" without user_id
-  unlink(rownames(token_summary)[is.na(token_summary$user_id)])
 
-  if (anyDuplicated(token_summary$key) != 0) {
-    for (key in token_summary$key) {
-      unlink(rownames(token_summary)[token_summary$key == key][-1])
+    # Delete any "token" without key
+    unlink(rownames(token_summary)[is.na(token_summary$key)])
+    # Delete any "token" without user_id
+    unlink(rownames(token_summary)[is.na(token_summary$user_id)])
+
+    if (anyDuplicated(token_summary$key) != 0) {
+      for (key in token_summary$key) {
+        unlink(rownames(token_summary)[token_summary$key == key][-1])
+      }
     }
   }
-
   auth_sitrep()
 }
 

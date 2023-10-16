@@ -5,6 +5,7 @@
 #'
 #' @inheritParams TWIT_paginate_cursor
 #' @inheritParams get_timeline
+#' @inheritParams stream
 #' @param page `r lifecycle::badge("deprecated")` Please use `cursor` instead.
 #' @references <https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-followers-ids>
 #' @examples
@@ -32,7 +33,7 @@ get_followers <- function(user, n = 5000,
     cursor <- page
   }
 
-  stopifnot(is.atomic(user), isTRUE(length(user) == 1))
+  stopifnot(is.atomic(user) && !is.null(user), isTRUE(length(user) == 1))
 
   params <- list(stringify_ids = TRUE)
   params[[user_type(user)]] <- user

@@ -18,6 +18,7 @@
 #' @param exclude_hashtags Logical, indicating whether or not to
 #'   exclude hashtags. Defaults to FALSE--meaning, hashtags are
 #'   included in returned trends.
+#' @inheritParams stream
 #' @examples
 #' if (auth_has_default()) {
 #'
@@ -75,7 +76,7 @@ get_trends <- function(woeid = 1,
       stop("could not find woe id for provided lat/lng coordinates", call. = FALSE)
     }
   } else {
-    stopifnot(is.atomic(woeid), length(woeid) == 1)
+    stopifnot(is.atomic(woeid) && !is.null(woeid), length(woeid) == 1)
     if (!is_n(woeid)) {
       trends <- trends_available(token = token)
       woeid <- trends$woeid[grep(woeid, trends$name, ignore.case = TRUE)[1]]

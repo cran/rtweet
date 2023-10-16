@@ -26,8 +26,8 @@ post_tweet(
 up-to length 4 character vector with file paths to static images to be included in tweet.
 \strong{The caller is responsible for managing this.}}
 
-\item{token}{Expert use only. Use this to override authentication for
-a single API call. In most cases you are better off changing the
+\item{token}{Use this to override authentication for
+a single API call. In many cases you are better off changing the
 default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
 \item{in_reply_to_status_id}{Status ID of tweet to which you'd like to reply.
@@ -57,7 +57,7 @@ for more information.}
 tweet refers to. Range should be between -90 and 90 (north). Note that you
 should enable the "Precise location" option in your account via \emph{Settings
 and privacy > Privacy and Safety > Location}. See
-\href{https://help.twitter.com/en/safety-and-security/twitter-location-services-for-mobile}{the official Help Center section}.}
+\href{https://help.twitter.com/en/safety-and-security/x-location-services-for-mobile}{the official Help Center section}.}
 
 \item{long}{A numeric value representing the longitude of the location the
 tweet refers to. Range should be between -180 and 180 (west). See

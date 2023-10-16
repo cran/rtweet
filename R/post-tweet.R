@@ -27,7 +27,7 @@
 #'   tweet refers to. Range should be between -90 and 90 (north). Note that you
 #'   should enable the "Precise location" option in your account via *Settings
 #'   and privacy > Privacy and Safety > Location*. See
-#'   [the official Help Center section](https://help.twitter.com/en/safety-and-security/twitter-location-services-for-mobile).
+#'   [the official Help Center section](https://help.twitter.com/en/safety-and-security/x-location-services-for-mobile).
 #' @param long A numeric value representing the longitude of the location the
 #'   tweet refers to. Range should be between -180 and 180 (west). See
 #'   `lat` parameter.
@@ -132,7 +132,7 @@ post_tweet <- function(status = "my first rtweet #rstats",
     if (!is.numeric(lat)) stop("`lat` must be numeric.")
     if (!is.numeric(long)) stop("`long` must be numeric.")
 
-    if (!is.logical(display_coordinates)) {
+    if (!is_logical(display_coordinates)) {
       stop("`display_coordinates` must be TRUE/FALSE.")
     }
 
@@ -267,7 +267,7 @@ wait_for_chunked_media <- function(resp, media_id, token = NULL) {
 }
 
 check_media <- function(media, alt_text) {
-  if (!is.character(media) | !is.character(alt_text)) {
+  if (!is.character(media) || !is.character(alt_text)) {
     stop("Media and alt_text must be character vectors.", call. = FALSE)
   }
   media_type <- tools::file_ext(media)

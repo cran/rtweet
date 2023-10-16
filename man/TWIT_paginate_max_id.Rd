@@ -53,8 +53,8 @@ TWIT_paginate_premium(
 )
 }
 \arguments{
-\item{token}{Expert use only. Use this to override authentication for
-a single API call. In most cases you are better off changing the
+\item{token}{Use this to override authentication for
+a single API call. In many cases you are better off changing the
 default for all calls. See \code{\link[=auth_as]{auth_as()}} for details.}
 
 \item{get_id}{A single argument function that returns a vector of ids given
@@ -91,7 +91,7 @@ that point. The default value, \code{NULL}, consults the option
 if desired.
 
 If you expect a query to take hours or days to perform, you should not
-rely soley on \code{retryonratelimit} because it does not handle other common
+rely solely on \code{retryonratelimit} because it does not handle other common
 failure modes like temporarily losing your internet connection.}
 
 \item{verbose}{Show progress bars and other messages indicating current
@@ -100,10 +100,9 @@ progress?}
 \item{cursor}{Which page of results to return. The default will return
 the first page; you can supply the result from a previous call to
 continue pagination from where it left off.}
-
-\item{parse}{If \code{TRUE}, the default, returns a tidy data frame. Use \code{FALSE}
-to return the "raw" list corresponding to the JSON returned from the
-Twitter API.}
+}
+\value{
+A list with the json output of the API.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

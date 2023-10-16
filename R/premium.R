@@ -9,6 +9,7 @@
 #' Note: The `env_name` must match the ones you set up for the token you are using.
 #'
 #' @inheritParams TWIT_paginate_max_id
+#' @inheritParams stream
 #' @param q Search query on which to match/filter tweets. See details for
 #'   information about available search operators.
 #' @param continue A character string with the next results of a query. You
@@ -95,9 +96,6 @@
 #' }
 #'
 #' @export
-#' @references Endpoint: <https://developer.twitter.com/en/docs/twitter-api/premium/search-api/api-reference/premium-search>
-#' Full archive limits <https://developer.twitter.com/en/pricing/search-fullarchive>
-#' 30day limits <https://developer.twitter.com/en/pricing/search-30day>
 search_fullarchive <- function(q, n = 100, fromDate = NULL, toDate = NULL,
                                continue = NULL,
                                env_name = NULL, premium = FALSE,
@@ -154,7 +152,7 @@ search_premium <- function(product, q, n = NULL, fromDate = NULL, toDate = NULL,
     stop("`safedir` temporarily not supported")
   }
 
-  if (!is.logical(premium) && length(premium) != 1) {
+  if (!is_logical(premium)) {
     stop("premium must be either TRUE or FALSE.", call. = FALSE)
   }
 
