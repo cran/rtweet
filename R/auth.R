@@ -84,8 +84,6 @@ auth_setup_default <- function() {
 #' @export
 #' @examples
 #' \dontrun{
-#' rtweet_user()
-#' rtweet_bot()
 #' rtweet_app()
 #' }
 rtweet_user <- function(client_id = NULL, client_secret = NULL,
@@ -162,19 +160,70 @@ rtweet_app <- function(bearer_token) {
   )
 }
 
-ask_pass <- function(type, call = caller_env()) {
-  check_installed("askpass", call = call)
+ask_pass <- function(type) {
+  check_installed("askpass", call = current_call())
 
   message <- paste0("Please enter your ", type, ": ")
   val <- askpass::askpass(message)
   if (is.null(val)) {
-    abort("Cancelled by user")
+    abort("Cancelled by user", call = current_call())
   }
   val
 }
 
+#' @export
+#' @rdname rtweet_user
+rtweet_bearer <- function(client = NULL, scopes  = NULL) {
+
+  client <- client %||% client_get()
+  if (!is_client(client)) {
+    abort(c("Client not valid",
+            i = "Check out the `vignette('auth', 'rtweet')`."),
+          call = current_call())
+  }
+
+  if (!is.null(scopes) && check_scopes(scopes)) {
+    scopes <- scopes
+  } else if (is.null(scopes)) {
+    scopes <- set_scopes(tweet_moderate = FALSE)
+  } else {
+    abort("Scopes is not in the right format.", call = current_call())
+  }
+
+  token <- httr2::oauth_flow_client_credentials(client,
+                                       scope = scopes,
+                                       token_params = list(client_secret = client$secret,
+                                                           client_type = "third_party_app",
+                                                           grant_type = "refresh_token"))
+  attr(token, "app") <- client
+  token
+}
+
+# @seealso [invalidate_bearer()]
+rtweet_invalidate <- function(api_key, api_secret, token = NULL) {
+  # To store the token at the right place: see ?httr2::oauth_cache_path
+  withr::local_envvar(HTTR2_OAUTH_CACHE = auth_path())
+  if (missing(api_key)) {
+    api_key <- ask_pass("API key")
+  }
+  if (missing(api_secret)) {
+    api_secret <- ask_pass("API secret")
+  }
+
+  token <- check_token_v2(token, mechanism = "bearer")
+  if (!is.null(token$token)) {
+    abort("Not possible to invalidate bearer token generated with OAuth 1.0",
+        call = caller_call())
+  }
+  httr2::request("https://api.twitter.com/oauth2/invalidate_token") |>
+    httr2::req_method("POST") |>
+    httr2::req_auth_basic(api_key, api_secret) |>
+    httr2::req_body_form(access_token = token$access_token) |>
+    httr2::req_perform()
+}
+
 is_auth <- function(x) {
-  inherits(x, "Token") || inherits(x, "rtweet_bearer") || inherits(x, "httr2_token")
+  inherits(x, "Token") || inherits(x, "rtweet_bearer") || inherits(x, "httr2_token") || inherits(x, "httr2_oauth_client")
 }
 
 #' @export
@@ -286,7 +335,7 @@ auth_as <- function(auth = NULL) {
   invisible(old)
 }
 
-find_auth <- function(auth = NULL, call = caller_env()) {
+find_auth <- function(auth = NULL) {
   if (is.null(auth)) {
     if (is_developing()) {
       rtweet_test() %||% no_token()
@@ -296,29 +345,33 @@ find_auth <- function(auth = NULL, call = caller_env()) {
   } else if (is_auth(auth)) {
     auth
   } else if (is_string(auth)) {
-    load_token(auth, call)
+    load_token(auth)
   } else {
     abort("Unrecognised input to `auth`",
-          call = call)
+          call = current_call())
   }
 }
 
-load_token <- function(auth_name, call = caller_env) {
+load_token <- function(auth_name) {
   if (file.exists(auth_name)) {
     path <- auth_name
+    name <- tools::file_path_sans_ext(basename(auth_name))
   } else {
     path <- auth_path(paste0(auth_name, ".rds"))
+    name <- auth_name
   }
   if (!file.exists(path)) {
     abort(paste0("Can't find saved auth with name '", auth_name, "'"),
-          call = call)
+          call = current_call())
   }
   if (!is_developing()) {
     inform(paste0("Reading auth from '", path, "'"))
   }
-  readRDS(path)
+  token <- readRDS(path)
+  # Store the name of the token as an attribute
+  attr(token, "name") <- name
+  token
 }
-
 
 default_cached_auth <- function() {
   default <- auth_path("default.rds")
@@ -329,12 +382,13 @@ default_cached_auth <- function() {
 
   names <- auth_list()
   if (length(names) == 0) {
-    abort("No default authentication found. Please call `auth_setup_default()`")
+    abort("No default authentication found. Please call `auth_setup_default()`",
+          call = caller_call())
   } else {
     abort(c(
       "No default authentication found. Pick existing auth with:",
       paste0("auth_as('", names, "')")
-    ))
+    ), call = caller_call())
   }
 }
 
@@ -344,11 +398,11 @@ auth_has_default <- function() {
   file.exists(auth_path("default.rds"))
 }
 
-no_token <- function(call = caller_env()) {
+no_token <- function() {
   if (is_testing()) {
     testthat::skip("Auth not available")
   } else {
-    abort("Could not authenticate", call = call)
+    abort("Could not authenticate", call = current_call())
   }
 }
 # Internal function to generate the bot used for testing
@@ -406,7 +460,8 @@ twitter_init_oauth1.0 <- function(endpoint, app, permission = NULL,
 auth_path <- function(...) {
   # Use private option to make testing easier
   path <- getOption("rtweet:::config_dir", tools::R_user_dir("rtweet", "config"))
-  file.path(path, ...)
+  full_path <- file.path(path, ...)
+  full_path
 }
 
 #' Some endpoints require OAuth 2.0 with specific permissions in order to work.
@@ -419,15 +474,20 @@ auth_path <- function(...) {
 #' @export
 #' @rdname rtweet_user
 rtweet_oauth2 <- function(client = NULL, scopes = NULL) {
+  lifecycle::deprecate_stop("2.0.0", what = "rtweet_oatuh2()",
+                            details = c("No longer needed, httr2 handles it automatically",
+                                        i = "Register your client with `client_as('my_client')` and make your requests"))
   client <- client %||% client_get()
   if (!is_client(client)) {
     abort(c("Client not valid",
-          i = "Check out the `vignette('auth', 'rtweet')`."))
+          i = "Check out the `vignette('auth', 'rtweet')`."),
+          call = current_call())
   }
   if (is.null(scopes)) {
     scopes <- client_scopes(client)
   } else if (!check_scopes(scopes)) {
-    abort("Scopes is not in the right format.")
+    abort("Scopes is not in the right format.",
+          call = current_call())
   }
 
   # Guide to all urls for OAuth 2
@@ -440,69 +500,81 @@ rtweet_oauth2 <- function(client = NULL, scopes = NULL) {
                        auth_url = "https://twitter.com/i/oauth2/authorize",
                        pkce = TRUE,
                        scope = paste(scopes, collapse = " "),
-                       host_name = "127.0.0.1",
-                       port = 1410
+                       redirect_uri = "http://127.0.0.1:1410"
+                       # redirect_uri = "http://localhost:1410"
                        )
   # Example of valid url for authorization (created via client_as("academic_dev");rtweet_oauth2() )
   # https://twitter.com/i/oauth2/authorize?response_type=code&client_id=Tm5FWFA3OGFUVUMxTjhUREwzZzQ6MTpjaQ&redirect_uri=http%3A%2F%2F127.0.0.1%3A1410%2F&scope=tweet.read%20tweet.write%20tweet.moderate.write%20users.read%20follows.read%20follows.write%20offline.access%20space.read%20mute.read%20mute.write%20like.read%20like.write%20list.read%20list.write%20block.read%20block.write%20bookmark.read%20bookmark.write&state=PVgWK3MviQ5MBsfj0Iy5D89HBFR4mPwTl0yumjSPlWo&code_challenge=FNcGvupIzNIbWOL8rdJOrxsVS_b2R01vIbynF_iQIMQ&code_challenge_method=S256
-  # # Note that the cliend_id should match in the url
-  inform("Requires confirming permissions to the app (client) every two hours!")
+  # # Note that the client_id should match in the url
   attr(token, "app") <- attr(client, "app")
   token
 }
 
 # Renew token if needed
 # Makes the assumption that the right app is still in the user computer
-auth_renew <- function(token, scopes = NULL, call = caller_env()) {
-  stopifnot(auth_is_pkce(token))
+auth_renew <- function() {
+  withr::local_envvar(HTTR2_OAUTH_CACHE = auth_path())
 
-  if (.POSIXct(token$expires_at) >= Sys.time()) {
-    return(token)
-  }
-  msg <- "Impossible to renew the authentication without interactive usage."
-  if (!interactive()  && is_testing()) {
-    testthat::skip(msg)
-  } else if (!interactive()  && !is_developing()) {
-    abort(msg)
-  }
+  client <- client_get()
+  token <- httr2::oauth_token_cached(
+    client = client,
+    flow = httr2::oauth_flow_refresh,
+    flow_params = list(
+      scope = paste(client_scopes(client), collapse = " "),
+      token_params = list(client_id = client$id)
+    ),
+    cache_disk = TRUE
+  )
+  token_file <- list.files(pattern = client$name, path = auth_path(),
+                           full.names = TRUE, include.dirs = FALSE)
+  token <- readRDS(token_file)
+  # Somehow the time doesn't look fine
+  loc <- Sys.setlocale("LC_TIME", locale = "C")
+  expires <- .POSIXct(token$expires_at) >= Sys.time()
+  Sys.setlocale("LC_TIME", locale = loc)
 
-  if (!is.null(scopes) && check_scopes(scopes)) {
-    scopes <- scopes
-  } else if (is.null(scopes)) {
-    scopes <- strsplit(token$scope, " ", fixed = TRUE)[[1]]
+
+
+  if (expires && !interactive()) {
+    if (is_testing()) {
+      testthat::skip(paste0("Not possible to refresh the token automatically",
+                            " and not in interactive environment."))
+    }
+    warn("Automatic refresh of the token was not possible.",
+          call = caller_call())
   } else {
-    abort("Scopes is not in the right format.")
-  }
-  client_name <- attr(token, "app", TRUE)
-  client <- load_client(client_name)
-
-  # TODO: once it is possible to silently update the token (see https://github.com/r-lib/httr2/issues/197)
-  # activate this branch to reauthorize the app
-  if (FALSE ) {
-    !any(grepl("offline.access", scopes, fixed = TRUE))
-    abort(c("Not possible to update the client"))
-    token <- rtweet_oauth2(client, scopes)
-    return(token)
+    return(NULL)
   }
 
-  # inform("You'll need to give again permissions to the app every two hours!")
-  token <- rtweet_oauth2(client, scopes)
-  # The provided refresh token can only be used once:
-  # https://twittercommunity.com/t/unable-to-obtain-new-access-token-by-using-refresh-token/164123/16
-  # token <- httr2::oauth_flow_refresh(client, refresh_token = token$refresh_token,
-  #                                scope = token$scopes)
-  # This is reported to upstream: https://github.com/r-lib/httr2/issues/197
 
-  # Save token in the environment
-  # It could be that token is not from the environment, but this feel safer than saving it in a file directly.
-  auth_as(token)
-  inform(c("i" = "Using renewed token",
-           "!" = "Save your new oauth2 token with the appropriate name:",
-           "`auth_save(auth_get(), 'renewed_token')`"))
-  token
+
+  token <- httr2::oauth_flow_refresh(client,
+                             refresh_token = token$refresh_token,
+                             scope = token$scope,
+                             token_params = list(client_id = client$id))
+  saveRDS(token, token_file)
+  message("Automatic refereshing of token")
 }
 
 decrypt <- function(x) {
   check_installed("openssl") # Suggested!
   rawToChar(openssl::rsa_decrypt(x[[2]], x[[1]]))
+}
+
+token_name <- function(x){
+  attr(x, "name", TRUE)
+}
+
+resave_token <- function(token) {
+  name <- token_name(token)
+  if (is.null(name)) {
+    inform(c("!" = "It was not possible to save your token",
+             "i" = "Saving your new oauth2 token with: `auth_save(auth_get(), 'renewed_token')`"))
+    auth_save(auth_get(), 'renewed_token')
+  }
+
+  path <- auth_path(paste0(name, ".rds"))
+  # Protects in case the folder gets deleted while the token is loaded
+  dir.create(auth_path(), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(token, path)
 }

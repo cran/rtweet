@@ -42,19 +42,6 @@ area of interest. This function converts boxes into their
 geographical midpoints, which works well in the vast majority of
 cases, but sometimes includes an otherwise puzzling result.
 }
-\examples{
-
-if (auth_has_default()) {
-
-## stream tweets sent from the US
-rt <- search_tweets(geocode = lookup_coords("usa"))
-
-## use lat_lng to recover full information geolocation data
-rtl_loc <- lat_lng(rt)
-rtl_loc
-}
-
-}
 \seealso{
 Other geo: 
 \code{\link{lookup_coords}()}

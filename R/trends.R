@@ -1,5 +1,6 @@
 #' Get Twitter trends data.
 #'
+#' `r lifecycle::badge("deprecated")`
 #' @inheritParams lookup_users
 #' @param woeid Numeric, WOEID (Yahoo! Where On Earth ID) or character
 #'   string of desired town or country. Users may also supply latitude
@@ -19,39 +20,9 @@
 #'   exclude hashtags. Defaults to FALSE--meaning, hashtags are
 #'   included in returned trends.
 #' @inheritParams stream
-#' @examples
-#' if (auth_has_default()) {
-#'
-#' ## Retrieve available trends
-#' trends <- trends_available()
-#' trends
-#'
-#' ## Store WOEID for Worldwide trends
-#' worldwide <- trends$woeid[grep("world", trends$name, ignore.case = TRUE)[1]]
-#'
-#' ## Retrieve worldwide trends datadata
-#' ww_trends <- get_trends(worldwide)
-#'
-#' ## Preview trends data
-#' ww_trends
-#'
-#' ## Retrieve trends data using latitude, longitude near New York City
-#' nyc_trends <- get_trends(lat = 40.7, lng = -74.0)
-#'
-#' ## should be same result if lat/long supplied as first argument
-#' nyc_trends <- get_trends(c(40.7, -74.0))
-#'
-#' ## Preview trends data
-#' nyc_trends
-#'
-#' ## Provide a city or location name using a regular expression string to
-#' ## have the function internals do the WOEID lookup/matching for you
-#' (luk <- get_trends("london"))
-#'
-#' }
-#'
 #' @return Tibble data frame of trends data for a given geographical area.
 #' @family trends
+#' @seealso [`rtweet-deprecated`]
 #' @export
 get_trends <- function(woeid = 1,
                        lat = NULL,
@@ -144,19 +115,13 @@ format_trend_date <- function(x) {
 
 #' Available Twitter trends along with associated WOEID.
 #'
+#' `r lifecycle::badge("deprecated")`
 #' @inheritParams lookup_users
-#'
-#' @examples
-#' if (auth_has_default()) {
-#' ## Retrieve available trends
-#' trends <- trends_available()
-#' trends
-#'
-#' }
 #'
 #' @return Data frame with WOEID column. WOEID is a Yahoo! Where On
 #'   Earth ID.
 #' @family trends
+#' @seealso [`rtweet-deprecated`]
 #' @export
 #' @references <https://developer.twitter.com/en/docs/twitter-api/v1/trends/locations-with-trending-topics/api-reference/get-trends-available>
 trends_available <- function(token = NULL, parse = TRUE) {

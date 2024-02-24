@@ -66,13 +66,12 @@ filtered_stream <- function(timeout, file = tempfile(),
   expansions <- check_expansions(arg_def(expansions, set_expansions(list = NULL)))
   fields <- check_fields(arg_def(fields, set_fields()), metrics = NULL)
   expansions_for_fields(expansions, fields)
-  token <- check_token_v2(token)
-  req_stream <- endpoint_v2(token, "tweets/search/stream", 50 / (60*15))
+  req_stream <- endpoint_v2("tweets/search/stream", 50 / (60*15), set_scopes())
   data <- c(list(expansions = expansions), fields, ...)
   data <- unlist(prepare_params(data), recursive = FALSE)
   req_stream <- httr2::req_url_query(req_stream, !!!data)
   if (file.exists(file) && isFALSE(append)) {
-    stop("File already exists and append = FALSE", call. = FALSE)
+    abort("File already exists and append = FALSE",  call = caller_call())
   }
   out <- stream(req_stream, file, timeout = timeout)
   if (!parse) {
@@ -121,6 +120,8 @@ stream <- function(req, file, timeout) {
 #' @describeIn stream Add rules for the filtered streaming.
 #' @export
 stream_add_rule <- function(query, dry = FALSE, token = NULL) {
+  # To store the token at the right place: see ?httr2::oauth_cache_path
+  withr::local_envvar(HTTR2_OAUTH_CACHE = auth_path())
   if (!is.null(query)) {
     query <- list(add = check_stream_add(query))
   }
@@ -136,6 +137,8 @@ stream_add_rule <- function(query, dry = FALSE, token = NULL) {
 #' @describeIn stream Remove rules from the filtered streaming
 #' @export
 stream_rm_rule <- function(query, dry = FALSE, token = NULL) {
+  # To store the token at the right place: see ?httr2::oauth_cache_path
+  withr::local_envvar(HTTR2_OAUTH_CACHE = auth_path())
   if (!is.null(query)) {
     query <- check_stream_remove(query)
   }
@@ -165,9 +168,8 @@ handle_rules_resp <- function(x) {
   df
 }
 
-stream_rules <- function(query = NULL, token = NULL, ..., call = caller_env()) {
-  token <- check_token_v2(token, call = call)
-  req <- endpoint_v2(token, "tweets/search/stream/rules", 450 / (15 * 60))
+stream_rules <- function(query = NULL, token = NULL, ...) {
+  req <- endpoint_v2("tweets/search/stream/rules", 450 / (15 * 60), set_scopes())
 
   if (!is.null(query)) {
     req <- httr2::req_body_json(req, data = query, ...)
@@ -177,24 +179,24 @@ stream_rules <- function(query = NULL, token = NULL, ..., call = caller_env()) {
 
 is_rule <- function(q) {
   if (!has_name(q, "value")) {
-    stop("Please add value for filtering and a tag", call. = FALSE)
+    abort("Please add value for filtering and a tag", call = current_call())
   }
   nc <- nchar(q[["value"]])
   if (any(nc > 1024)) {
-    stop("Value cannot be longer than 1024 characters", call. = FALSE)
+    abort("Value cannot be longer than 1024 characters", call = current_call())
   } else if (any(nc > 512)) {
-    warning("Requires academic research access.", call. = FALSE)
+    warn("Requires academic research access.")
   }
 
   if (length(nc) > 1000) {
-    stop("Impossible to have more than 1000 rules", call. = FALSE)
+    abort("Impossible to have more than 1000 rules", call = current_call())
   } else if (length(nc) > 5) {
-    warning("Requires elevated or academic research access", call. = FALSE)
+    warn("Requires elevated or academic research access")
   }
 
   if (is.null(q[["tag"]]) || any(nchar(q[["tag"]]) == 0)) {
-    stop("Add tags for the rules for better handling of the streaming output",
-         call. = FALSE)
+    abort("Add tags for the rules for better handling of the streaming output",
+          call = current_call())
   }
   q
 }
@@ -215,7 +217,7 @@ check_stream_remove <- function(q) {
   }
 
   if (!any(grepl("^[0-9]{19}$", q))) {
-    stop("Streaming ids should be 19 numbers long", call. = FALSE)
+    abort("Streaming ids should be 19 numbers long", call = caller_call())
   }
   if (length(q) == 1) {
     list(delete = list(ids = list(q)))
@@ -278,14 +280,13 @@ sample_stream <- function(timeout, file = tempfile(),
   fields <- check_fields(arg_def(fields, set_fields()), metrics = NULL)
   expansions_for_fields(expansions, fields)
   parsing(parse, expansions, fields)
-  token <- check_token_v2(token)
-  req_stream <- endpoint_v2(token, "tweets/sample/stream", 50 / (60*15))
+  req_stream <- endpoint_v2("tweets/sample/stream", 50 / (60*15), set_scopes())
 
   data <- c(list(expansions = expansions), fields, ...)
   data <- unlist(prepare_params(data), recursive = FALSE)
   req_stream <- httr2::req_url_query(req_stream, !!!data)
   if (file.exists(file) && isFALSE(append)) {
-    stop("File already exists and append = FALSE", call. = FALSE)
+    abort("File already exists and append = FALSE", call = caller_call())
   }
   out <- stream(req_stream, file, timeout = timeout)
   if (!parse) {

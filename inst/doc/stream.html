@@ -358,16 +358,13 @@ vignette assumes users have already setup app access tokens (see: the
 “auth” vignette, <code>vignette(&quot;auth&quot;, package = &quot;rtweet&quot;)</code>).</p>
 <details class="chunk-details" open><summary class="chunk-summary"><span class="chunk-summary-text">Code</span></summary>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="do">## Load rtweet</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(rtweet)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(rtweet)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">client_as</span>(<span class="st">&quot;my_app&quot;</span>)</span></code></pre></div>
 </details>
 </div>
 <div id="overview" class="section level2">
 <h2>Overview</h2>
-<p>In addition to accessing Twitter’s REST API (e.g.,
-<code>search_tweets</code>, <code>get_timeline</code>), rtweet makes it
-possible to capture live streams of Twitter data<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. This requires an app
-authentication see
-<code>vignette(&quot;auth&quot;, package = &quot;rtweet&quot;)</code>.</p>
+<p>rtweet makes it possible to capture live streams of Twitter data<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
 <p>There are two ways of having a stream:</p>
 <ul>
 <li><p><a href="https://developer.twitter.com/en/docs/twitter-api/tweets/filtered-stream/api-reference/get-tweets-search-stream">A

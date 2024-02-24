@@ -67,24 +67,19 @@ A tibble with one row for each tweet.
 }
 \description{
 Returns up to 3,000 tweets liked/favorited for each \code{user}.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
 \examples{
-if (auth_has_default()) {
-# get likes for a single user
-kfc <- get_favorites("KFC")
-kfc
-# get newer likes since last request
-newer <- get_favorites("KFC", since_id = kfc)
-
-# get likes from multiple users
-favs <- get_favorites(c("Lesdoggg", "pattonoswalt", "meganamram"))
-favs
+if (FALSE) {
+  get_favorites("KFC")
 }
 }
 \references{
 \url{https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/api-reference/get-favorites-list}
 }
 \seealso{
+\code{\link{rtweet-deprecated}}
+
 Other tweets: 
 \code{\link{get_mentions}()},
 \code{\link{get_timeline}()},

@@ -2,20 +2,16 @@
 #'
 #' `user_block(...)` blocks or unblocks a target twitter user.
 #' `user_unblock(...)` is synonymous to `user_block(..., unblock=TRUE)`.
+#' `r lifecycle::badge("deprecated")`
 #'
 #' @inheritParams get_timeline
 #' @param unblock Logical indicating whether to unblock the intended
 #'   friend.
 #' @aliases user_unblock
+#' @seealso [`rtweet-deprecated`]
 #' @export
 #' @references
 #' Block: <https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/mute-block-report-users/api-reference/post-blocks-create>
-#' @examples
-#' if (auth_has_default()) {
-#'   user_block("rtweet")
-#'   user_unblock("rtweet")
-#'   user_block("rtweet", unblock=TRUE) #<-same as the above
-#' }
 user_block <- function(user,
                       unblock = FALSE,
                       token = NULL) {

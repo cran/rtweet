@@ -28,18 +28,7 @@
 #' @return Returns updated data object with full information latitude
 #'   and longitude vars.
 #' @family geo
-#' @examples
-#'
-#' if (auth_has_default()) {
-#'
-#' ## stream tweets sent from the US
-#' rt <- search_tweets(geocode = lookup_coords("usa"))
-#'
-#' ## use lat_lng to recover full information geolocation data
-#' rtl_loc <- lat_lng(rt)
-#' rtl_loc
-#' }
-#'
+# Used by Twitmo
 #' @export
 lat_lng <- function(x, coords = c("coords_coords", "bbox_coords", "geo_coords"), prefs = "bbox_coords") {
   stopifnot(is.data.frame(x))

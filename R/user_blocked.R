@@ -1,6 +1,6 @@
-#' Find followers.
+#' Find users blocked.
 #'
-#' List of users that follow the specified user ID.
+#' List of users that are blocked.
 #' @inheritParams filtered_stream
 #' @param ... Other arguments passed to the API.
 #' @param n Number of tweets to query.
@@ -39,10 +39,7 @@ user_blocked <- function(id, n = 1000, expansions = NULL, fields = NULL, ...,
   data <- c(max_results = max_results, data)
 
   # Rates from the website app and user limits
-  token <- check_token_v2(token, "pkce")
-  check_scopes_token(token, c("tweet.read", "users.read", "block.read"))
-  rate <- check_rate(token, 15/(60*15), 15/(60*15))
-  req_archive <- endpoint_v2(token, url, rate)
+  req_archive <- endpoint_v2(url, 15/(60*15), c("tweet.read", "users.read", "block.read"))
   req_final <- httr2::req_url_query(req_archive, !!!data)
   p <- pagination(req_final, n_pages, n, verbose)
   if (!parse) {

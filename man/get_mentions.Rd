@@ -69,21 +69,14 @@ Tibble of mentions data.
 Returns data on up to 200 of the most recent mentions (Tweets
 containing a users' screen_name) of the authenticating user.
 The timeline returned is the equivalent of the one seen when you view
-your mentions on twitter.com.
-}
-\examples{
-if (auth_has_default()) {
-  tw <- get_mentions()
-  tw
-
-  # newer mentions
-  get_mentions(since_id = tw)
-}
+your mentions on twitter.com. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
 \references{
 \url{https://developer.twitter.com/en/docs/twitter-api/v1/tweets/timelines/overview}
 }
 \seealso{
+\code{\link{rtweet-deprecated}}
+
 Other tweets: 
 \code{\link{get_favorites}()},
 \code{\link{get_timeline}()},

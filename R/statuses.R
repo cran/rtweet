@@ -1,24 +1,13 @@
 #' Get tweets data for given statuses (status IDs).
 #'
+#' `r lifecycle::badge("deprecated")`
 #' @inheritParams lookup_users
 #' @inheritParams stream
 #' @param statuses User id or screen name of target user.
 #' @references <https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/api-reference/get-statuses-lookup>
-#' @examples
-#'
-#' if (auth_has_default()) {
-#'   statuses <- c(
-#'     "567053242429734913",
-#'     "266031293945503744",
-#'     "440322224407314432"
-#'   )
-#'
-#'   ## lookup tweets data for given statuses
-#'   tw <- lookup_tweets(statuses)
-#'   tw
-#' }
 #' @return A tibble of tweets data.
 #' @family tweets
+#' @seealso [tweet_search_recent()], [`rtweet-deprecated`]
 #' @export
 lookup_tweets <- function(statuses, parse = TRUE, token = NULL,
                           retryonratelimit = NULL, verbose = TRUE) {
@@ -104,10 +93,7 @@ tweet_get <- function(id, expansions = NULL, fields = NULL, ..., token = NULL,
   }
 
   # Rates from the website app and user limits
-  token <- check_token_v2(token, c("bearer", "pkce"))
-  check_scopes_token(token, c("tweet.read", "users.read"))
-  rate <- check_rate(token, 300 /( 60 * 15), 900 / (60 * 15))
-  req_archive <- endpoint_v2(token, url, rate)
+  req_archive <- endpoint_v2(url, 900 / (60 * 15), c("tweet.read", "users.read"))
   req_final <- httr2::req_url_query(req_archive, !!!data)
   p <- pagination(req_final, 1, length(ids), verbose = verbose)
   if (!parse) {
@@ -127,12 +113,13 @@ tweet_get <- function(id, expansions = NULL, fields = NULL, ..., token = NULL,
 #' @references <https://developer.twitter.com/en/docs/twitter-api/tweets/manage-tweets/api-reference/post-tweets>
 #' @examples
 #' if (FALSE) {
-#'  # It reqruires the Oauth2.0 Authentication
+#'  # It requires the Oauth2.0 Authentication
 #'   tp_id <- tweet_post("Posting from #rtweet with the basic plan")
 #'   tweet_post()
 #' }
 tweet_post <- function(text, ..., token = NULL) {
-
+  # To store the token at the right place: see ?httr2::oauth_cache_path
+  withr::local_envvar(HTTR2_OAUTH_CACHE = auth_path())
   options <- list(text = text, ...)
 
   if (sum(c("media", "quote_tweet_id", "poll") %in% names(options) ) > 1) {
@@ -141,7 +128,7 @@ tweet_post <- function(text, ..., token = NULL) {
   }
 
   if ("for_super_followers_only" %in% names(options) && !is_logical(options[["for_super_followers_only"]])) {
-      abort("Provide only TRUE or FALSE for for_super_followers_only")
+      abort("Provide only TRUE or FALSE for 'for_super_followers_only'")
   }
   if (check_reply_settings(options)) {
     abort(c("Provide a valid reply_setting option:",
@@ -152,10 +139,7 @@ tweet_post <- function(text, ..., token = NULL) {
   }
 
   # Rates from the website app and user limits
-  token <- check_token_v2(token, "pkce")
-  check_scopes_token(token, c("tweet.read", "users.read", "tweet.write"))
-  rate <- check_rate(token, 200/(60*15), 200/(60*15))
-  req_archive <- endpoint_v2(token, "tweets", rate)
+  req_archive <- endpoint_v2("tweets", 200/(60*15), c("tweet.read", "users.read", "tweet.write"))
   req_final <- httr2::req_body_json(req_archive, options)
   resp <- httr2::req_perform(req_final)
   r <- resp(resp)
@@ -176,14 +160,9 @@ check_reply_settings <- function(options) {
 #' @seealso [tweet_post()], [tweet_search_recent()], [user_timeline()]
 #' @export
 #' @references <https://developer.twitter.com/en/docs/twitter-api/tweets/manage-tweets/api-reference/delete-tweets-id>
-#' @examples
-#' if (FALSE) {
-#'   # It requires Oauth authentication
-#'   tp <- tweet_post("Running examples of #rtweet")
-#'   td <- tweet_delete(tp$id)
-#' }
-#'
 tweet_delete <- function(id, verbose = FALSE, token = NULL) {
+  # To store the token at the right place: see ?httr2::oauth_cache_path
+  withr::local_envvar(HTTR2_OAUTH_CACHE = auth_path())
   stopifnot("Requires valid ids." = is_id(id))
   if (length(id) == 1) {
     url <- paste0("tweets/", id)
@@ -192,10 +171,8 @@ tweet_delete <- function(id, verbose = FALSE, token = NULL) {
   }
 
   # Rates from the website app and user limits
-  token <- check_token_v2(token, "pkce")
-  check_scopes_token(token, c("tweet.read", "users.read", "tweet.write"))
-  rate <- 50 / (60 * 15)
-  req_archive <- endpoint_v2(token, url, rate)
+  req_archive <- endpoint_v2(url, 50 / (60 * 15),
+                             c("tweet.read", "users.read", "tweet.write"))
   req_final <- httr2::req_url_query(req_archive)
 
   r <- httr2::req_perform(httr2::req_method(req_final, "DELETE"))
@@ -211,7 +188,6 @@ tweet_delete <- function(id, verbose = FALSE, token = NULL) {
 #' @inheritParams tweet_get
 #' @inheritParams tweet_search_recent
 #' @param id At least a tweet id.
-#' @seealso [lookup_tweets()] [tweet_get()]
 #' @references
 #' One tweet: <https://developer.twitter.com/en/docs/twitter-api/tweets/quote-tweets/api-reference/get-tweets-id-quote_tweets>
 #' @export
@@ -244,10 +220,7 @@ tweet_quoted <- function(id, n = 100, expansions = NULL, fields = NULL, ..., tok
   }
 
   # Rates from the website app and user limits
-  token <- check_token_v2(token, c("bearer", "pkce"))
-  check_scopes_token(token, c("tweet.read", "users.read"))
-  rate <- check_rate(token, 75 / ( 60 * 15), 75 / (60 * 15))
-  req_archive <- endpoint_v2(token, url, rate)
+  req_archive <- endpoint_v2(url, 75 / (60 * 15), c("tweet.read", "users.read"))
   req_final <- httr2::req_url_query(req_archive, !!!data)
   p <- pagination(req_final, n_pages, n, verbose = verbose)
   if (!parse) {

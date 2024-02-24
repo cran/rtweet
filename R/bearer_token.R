@@ -9,6 +9,7 @@
 #' [Twitter developer portal](https://developer.twitter.com/en/portal/projects-and-apps).
 #' See `vignette("auth", package = "rtweet")` for full details.
 #' @keywords internal
+#' @seealso [rtweet_bearer()], [`rtweet-deprecated`]
 #' @export
 bearer_token <- function(token = NULL) {
   lifecycle::deprecate_stop("1.0.0", "bearer_token()", "rtweet_app()")
@@ -27,7 +28,9 @@ bearer_token <- function(token = NULL) {
 #' @keywords internal
 #' @export
 invalidate_bearer <- function(api_key, api_secret, client = NULL, token = NULL) {
-
+  # See also rtweet_invalidate in auth.R
+  # To store the token at the right place: see ?httr2::oauth_cache_path
+  withr::local_envvar(HTTR2_OAUTH_CACHE = auth_path())
   if (is.null(client)) {
     client <- client_as(client)
     api_key <- client["id"]

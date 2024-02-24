@@ -4,7 +4,9 @@ auth_is_bearer <- function(token = NULL) {
   if (is.null(token)) {
     token <- auth_get()
   }
-  inherits(token, "rtweet_bearer")
+  # if the bearer is created with rtweet_bearer the class is different
+  bearer_httr2 <- inherits(token, "httr2_token") && is.null(token$refresh_token)
+  inherits(token, "rtweet_bearer") || bearer_httr2
 }
 
 prepare_bearer <- function(x, y) {
@@ -37,10 +39,10 @@ auth_is_pkce <- function(token = NULL) {
 #  if (auth_has_default()) {
 #     tryCatch(check_token_v2())
 #  }
-check_token_v2 <- function(token = NULL, mechanism = "bearer", call = caller_env()) {
+check_token_v2 <- function(token = NULL, mechanism = "bearer") {
 
   token <- token %||% auth_get()
-
+  return(token)
   mechanism <- match.arg(mechanism, c("bearer", "pkce"), several.ok = TRUE)
 
   # For endpoints that accept both authentications methods
@@ -49,29 +51,23 @@ check_token_v2 <- function(token = NULL, mechanism = "bearer", call = caller_env
   } else if (length(mechanism) == 2) {
     # To make it easier testing interactively
     if (is_developing()) {
-      return(load_token("bearer_academic_dev", call = call))
+      return(load_token("bearer_academic_dev"))
     }
 
     abort(c(
       "x" = "You must use a token accepted by the endpoints v2.",
       "i" = "Check the `vignette('auth', package = 'rtweet')` about how to get them."),
-      call = call)
+      call = current_call())
   }
 
   if (mechanism == "bearer" && !auth_is_bearer(token)) {
-    # To make it easier testing interactively
-    if (is_developing()) {
-      return(load_token("bearer_academic_dev", call = call))
-    }
+
     abort(c("x" = "A bearer `token` is needed for this endpoint.",
             "i" = "Get one via `rtweet_app()`"),
-          call = call)
+          call = current_call())
   }
   if (mechanism == "pkce" && !auth_is_pkce(token)) {
-    # To make it easier testing interactively
-    if (is_developing()) {
-      return(load_token("renewed_token", call = call))
-    }
+
     client <- client_get()
     if (!is_client(client)) {
       msg <- c(">" = "Check the vignette('auth', 'rtweet')",
@@ -82,7 +78,7 @@ check_token_v2 <- function(token = NULL, mechanism = "bearer", call = caller_env
     abort(c("x" = "An OAuth 2.0  is needed for this endpoint.",
             msg,
             "i" = "Get the authorization via `rtweet_oauth2()`"),
-          call = call)
+          call = current_call())
   }
   token
 }
@@ -90,12 +86,11 @@ check_token_v2 <- function(token = NULL, mechanism = "bearer", call = caller_env
 # Provides the required method for the token type
 req_auth <- function(req, token) {
   if (auth_is_bearer(token)) {
-    token <- token$token
+    httr2::req_auth_bearer_token(req, token$token)
   } else if (auth_is_pkce(token)) {
-    token <- auth_renew(token)
+    token <- auth_renew()
     token <- token$access_token
   }
-  httr2::req_auth_bearer_token(req, token)
 }
 
 req_is_error <- function(resp) {
@@ -104,7 +99,7 @@ req_is_error <- function(resp) {
   } else {
     r <- resp
   }
-  has_name_(r, "errors")
+  has_name_(r, "errors") || httr2::resp_is_error(resp)
 }
 
 req_errors <- function(resp) {
@@ -115,7 +110,11 @@ req_errors <- function(resp) {
   }
 
   if (any(lengths(r$errors) > 1)) {
-    errors <- do.call(rbind, lapply(r$errors, list2DF))
+    if (is.data.frame(r$errors[[1]])) {
+      errors <- r$errors
+    } else {
+      errors <- do.call(rbind, lapply(r$errors, list2DF))
+    }
   }  else {
     errors <- r$errors
   }
@@ -131,16 +130,31 @@ req_errors <- function(resp) {
 # Prepare the requests ####
 # General function to create the requests for Twitter API v2 with retry limits
 # and error handling
-req_v2 <- function(token = NULL, call = caller_env()) {
+req_v2 <- function(scopes) {
+  client <- client_get()
+  scopes_client <- client_scopes(client)
   req <- httr2::request("https://api.twitter.com/2")
   req_agent <- httr2::req_user_agent(req, "rtweet (https://docs.ropensci.org/rtweet)")
-  req_authorized <- req_auth(req_agent, token)
+  # req_authorized <- req_auth(req_agent, token)
+  check_scopes(scopes_client, scopes)
+  # httr2 looks for this path.
+  withr::local_envvar(HTTR2_OAUTH_CACHE = auth_path())
+  req_authorized <- httr2::req_oauth_auth_code(req_agent,
+                             client = client,
+                             auth_url = "https://twitter.com/i/oauth2/authorize",
+                             pkce = TRUE,
+                             scope = paste(scopes_client, collapse = " "),
+                             redirect_uri = "http://127.0.0.1:1410",
+                             cache_disk = TRUE
+                             # redirect_uri = "http://localhost:1410"
+  )
+
   req_content <- httr2::req_headers(req_authorized,
                              `Content-type` = "application/json")
   req_try <- httr2::req_retry(req_content,
                               is_transient = twitter_is_transient,
                               after = twitter_after)
-  req <- httr2::req_error(req_try, is_error = req_is_error, body = req_errors)
+  req <- httr2::req_error(req_try, is_error = httr2::resp_is_error, body = req_errors)
   req
 }
 
@@ -155,9 +169,9 @@ twitter_after <- function(resp) {
 }
 
 
-endpoint_v2 <- function(token, path, throttle, call = caller_call()) {
+endpoint_v2 <- function(path, throttle, scopes) {
 
-  req <- httr2::req_url_path_append(req_v2(token, call), path)
+  req <- httr2::req_url_path_append(req_v2(scopes), path)
   httr2::req_throttle(req, throttle, realm = path)
 }
 

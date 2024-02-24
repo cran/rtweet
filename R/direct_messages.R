@@ -3,7 +3,7 @@
 #'
 #' Returns all Direct Message events (both sent and received) within the last 30
 #' days. Sorted in reverse-chronological order. Includes detailed information
-#' about the sender and recipient.
+#' about the sender and recipient. `r lifecycle::badge("deprecated")`
 #'
 #' @inheritParams TWIT_paginate_cursor
 #' @inheritParams stream
@@ -13,13 +13,11 @@
 #' \dontrun{
 #'
 #' ## get my direct messages
-#' dms <- direct_messages()
-#'
-#' ## inspect data structure
-#' str(dms)
+#' direct_messages()
 #'
 #' }
 #' @export
+#' @seealso [`rtweet-deprecated`]
 #' @references <https://developer.twitter.com/en/docs/twitter-api/v1/direct-messages/sending-and-receiving/api-reference/list-events>
 direct_messages <- function(n = 50,
                             cursor = NULL,
@@ -62,16 +60,8 @@ direct_messages <- function(n = 50,
 #'
 #' ## get my direct messages
 #' dms <- direct_messages_received()
-#'
-#' ## inspect data structure
-#' str(dms)
-#'
 #' ## get direct messages I've sent
 #' sdms <- direct_messages_sent()
-#'
-#' ## inspect data structure
-#' str(dms)
-#'
 #' }
 #'
 #' @details Includes detailed information about the sender and
@@ -86,7 +76,7 @@ direct_messages_received <- function(since_id = NULL,
                                      parse = TRUE,
                                      token = NULL) {
   abort("The endpoint for `direct_messages_received()` no longer exists. ",
-    "Please use `direct_messages()` instead.")
+    "Please use `direct_messages()` instead.", call = current_call())
 }
 
 #' @export
@@ -97,5 +87,5 @@ direct_messages_sent <- function(since_id = NULL,
                                  parse = TRUE,
                                  token = NULL) {
   abort("The endpoint for `direct_messages_received()` no longer exists. ",
-    "Please use `direct_messages()` instead.")
+    "Please use `direct_messages()` instead.", call = current_call())
 }

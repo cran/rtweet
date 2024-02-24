@@ -65,19 +65,19 @@ A list with one element for each page of results.
 \description{
 Returns all Direct Message events (both sent and received) within the last 30
 days. Sorted in reverse-chronological order. Includes detailed information
-about the sender and recipient.
+about the sender and recipient. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
 \examples{
 \dontrun{
 
 ## get my direct messages
-dms <- direct_messages()
-
-## inspect data structure
-str(dms)
+direct_messages()
 
 }
 }
 \references{
 \url{https://developer.twitter.com/en/docs/twitter-api/v1/direct-messages/sending-and-receiving/api-reference/list-events}
+}
+\seealso{
+\code{\link{rtweet-deprecated}}
 }
